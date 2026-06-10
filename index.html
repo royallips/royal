@@ -543,10 +543,37 @@ function applyCloudData(d){
 }
 function startCloudSync(){
   if(!cloudUrl)return;
-  // 初回：サーバーの最新を取得
-  cloudPull();
   // 10秒ごとに自動取得
-  setInterval(cloudPull,10000);
+  if(window._cloudTimer)clearInterval(window._cloudTimer);
+  window._cloudTimer=setInterval(cloudPull,10000);
+}
+// 「接続して同期開始」専用：まずサーバーの状態を確認し、
+//  ・サーバーにデータがある → 取り込む（この端末のデータは上書きしない）
+//  ・サーバーが空            → この端末のデータを初期データとして送信
+async function connectCloud(){
+  if(!cloudUrl)return;
+  cloudStatus("接続中…","#c77");
+  try{
+    // rev=0 で問い合わせ、サーバーに何かあれば必ず返ってくる
+    const res=await fetch(cloudUrl+(cloudUrl.includes("?")?"&":"?")+"action=get&rev=0",{method:"GET"});
+    const j=await res.json();
+    if(j&&j.ok){
+      if(j.changed&&j.data&&j.data.casts){
+        // サーバーにデータあり → 取り込む（端末データは送らない）
+        suppressPush=true;applyCloudData(j.data);suppressPush=false;
+        localStorage.setItem(KEY,JSON.stringify(state));
+        lastSyncedRev=j.rev;
+        const sy=window.scrollY;renderAll();window.scrollTo(0,sy);
+        cloudStatus("サーバーのデータを取り込みました ✓","#2d8a4a");
+      }else{
+        // サーバーが空 → この端末のデータを初期データとして送信
+        lastSyncedRev=j.rev||0;
+        await doCloudPush();
+        cloudStatus("この端末のデータを初期登録しました ✓","#2d8a4a");
+      }
+      startCloudSync();
+    }else{cloudStatus("接続失敗","#d12");}
+  }catch(e){cloudStatus("オフライン（接続できません）","#d12");}
 }
 function id(){return Math.random().toString(36).slice(2,9);}
 function ym(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");}
@@ -1102,7 +1129,7 @@ function renderManage(){
   document.getElementById("addCast2").onclick=()=>openCastDlg();
   const cs=document.getElementById("cloudSaveBtn");if(cs)cs.onclick=()=>{
     setCloudUrl(document.getElementById("cloudUrlInput").value);
-    if(cloudUrl){lastSyncedRev=0;cloudStatus("接続中…","#c77");startCloudSync();doCloudPush();}
+    if(cloudUrl){lastSyncedRev=0;connectCloud();}
     else cloudStatus("未接続（この端末のみ保存）");};
   const cp=document.getElementById("cloudPullBtn");if(cp)cp.onclick=()=>{if(cloudUrl){lastSyncedRev=0;cloudPull();}else alert("先にURLを設定してください");};
   const ch=document.getElementById("cloudHelpBtn");if(ch)ch.onclick=()=>document.getElementById("cloudHelpDlg").showModal();
@@ -1279,7 +1306,7 @@ function _merge(server,client){
   const cg=document.getElementById("copyGas");if(cg)cg.onclick=()=>{const t=document.getElementById("gasCode");t.select();try{document.execCommand("copy");cg.textContent="コピーしました ✓";setTimeout(()=>cg.textContent="コードをコピー",1500);}catch(e){}};
 })();
 // 起動時、保存済みURLがあれば同期開始
-if(cloudUrl)startCloudSync();
+if(cloudUrl){lastSyncedRev=0;cloudPull();startCloudSync();}
 </script>
 </body>
 </html>
