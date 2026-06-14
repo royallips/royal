@@ -31,6 +31,15 @@
   .btn.lend{background:var(--lend)}
   .btn.lock{background:#2d7a4a}
   .lock-toggle{border:2px solid #2d7a4a;border-radius:10px;padding:7px 14px;font-size:13px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:4px;transition:all .15s}
+  #authBlock{position:fixed;inset:0;z-index:99999;background:rgba(180,20,20,.96);display:flex;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(2px)}
+  #authBlock .ab-inner{background:#fff;border-radius:18px;max-width:420px;width:100%;padding:28px 22px;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,.4)}
+  #authBlock .ab-icon{font-size:54px;line-height:1}
+  #authBlock .ab-title{font-size:26px;font-weight:900;color:#c11;margin:10px 0 14px}
+  #authBlock .ab-msg{font-size:17px;font-weight:800;color:#222;line-height:1.6;margin-bottom:12px}
+  #authBlock .ab-sub{font-size:13px;font-weight:600;color:#555;line-height:1.6;margin-bottom:16px}
+  #authBlock input{width:100%;padding:13px;border:2px solid #c11;border-radius:11px;font-size:16px;margin-bottom:12px;box-sizing:border-box}
+  #authBlock .btn{width:100%;background:#c11;font-size:16px;padding:13px}
+  #authBlockStatus{color:#c11}
   .lock-toggle.off{background:#fff;color:#2d7a4a}
   .lock-toggle.off:hover{background:#eaf7ee}
   .lock-toggle.on{background:#2d7a4a;color:#fff;border-color:#1e5a35;box-shadow:0 2px 8px rgba(45,122,74,.35)}
@@ -225,8 +234,7 @@
 
   .over-banner{margin:10px 0;border:2px solid var(--over);border-radius:12px;background:var(--over-bg);padding:10px;color:var(--over);font-weight:800;font-size:14px}
   .lock-banner{margin:10px 0;border:2px solid #2d7a4a;border-radius:12px;background:#eaf7ee;padding:10px;color:#2d7a4a;font-weight:800;font-size:14px}
-  .rt-wrap.locked{position:relative;outline:3px solid #2d7a4a;outline-offset:2px;border-radius:8px}
-  .rt-wrap.locked::before{content:"🔒 確定済み";position:absolute;top:-12px;right:8px;background:#2d7a4a;color:#fff;font-size:11px;font-weight:800;padding:2px 10px;border-radius:10px;z-index:10}
+  .rt-wrap.locked{position:relative;outline:3px solid #2d7a4a;outline-offset:-1px;border-radius:8px}
   .rt-wrap.locked .rt-bar{cursor:not-allowed}
   .lend-zone{margin-top:14px;border:2px solid var(--lend);border-radius:12px;background:#f6effb;padding:10px}
   .lend-zone.borrow{border-color:var(--borrow);background:#eef6fc}
@@ -365,6 +373,17 @@
 </style>
 </head>
 <body>
+<div id="authBlock" style="display:none">
+  <div class="ab-inner">
+    <div class="ab-icon">⚠️</div>
+    <div class="ab-title">パスワードが違います</div>
+    <div class="ab-msg">このアプリは現在<b>同期できません</b>。<br>入力しても<b>保存・共有されません</b>。</div>
+    <div class="ab-sub">パスワードが変更された可能性があります。<br>新しいパスワードを入力して再接続してください。</div>
+    <input id="authBlockPass" placeholder="新しいパスワード" autocomplete="off">
+    <button class="btn" id="authBlockBtn">新しいパスワードで再接続</button>
+    <div id="authBlockStatus" style="margin-top:8px;font-size:12px;font-weight:700;min-height:16px"></div>
+  </div>
+</div>
 <div class="wrap">
   <h1>ロイヤル利用表・リスピラ管理</h1>
   <div class="bar">
@@ -710,6 +729,19 @@ function cloudStatus(msg, color) {
   const el = document.getElementById("cloudStatus");
   if (el) { el.textContent = msg; el.style.color = color || "var(--ink-soft)"; }
 }
+// パスワード不一致時の全画面警告（入力をブロック）
+let authBlocked = false;
+function showAuthBlock() {
+  authBlocked = true;
+  const el = document.getElementById("authBlock");
+  if (el) el.style.display = "flex";
+}
+function clearAuthBlock() {
+  if (!authBlocked) return;
+  authBlocked = false;
+  const el = document.getElementById("authBlock");
+  if (el) el.style.display = "none";
+}
 function cloudGetUrl(params) {
   const p = cloudPass ? "&pass=" + encodeURIComponent(cloudPass) : "";
   return cloudUrl + (cloudUrl.includes("?") ? "&" : "?") + params + p;
@@ -737,9 +769,9 @@ async function doCloudPush() {
         suppressPush = true; applyCloudData(j.data); suppressPush = false;
         persistLocal();
       }
-      lastSyncedRev = j.rev; cloudStatus("同期済み ✓", "#2d8a4a");
+      lastSyncedRev = j.rev; cloudStatus("同期済み ✓", "#2d8a4a"); clearAuthBlock();
     } else if (j && j.error === "auth") {
-      cloudStatus("合言葉が違います（保存できません）", "#d12");
+      cloudStatus("パスワードが違います（保存できません）", "#d12"); showAuthBlock();
     } else {
       cloudStatus("保存失敗", "#d12");
     }
@@ -755,7 +787,8 @@ async function cloudPull() {
   try {
     const res = await fetch(cloudGetUrl("action=get&rev=" + lastSyncedRev), { method: "GET" });
     const j = await res.json();
-    if (j && j.error === "auth") { cloudStatus("合言葉が違います", "#d12"); return; }
+    if (j && j.error === "auth") { cloudStatus("パスワードが違います", "#d12"); showAuthBlock(); return; }
+    if (j && j.ok) clearAuthBlock();
     if (j && j.ok && j.changed && j.data) {
       // 編集ダイアログを開いている最中は反映を保留（入力の邪魔をしない）
       const editingOpen = ["dlg", "castDlg", "moveDlg", "lendDlg", "eventDlg", "askLabelDlg"]
@@ -787,8 +820,9 @@ async function connectCloud() {
   try {
     const res = await fetch(cloudGetUrl("action=get&rev=0"), { method: "GET" });
     const j = await res.json();
-    if (j && j.error === "auth") { cloudStatus("合言葉が違います（接続できません）", "#d12"); return; }
+    if (j && j.error === "auth") { cloudStatus("パスワードが違います（接続できません）", "#d12"); showAuthBlock(); return; }
     if (j && j.ok) {
+      clearAuthBlock();
       if (j.changed && j.data && j.data.casts) {
         suppressPush = true; applyCloudData(j.data); suppressPush = false;
         persistLocal();
@@ -850,8 +884,10 @@ function overlap(a, b) { return a[0] < b[1] && b[0] < a[1]; }
 function occupies(sp, h) { return sp[0] < h + 1 && h < sp[1]; }
 // バー表示用：spから時間文字列（中抜けの各枠用、終了がCLOSEなら "L"）
 function fmtSp(sp) { if (!sp) return ""; const e = sp[1] >= CLOSE ? "L" : sp[1]; return sp[0] + "-" + e; }
+// 在籍中のキャスト（退職した人を除く）
+function activeCasts() { return state.casts.filter(c => !c.retired); }
 function sortedCasts(group) {
-  return state.casts.filter(c => c.group === group).slice()
+  return state.casts.filter(c => c.group === group && !c.retired).slice()
     .sort((a, b) => a.name.localeCompare(b.name, "ja"));
 }
 
@@ -986,17 +1022,20 @@ function renderStats() {
   state.casts.forEach(c => {
     for (let d = 1; d <= dim; d++) { const r = rec(c.id, d); if (r && isUse(r.status)) { usedSet.add(c.id); break; } }
   });
-  const noUseHiru = state.casts.filter(c => c.group === "hiru" && !usedSet.has(c.id));
-  const noUseYoru = state.casts.filter(c => c.group === "yoru" && !usedSet.has(c.id));
+  const noUseHiru = activeCasts().filter(c => c.group === "hiru" && !usedSet.has(c.id));
+  const noUseYoru = activeCasts().filter(c => c.group === "yoru" && !usedSet.has(c.id));
   const noUseAll = new Set([...noUseHiru, ...noUseYoru].map(c => c.id));
 
-  // 明日以降の利用予定が1つもない人（今月利用なしは除外）
+  // 「本日利用 明日以降未定」＝今日利用があり、かつ明日以降の利用予定が1つもない人
   const tomorrow = isCur ? today.getDate() + 1 : 1;
+  const usedToday = cid => { const r = rec(cid, today.getDate()); return !!(r && isUse(r.status)); };
   const hasFuture = cid => {
     for (let d = Math.max(1, tomorrow); d <= dim; d++) { const r = rec(cid, d); if (r && isUse(r.status)) return true; }
     return false;
   };
-  const futureNone = state.casts.filter(c => !noUseAll.has(c.id) && !hasFuture(c.id));
+  const futureNone = isCur
+    ? activeCasts().filter(c => usedToday(c.id) && !hasFuture(c.id))
+    : [];
 
   const nameSpan = (c, extra = "") => `<span class="nm${extra}" style="cursor:pointer" onclick="searchCastInCalendar('${c.name.replace(/'/g, "\\'")}')">${c.name}</span>`;
   const listOrNone = (arr, extra) => arr.length ? arr.map(c => nameSpan(c, extra)).join("") : '<span class="none">なし</span>';
@@ -1024,7 +1063,7 @@ function renderStats() {
     : '<span class="none">対象日なし</span>';
 
   // 本日利用を確認（確認日=今日に設定されたキャスト・当月のみ）
-  const askToday = isCur ? state.casts.filter(c => String(c.availDates) === String(today.getDate())) : [];
+  const askToday = isCur ? activeCasts().filter(c => String(c.availDates) === String(today.getDate())) : [];
   const askHtml = askToday.length ? askToday.map(c => nameSpan(c, " ask")).join("") : '<span class="none">なし</span>';
 
   const todayCards = isCur ?
@@ -1123,7 +1162,7 @@ function renderRooms() {
   const isToday0 = tdy0.getFullYear() === cur.getFullYear() && tdy0.getMonth() === cur.getMonth() && tdy0.getDate() === roomDay;
   let soukeiHtml = "";
   if (isToday0) {
-    const soukeiList = state.casts.filter(c => {
+    const soukeiList = activeCasts().filter(c => {
       if (c.soukei !== "ari" && c.soukei !== "kakunin") return false;
       const r = rec(c.id, roomDay);
       const sp = span(r);
@@ -1243,7 +1282,7 @@ function toZen(s) {
 // 送迎依頼テキストを作成して表示（要確認=必要 と 送迎あり のみ。不要は除外）
 function buildSoukeiRequest() {
   const stMap = (state.soukeiStatus && state.soukeiStatus[dkey(roomDay)]) || {};
-  const targets = state.casts.filter(c => {
+  const targets = activeCasts().filter(c => {
     if (c.soukei !== "ari" && c.soukei !== "kakunin") return false;
     const r = rec(c.id, roomDay), sp = span(r);
     let endsL = (sp && sp[1] >= CLOSE);
@@ -1517,7 +1556,7 @@ function openLend(mode) {
   $("lendCast").parentElement.style.display = isLend ? "block" : "none";
   $("lendStoreLabel").textContent = isLend ? "加盟店" : "相手の加盟店";
   if (isLend) {
-    const workers = state.casts.filter(c => span(rec(c.id, roomDay)));
+    const workers = activeCasts().filter(c => span(rec(c.id, roomDay)));
     $("lendCast").innerHTML = workers.length
       ? workers.map(c => `<option value="${c.id}">${c.name}（${fmtTime(rec(c.id, roomDay))}）</option>`).join("")
       : `<option value="">この日に利用のキャストがいません</option>`;
@@ -1731,7 +1770,7 @@ function calTable(group) {
 
   let casts;
   if (calSearch) {
-    casts = state.casts.filter(c => c.name.includes(calSearch)).slice()
+    casts = state.casts.filter(c => c.name.includes(calSearch) && !c.retired).slice()
       .sort((a, b) => a.name.localeCompare(b.name, "ja"));
   } else {
     casts = sortedCasts(group);
@@ -1936,9 +1975,9 @@ function renderManage() {
   }
   $("view-manage").innerHTML =
     `<div class="panel">
-      <div class="card" style="margin-bottom:14px;max-width:200px"><div class="lbl">登録キャスト</div><div class="num">${state.casts.length}</div><div class="sub">名</div></div>
-      <div class="sec-title"><span class="tag hiru">昼の部</span>（${state.casts.filter(c => c.group === "hiru").length}名）</div><div>${chips("hiru")}</div>
-      <div class="sec-title" style="margin-top:14px"><span class="tag yoru">夜の部</span>（${state.casts.filter(c => c.group === "yoru").length}名）</div><div>${chips("yoru")}</div>
+      <div class="card" style="margin-bottom:14px;max-width:200px"><div class="lbl">登録キャスト</div><div class="num">${activeCasts().length}</div><div class="sub">名</div></div>
+      <div class="sec-title"><span class="tag hiru">昼の部</span>（${activeCasts().filter(c => c.group === "hiru").length}名）</div><div>${chips("hiru")}</div>
+      <div class="sec-title" style="margin-top:14px"><span class="tag yoru">夜の部</span>（${activeCasts().filter(c => c.group === "yoru").length}名）</div><div>${chips("yoru")}</div>
       <div style="margin-top:16px"><button class="btn" id="addCast2">＋ キャストを追加</button></div>
       <div class="sec-title" style="margin-top:22px">☁ クラウド同期</div>
       <div class="field"><label>GAS WebアプリURL</label>
@@ -1979,10 +2018,9 @@ function openDelDlg(cid) {
 $("delConfirm").onclick = () => {
   const cid = delTarget;
   if (!cid) { dlgClose("delDlg"); return; }
-  state.casts = state.casts.filter(c => c.id !== cid);
-  Object.keys(state.records).forEach(k => { if (k.startsWith(cid + "_")) delete state.records[k]; });
-  Object.values(state.assign).forEach(a => { if (a && a[cid] != null) delete a[cid]; });
-  Object.keys(state.lends).forEach(k => { state.lends[k] = state.lends[k].filter(l => l.cid !== cid); });
+  // 過去のリスピラ・リスピラ一覧から消えないよう、記録は残して「退職」フラグを立てる
+  const c = state.casts.find(x => x.id === cid);
+  if (c) c.retired = true;
   save(); delTarget = null; dlgClose("delDlg"); renderAll();
 };
 $("delCancel").onclick = () => { delTarget = null; dlgClose("delDlg"); };
@@ -2343,6 +2381,26 @@ function _merge(server,client){
     const t = $("gasCode"); t.select();
     try { document.execCommand("copy"); cg.textContent = "コピーしました ✓"; setTimeout(() => cg.textContent = "コードをコピー", 1500); } catch (e) {}
   };
+  // パスワード警告画面の再接続ボタン
+  const abBtn = $("authBlockBtn");
+  if (abBtn) abBtn.onclick = async () => {
+    const np = ($("authBlockPass").value || "").trim();
+    if (!np) { $("authBlockStatus").textContent = "新しいパスワードを入力してください"; return; }
+    setCloudPass(np);
+    const ui = $("cloudPassInput"); if (ui) ui.value = np;
+    $("authBlockStatus").textContent = "接続中…";
+    lastSyncedRev = 0;
+    await connectCloud();
+    if (authBlocked) {
+      $("authBlockStatus").textContent = "まだパスワードが違うようです。もう一度確認してください。";
+    } else {
+      $("authBlockPass").value = "";
+      $("authBlockStatus").textContent = "";
+      startCloudSync();
+    }
+  };
+  const abPass = $("authBlockPass");
+  if (abPass) abPass.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); $("authBlockBtn").click(); } });
 })();
 // 起動時、保存済みURLがあれば同期開始
 if (cloudUrl) { lastSyncedRev = 0; cloudPull(); startCloudSync(); }
