@@ -29,6 +29,12 @@
   .btn.sm{padding:5px 10px;font-size:12px;border-radius:8px}
   .btn.danger{background:var(--over)}
   .btn.lend{background:var(--lend)}
+  .btn.lock{background:#2d7a4a}
+  .lock-toggle{border:2px solid #2d7a4a;border-radius:10px;padding:7px 14px;font-size:13px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:4px;transition:all .15s}
+  .lock-toggle.off{background:#fff;color:#2d7a4a}
+  .lock-toggle.off:hover{background:#eaf7ee}
+  .lock-toggle.on{background:#2d7a4a;color:#fff;border-color:#1e5a35;box-shadow:0 2px 8px rgba(45,122,74,.35)}
+  .lock-toggle.on:hover{background:#26683f}
   .btn.borrow{background:var(--borrow)}
   .month-nav{display:flex;align-items:center;gap:4px;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:3px}
   .month-nav span{font-weight:800;min-width:104px;text-align:center;font-size:15px}
@@ -66,19 +72,27 @@
   .highday small{font-size:10px;color:#d0738a;font-weight:700}
 
   /* リスピラ一覧 */
-  .lf-scroll{display:flex;gap:14px;overflow-x:auto;padding-bottom:10px}
+  .lf-scroll{display:flex;align-items:flex-start;gap:14px;overflow-x:auto;padding-bottom:10px}
   .lf-day{flex:0 0 auto;width:300px;border:1.5px solid var(--line);border-radius:12px;overflow:hidden;cursor:pointer}
   .lf-day:hover{box-shadow:0 4px 14px rgba(232,69,122,.18)}
   .lf-dayhead{background:var(--pink-soft);font-weight:800;font-size:13px;padding:6px 8px;display:flex;align-items:center;gap:6px;border-bottom:1.5px solid var(--line)}
   .lf-dayhead small{font-weight:700;color:var(--ink-soft)}
   .lf-dayhead.sat{background:#dcecff}.lf-dayhead.sun{background:#ffe0e0}
+  .lf-day.today{border-color:var(--pink);box-shadow:0 0 0 2px var(--pink)}
+  .lf-day.today .lf-dayhead{background:var(--pink);color:#fff}
+  .lf-day.today .lf-dayhead small{color:#ffe3ef}
+  .lf-todaymk{display:inline-block;font-size:9px;background:#fff;color:var(--pink);border-radius:6px;padding:0 5px;font-weight:800;margin-right:2px}
+  .lf-day.flash{animation:lfflash 1.2s ease-out}
+  @keyframes lfflash{0%{box-shadow:0 0 0 3px var(--pink)}60%{box-shadow:0 0 0 3px var(--pink)}100%{box-shadow:0 0 0 0 transparent}}
   .lf-dayhead .lf-over{margin-left:auto;background:var(--over);color:#fff;border-radius:10px;padding:1px 7px;font-size:10px}
   .lf-dayhead .lf-freesum{margin-left:auto;color:#2d7a4a;font-size:11px;font-weight:800}
   .lf-dayhead .lf-over+.lf-freesum{margin-left:6px}
   .lf-axis{display:grid;grid-template-columns:18px repeat(16,1fr);font-size:8px;color:var(--ink-soft);border-bottom:1px solid var(--line)}
   .lf-axis span{border-left:1px solid var(--line);height:13px;padding-left:1px}
   .lf-row{display:grid;grid-template-columns:18px 1fr;align-items:stretch;border-bottom:1px solid #f3e6ee;min-height:18px}
-  .lf-row.over{background:var(--over-bg)}
+  .lf-row.over{background:var(--over-bg);min-height:15px}
+  .lf-row.over .lf-track{height:15px}
+  .lf-row.over .lf-bar{height:13px;top:1px}
   .lf-rno{font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;background:#faf3f7;border-right:1px solid var(--line);color:var(--ink-soft)}
   .lf-track{position:relative;height:18px;background:repeating-linear-gradient(90deg,transparent,transparent calc(100%/16 - 1px),#f0e2ea calc(100%/16 - 1px),#f0e2ea calc(100%/16))}
   .lf-track::after{content:"";position:absolute;top:0;bottom:0;left:56.25%;width:1.5px;background:#b06;opacity:.45;z-index:0;pointer-events:none}
@@ -89,18 +103,29 @@
   .lf-dn .lf-dn-y{background:#e4e8ff;color:#4a55c0;margin:0 0 0 2px}
   .lf-bar{position:absolute;top:1px;height:16px;border-radius:4px;color:#fff;font-size:8px;font-weight:700;display:flex;align-items:center;justify-content:center;overflow:hidden;white-space:nowrap;padding:0 2px}
   .lf-bar.b1{background:var(--bar)}.lf-bar.b2{background:var(--bar2)}.lf-bar.ov{background:var(--over)}.lf-bar.bw{background:var(--borrow)}
-  .lf-bar.clash{outline:1.5px solid #d12;outline-offset:-1.5px}
+  .lf-bar.gh{background:var(--hiru-bar)}.lf-bar.gy{background:var(--yoru-bar)}
+  .lf-bar.clash{box-shadow:inset 0 0 0 1.2px rgba(224,70,60,.85)}
   .lf-bar .lf-barlabel{position:relative;z-index:2;overflow:hidden;text-overflow:ellipsis}
-  .lf-bar .clash-ov{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(45deg,rgba(221,17,34,.85),rgba(221,17,34,.85) 4px,rgba(255,90,110,.85) 4px,rgba(255,90,110,.85) 8px);z-index:1}
+  .lf-bar .clash-ov{position:absolute;top:0;bottom:0;background:rgba(224,70,60,.28);border-left:1.2px solid rgba(224,70,60,.65);border-right:1.2px solid rgba(224,70,60,.65);z-index:1}
   .lf-bar.bsh{background:#5cab3f}.lf-bar.btp{background:#3f7fcf}
   .lf-freerow{display:grid;grid-template-columns:18px 1fr;border-top:2px solid var(--line)}
   .lf-freebar{display:grid;grid-template-columns:repeat(16,1fr);height:20px}
   .lf-cell{display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;border-left:1px solid rgba(255,255,255,.6)}
   .lf-overline{background:var(--over);color:#fff;font-size:10px;font-weight:800;padding:2px 6px;text-align:center}
-  .absent-zone{margin:10px 0;border:1.5px solid var(--over);border-radius:12px;background:#fff6f5;padding:10px}
-  .absent-zone .az-title{color:var(--over);font-weight:800;font-size:13px;margin-bottom:6px}
+  .lf-memo{font-size:11px;color:#5a3b2e;background:#fff8e6;border-top:1px solid var(--line);padding:5px 8px;white-space:pre-wrap;word-break:break-word;line-height:1.4}
+  .lf-event{font-size:11px;font-weight:800;color:#b5532a;background:#fff1e6;border-bottom:1px solid var(--line);padding:4px 8px;white-space:pre-wrap;word-break:break-word;line-height:1.3}
+  .rt-event{display:inline-flex;align-items:center;background:#fff1e6;color:#b5532a;border:1.5px solid #f0c4a3;border-radius:20px;padding:3px 12px;font-size:12px;font-weight:800}
+  .absent-zone{margin:10px 0;border:1.5px solid var(--over);border-radius:12px;background:#fff6f5;padding:10px}  .absent-zone .az-title{color:var(--over);font-weight:800;font-size:13px;margin-bottom:6px}
   .absent-item{display:inline-flex;align-items:center;gap:5px;background:#fff;border:1.5px solid var(--over);color:var(--over);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700;margin:3px}
   .absent-item small{font-size:10px;opacity:.7}
+  .soukei-zone{margin:10px 0;border:1.5px solid #1f8a9c;border-radius:12px;background:#effbfd;padding:10px}
+  .soukei-zone .sk-title{color:#157180;font-weight:800;font-size:13px;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+  .soukei-item{display:inline-flex;align-items:center;gap:5px;border-radius:20px;padding:4px 12px;font-size:13px;font-weight:800;margin:3px;border:1.5px solid}
+  .soukei-item small{font-size:10px;font-weight:700;opacity:.85}
+  .soukei-item.ari{background:#1f8a9c;color:#fff;border-color:#157180}
+  .soukei-item.kakunin{background:#fff;color:#157180;border-color:#1f8a9c;border-style:dashed;cursor:pointer}
+  .soukei-item.need{background:#e0492a;color:#fff;border-color:#b5391f;cursor:pointer}
+  .soukei-item.noneed{background:#f0f0f0;color:#999;border-color:#ddd;cursor:pointer;text-decoration:line-through}
 
   .panel{background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:14px;margin-bottom:16px;overflow:auto}
   .sec-title{font-weight:800;font-size:15px;margin:4px 0 10px;display:flex;align-items:center;gap:8px}
@@ -109,7 +134,9 @@
 
   table.cal{border-collapse:collapse;width:100%}
   .cal th,.cal td{border:1px solid var(--line);padding:4px;text-align:center;font-size:11px;white-space:nowrap}
-  .cal th{background:var(--pink-soft);font-weight:800;position:sticky;top:0;z-index:2;box-shadow:0 1px 0 var(--line)}
+  .cal th{background:var(--pink-soft);font-weight:800;position:sticky;top:0;z-index:2;box-shadow:0 1px 0 var(--line);line-height:0.95}
+  .cal th .daynum{display:block;line-height:0.95;margin-bottom:-2px}
+  .cal th small{line-height:0.9;display:inline-block;margin-top:-3px}
   .cal .name-col{position:sticky;left:0;background:#fff;text-align:left;font-weight:700;min-width:78px;z-index:1;padding-left:8px;cursor:pointer}
   .cal .name-col:hover{background:var(--pink-soft);text-decoration:underline}
   .cal th.name-col{position:sticky;top:0;left:0;z-index:5;background:var(--pink-mid);cursor:default}
@@ -122,7 +149,7 @@
   .cal .askbtn{cursor:pointer;font-size:16px;font-weight:800}
   .cal td.sat{background:#eef6ff}.cal td.sun{background:#fff0f0}
   .cal th.sat{background:#dcecff}.cal th.sun{background:#ffe0e0}
-  .cal .cell{cursor:pointer;height:34px;min-width:46px;font-weight:700;position:relative}
+  .cal .cell{cursor:pointer;height:34px;width:46px;min-width:46px;max-width:46px;font-weight:700;position:relative;overflow:hidden}
   .cal .cell:hover{outline:2px solid var(--pink);outline-offset:-2px}
   .cal .total-col{background:var(--pink-soft);font-weight:800;color:var(--pink)}
   /* 今日の列ハイライト */
@@ -132,8 +159,11 @@
   .cal .todaymk{display:inline-block;font-size:8px;background:#fff;color:var(--pink);border-radius:6px;padding:0 4px;font-weight:800}
   /* イベント・連休の列 */
   .cal th.eventcol{background:#ff8c1a;color:#fff;cursor:pointer}
-  .cal th.eventcol .evname{display:block;font-size:8px;background:#fff;color:#d2670a;border-radius:6px;padding:0 3px;font-weight:800;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46px}
+  .cal th .evname{display:block;font-size:8px;background:#fff;color:#d2670a;border-radius:6px;padding:0 3px;font-weight:800;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46px}
   .cal td.eventcell{background:#fff3e3}
+  .cal th.bookcol{background:#e8def5;color:#6b3fa0;cursor:pointer}
+  .cal th.bookcol .bookmk{display:inline-block;font-size:8px;background:#6b3fa0;color:#fff;border-radius:6px;padding:0 4px;font-weight:800;white-space:nowrap}
+  .cal td.bookcell{background:#f6f0fc;box-shadow:inset 2px 0 0 #b79be0,inset -2px 0 0 #b79be0}
   .cal th{cursor:pointer}
   .cal .name-col .gmk{display:inline-block;font-size:9px;font-weight:800;color:#fff;border-radius:5px;padding:0 4px;margin-right:4px}
   .cal .name-col .gmk.hiru{background:var(--hiru-bar)}
@@ -141,7 +171,7 @@
   .st-seiri{background:var(--seiri)!important}.st-shukuhaku{background:var(--shukuhaku)!important}
   .st-yotei{background:var(--yotei)!important}.st-tenpaku{background:var(--tenpaku)!important}
   .st-mitei{background:var(--mitei)!important;color:var(--ink-soft)}
-  .cell .timeunder{font-size:11px}
+  .cell .timeunder{font-size:10px;display:block;line-height:1.1;letter-spacing:-.3px}
   .cell .hidenet{font-size:8px;font-weight:800;color:#c0392b;background:#ffe3e0;border-radius:4px;padding:0 2px;display:inline-block;margin-top:1px}
   .cell.nakanuke{background:#fff3e0}
   .cell.nakanuke .timeunder{font-size:9.5px;line-height:1.15;font-weight:800}
@@ -169,23 +199,35 @@
   .rt-row.over .rt-room{background:var(--over-bg);color:var(--over);border-right-color:var(--over)}
   .rt-row.over .rt-track{background:var(--over-bg)}
   .rt-row.firstover{border-top:3px solid var(--over)}
-  .rt-track{position:relative;min-height:34px;background:repeating-linear-gradient(90deg,transparent,transparent calc(100%/16 - 1px),var(--line) calc(100%/16 - 1px),var(--line) calc(100%/16))}
+  .rt-track{position:relative;min-height:30px;background:repeating-linear-gradient(90deg,transparent,transparent calc(100%/16 - 1px),var(--line) calc(100%/16 - 1px),var(--line) calc(100%/16))}
   .rt-track::after{content:"";position:absolute;top:0;bottom:0;left:56.25%;width:2px;background:#b06; opacity:.5; z-index:0; pointer-events:none}
-  .rt-bar{position:absolute;height:28px;border-radius:7px;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;overflow:hidden;white-space:nowrap;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.15);padding:0 4px;top:3px}
+  .rt-bar{position:absolute;height:28px;border-radius:7px;color:#fff;font-size:11px;font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;white-space:nowrap;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.15);padding:0 4px;top:1px;line-height:1.05}
   .rt-bar:hover{filter:brightness(1.07);outline:2px solid #fff;outline-offset:-2px}
   .rt-bar.b1{background:var(--bar)}.rt-bar.b2{background:var(--bar2)}
+  .rt-bar.gh{background:var(--hiru-bar)}.rt-bar.gy{background:var(--yoru-bar)}
   .rt-bar.bsh{background:#5cab3f}.rt-bar.btp{background:#3f7fcf}
   .rt-bar.ov{background:var(--over)}
   .rt-bar.bw{background:var(--borrow)}
+  .rt-bar.newcomer{background:repeating-linear-gradient(45deg,#9b59b6,#9b59b6 6px,#b07cc6 6px,#b07cc6 12px)}
   .hidenet-bar{display:inline-block;background:#fff;color:#d12;font-weight:800;border-radius:4px;padding:0 3px;margin-left:3px;font-size:9px}
-  .rt-bar.clash{outline:2px solid #d12; outline-offset:-2px}
-  .rt-bar .rt-barlabel{position:relative;z-index:2;overflow:hidden;text-overflow:ellipsis}
-  .rt-bar .clash-ov{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(45deg,rgba(221,17,34,.85),rgba(221,17,34,.85) 5px,rgba(255,90,110,.85) 5px,rgba(255,90,110,.85) 10px);z-index:1}
+  .rt-bar.clash{box-shadow:0 1px 3px rgba(0,0,0,.15), inset 0 0 0 1.5px rgba(224,70,60,.9)}
+  .rt-bar .rt-barlabel{position:relative;z-index:2;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  .rt-bar .rt-bartime{position:relative;z-index:2;font-size:9px;font-weight:700;opacity:.95;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  .rt-bar .clash-ov{position:absolute;top:0;bottom:0;background:rgba(224,70,60,.28);border-left:1.5px solid rgba(224,70,60,.7);border-right:1.5px solid rgba(224,70,60,.7);z-index:1}
   .rt-bar.sel{outline:3px solid var(--pink);outline-offset:-1px;z-index:5}
+  .rt-bar.dragging{opacity:.45}
+  .rt-bar[draggable=true]{cursor:grab}
+  .rt-bar[draggable=true]:active{cursor:grabbing}
+  .rt-track.dropok{background:#e9f8ef !important;outline:2px dashed var(--bar);outline-offset:-2px}
+  .rt-row.over .rt-track.dropok{background:#fdeceb !important;outline-color:var(--over)}
   .redline-label{display:grid;grid-template-columns:54px 1fr}
   .redline-label .rl{grid-column:2;color:var(--over);font-weight:800;font-size:11px;padding:3px 0 1px;border-top:3px solid var(--over)}
 
   .over-banner{margin:10px 0;border:2px solid var(--over);border-radius:12px;background:var(--over-bg);padding:10px;color:var(--over);font-weight:800;font-size:14px}
+  .lock-banner{margin:10px 0;border:2px solid #2d7a4a;border-radius:12px;background:#eaf7ee;padding:10px;color:#2d7a4a;font-weight:800;font-size:14px}
+  .rt-wrap.locked{position:relative;outline:3px solid #2d7a4a;outline-offset:2px;border-radius:8px}
+  .rt-wrap.locked::before{content:"🔒 確定済み";position:absolute;top:-12px;right:8px;background:#2d7a4a;color:#fff;font-size:11px;font-weight:800;padding:2px 10px;border-radius:10px;z-index:10}
+  .rt-wrap.locked .rt-bar{cursor:not-allowed}
   .lend-zone{margin-top:14px;border:2px solid var(--lend);border-radius:12px;background:#f6effb;padding:10px}
   .lend-zone.borrow{border-color:var(--borrow);background:#eef6fc}
   .lend-zone .lz-title{font-weight:800;font-size:13px;margin-bottom:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -224,6 +266,8 @@
   .chip{background:var(--pink-soft);border:1px solid var(--line);border-radius:20px;padding:5px 8px 5px 12px;font-size:12px;display:inline-flex;align-items:center;gap:8px;margin:3px}
   .chip.hiru{background:var(--hiru)}.chip.yoru{background:var(--yoru)}
   .chip .del{cursor:pointer;color:#fff;background:var(--over);font-weight:800;font-size:13px;width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;line-height:1}
+  .chip .chipname{cursor:pointer}
+  .chip .ao-mark{display:inline-block;background:var(--over);color:#fff;font-size:9px;font-weight:800;border-radius:4px;padding:0 3px;margin-right:3px}
   .empty-msg{text-align:center;color:var(--ink-soft);padding:20px;font-size:13px}
   .hint{font-size:11px;color:var(--ink-soft);margin-top:4px}
   .room-move-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
@@ -280,13 +324,15 @@
     .freebar{grid-template-columns:30px 1fr}
     .rt-room{font-size:11px}
     .rt-bar{font-size:8px;padding:0 2px;border-radius:5px}
-    .rt-axis .ax{font-size:7px}
-    .rt-axis .ax span{padding-left:0}
-    /* 時間軸ラベルは2時間おきに表示（奇数列の数字を隠す） */
-    .rt-axis .ax span:nth-child(even){color:transparent}
+    .rt-axis .ax{font-size:6.5px}
+    .rt-axis .ax span{padding-left:0;overflow:visible}
     .freebar .fl{font-size:8px}
     .freebar .fc{font-size:8px}
-    .rt-track,.lf-track{min-height:30px}
+    .rt-track{min-height:30px}
+    .lf-track{height:18px;min-height:18px}
+    .lf-bar{height:16px;top:1px}
+    .lf-row.over .lf-track{min-height:15px;height:15px}
+    .lf-row.over .lf-bar{height:13px}
     /* リスピラ一覧の日ブロック：1日が画面にほぼ収まる幅 */
     .lf-day{width:88vw;max-width:340px}
     .lf-axis{grid-template-columns:16px repeat(16,1fr)}
@@ -327,7 +373,7 @@
 
   <div class="cards" id="statCards"></div>
 
-  <div class="tabs">
+  <div class="tabs" id="tabsBar">
     <button class="tab active" data-tab="rooms">リスピラ</button>
     <button class="tab" data-tab="roomslist">リスピラ一覧</button>
     <button class="tab" data-tab="calendar">月間利用表</button>
@@ -349,15 +395,45 @@
     </div>
     <div id="timeFields" style="margin-top:10px">
       <div class="time-row">
-        <div class="field"><label>利用開始時間</label><input id="startTime" placeholder="例 9 / 9.5" inputmode="text"></div>
-        <div class="field"><label>終了時間（空欄=L）</label><input id="endTime" placeholder="例 22 / L"></div>
+        <div class="field"><label>利用開始時間</label>
+          <div style="display:flex;gap:6px">
+            <select id="startTimeHour" style="flex:1"></select>
+            <select id="startTimeMin" style="width:84px">
+              <option value="0">:00</option>
+              <option value="0.5">.5</option>
+            </select>
+          </div>
+          <input type="hidden" id="startTime">
+        </div>
+        <div class="field"><label>終了時間（空欄=L）</label>
+          <div style="display:flex;gap:6px">
+            <select id="endTimeHour" style="flex:1"></select>
+            <select id="endTimeMin" style="width:84px">
+              <option value="0">:00</option>
+              <option value="0.5">.5</option>
+            </select>
+          </div>
+          <input type="hidden" id="endTime">
+        </div>
       </div>
       <div id="nakanukeRow" style="display:none">
         <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--ink-soft);margin:2px 0 8px">
           <input type="checkbox" id="nakanukeChk" style="width:auto"> 中抜け利用</label>
         <div class="time-row" id="nakanukeFields" style="display:none">
-          <div class="field"><label>2回目 開始</label><input id="startTime2" placeholder="例 18" inputmode="text"></div>
-          <div class="field"><label>2回目 終了（空欄=L）</label><input id="endTime2" placeholder="例 22 / L"></div>
+          <div class="field"><label>2回目 開始</label>
+            <div style="display:flex;gap:6px">
+              <select id="startTime2Hour" style="flex:1"></select>
+              <select id="startTime2Min" style="width:84px"><option value="0">:00</option><option value="0.5">.5</option></select>
+            </div>
+            <input type="hidden" id="startTime2">
+          </div>
+          <div class="field"><label>2回目 終了（空欄=L）</label>
+            <div style="display:flex;gap:6px">
+              <select id="endTime2Hour" style="flex:1"></select>
+              <select id="endTime2Min" style="width:84px"><option value="0">:00</option><option value="0.5">.5</option></select>
+            </div>
+            <input type="hidden" id="endTime2">
+          </div>
         </div>
         <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--ink-soft);margin:2px 0 8px">
           <input type="checkbox" id="hideNetChk" style="width:auto"> ネット非掲載</label>
@@ -376,13 +452,56 @@
 </dialog>
 
 <dialog id="castDlg">
-  <div class="dlg-head"><span>キャスト追加</span><span class="x" id="castX">×</span></div>
+  <div class="dlg-head"><span id="castDlgTitle">キャスト追加</span><span class="x" id="castX">×</span></div>
   <div class="dlg-body">
     <div class="field"><label>名前（ひらがな）</label><input id="castName" placeholder="例 あおい"></div>
-    <div class="field"><label>所属（利用表の分類用。リスピラには影響しません）</label>
-      <div class="seg" id="castSeg"><button data-g="hiru">☀ 昼の部</button><button data-g="yoru">🌙 夜の部</button></div></div>
+    <div class="field"><label>所属</label>
+      <div class="seg" id="castSeg"><button data-g="hiru">昼の部</button><button data-g="yoru">夜の部</button></div></div>
+    <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--ink-soft);margin-top:6px">
+      <input type="checkbox" id="castAutoOver" style="width:auto"> 自動溢れ</label>
+    <div style="margin-top:10px;font-size:12px;font-weight:700;color:var(--ink-soft)">送迎</div>
+    <div style="display:flex;gap:16px;margin-top:4px">
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700">
+        <input type="checkbox" id="castSoukeiAri" style="width:auto"> 送迎あり</label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700">
+        <input type="checkbox" id="castSoukeiKakunin" style="width:auto"> 送迎要確認</label>
+    </div>
+    <div class="field" id="castSoukeiPlaceField" style="margin-top:8px;display:none"><label>送迎場所</label><input id="castSoukeiPlace" placeholder=""></div>
   </div>
-  <div class="dlg-foot"><button class="btn" id="castSave" style="flex:1">保存</button></div>
+  <div class="dlg-foot"><button class="btn danger" id="castDelete" style="display:none">削除</button><button class="btn" id="castSave" style="flex:1">保存</button></div>
+</dialog>
+
+<dialog id="soukeiReqDlg">
+  <div class="dlg-head"><span>送迎依頼（<span id="soukeiReqCount"></span>）</span><span class="x" id="soukeiReqX">×</span></div>
+  <div class="dlg-body">
+    <div class="hint" style="margin-bottom:6px">下のテキストをコピーしてLINEに貼り付けてください。</div>
+    <textarea id="soukeiReqText" rows="8" style="width:100%;padding:10px;border:1.5px solid var(--line);border-radius:10px;font-size:15px;font-family:inherit;line-height:1.6" readonly></textarea>
+  </div>
+  <div class="dlg-foot"><button class="btn ghost" id="soukeiReqClose" style="flex:1">閉じる</button><button class="btn" id="soukeiReqCopy" style="flex:1">コピー</button></div>
+</dialog>
+
+<dialog id="newcomerDlg">
+  <div class="dlg-head"><span>入店予定を追加</span><span class="x" id="newcomerX">×</span></div>
+  <div class="dlg-body">
+    <div class="time-row">
+      <div class="field"><label>開始時間</label>
+        <div style="display:flex;gap:6px">
+          <select id="ncStartHour" style="flex:1"></select>
+          <select id="ncStartMin" style="width:84px"><option value="0">:00</option><option value="0.5">.5</option></select>
+        </div>
+        <input type="hidden" id="ncStart">
+      </div>
+      <div class="field"><label>終了時間（空欄=L）</label>
+        <div style="display:flex;gap:6px">
+          <select id="ncEndHour" style="flex:1"></select>
+          <select id="ncEndMin" style="width:84px"><option value="0">:00</option><option value="0.5">.5</option></select>
+        </div>
+        <input type="hidden" id="ncEnd">
+      </div>
+    </div>
+    <div id="ncList" style="margin-top:10px"></div>
+  </div>
+  <div class="dlg-foot"><button class="btn" id="ncSave" style="flex:1">追加</button></div>
 </dialog>
 
 <dialog id="moveDlg">
@@ -410,9 +529,22 @@
     <div class="store-grid" id="lendStoreGrid">
       <button data-st="M">M</button><button data-st="T">T</button><button data-st="E">E</button><button data-st="L">L</button><button data-st="MR">MR</button><button data-st="F">F</button>
     </div>
+    <div class="field" id="lendNameField" style="margin-top:8px;display:none"><label>名前（わかる場合のみ）</label><input id="lendName" placeholder="例 あおい"></div>
     <div class="time-row" style="margin-top:8px">
-      <div class="field"><label>開始</label><input id="lendStart" placeholder="例 13" inputmode="text"></div>
-      <div class="field"><label>終了（空欄=L）</label><input id="lendEnd" placeholder="例 22 / L"></div>
+      <div class="field"><label>開始</label>
+        <div style="display:flex;gap:6px">
+          <select id="lendStartHour" style="flex:1"></select>
+          <select id="lendStartMin" style="width:84px"><option value="0">:00</option><option value="0.5">.5</option></select>
+        </div>
+        <input type="hidden" id="lendStart">
+      </div>
+      <div class="field"><label>終了（空欄=L）</label>
+        <div style="display:flex;gap:6px">
+          <select id="lendEndHour" style="flex:1"></select>
+          <select id="lendEndMin" style="width:84px"><option value="0">:00</option><option value="0.5">.5</option></select>
+        </div>
+        <input type="hidden" id="lendEnd">
+      </div>
     </div>
   </div>
   <div class="dlg-foot"><button class="btn ghost" id="lendCancel">キャンセル</button><button class="btn lend" id="lendSave">追加</button></div>
@@ -420,8 +552,13 @@
 
 <dialog id="delDlg">
   <div class="dlg-head"><span>キャスト削除</span><span class="x" id="delX">×</span></div>
-  <div class="dlg-body"><div id="delInfo" style="font-size:14px"></div><div class="hint" style="margin-top:8px">利用記録もすべて削除されます。</div></div>
-  <div class="dlg-foot"><button class="btn ghost" id="delCancel">キャンセル</button><button class="btn danger" id="delConfirm">削除する</button></div>
+  <div class="dlg-body">
+    <div id="delInfo" style="font-size:14px;font-weight:700"></div>
+    <div style="margin-top:10px;padding:10px;border:1.5px solid var(--over);border-radius:10px;background:#fff6f5;color:var(--over);font-size:13px;font-weight:700;line-height:1.6">
+      ⚠ 注意：削除すると、このキャストの利用記録・部屋の割り当て・掛け持ちなど<u>すべてのデータが完全に消えます</u>。この操作は元に戻せません。
+    </div>
+  </div>
+  <div class="dlg-foot"><button class="btn ghost" id="delCancel">キャンセル</button><button class="btn danger" id="delConfirm">完全に削除する</button></div>
 </dialog>
 
 <dialog id="statDlg">
@@ -462,295 +599,595 @@
     <button class="btn ghost sm" id="copyGas" style="margin:6px 0 12px">コードをコピー</button>
     <p style="font-weight:800;margin:0 0 6px">④ デプロイ（公開）</p>
     <p style="margin:0 0 10px">右上「デプロイ」→「新しいデプロイ」→種類を「ウェブアプリ」、アクセスできるユーザーを「全員」にして「デプロイ」。表示された <b>ウェブアプリのURL</b> をコピーします。（初回は許可を求められるので承認してください）</p>
-    <p style="font-weight:800;margin:0 0 6px">⑤ URLを貼り付け</p>
-    <p style="margin:0 0 10px">このアプリの「GAS WebアプリURL」にそのURLを貼り、「接続して同期開始」を押します。他の端末でも同じURLを入れれば全員で共有されます。</p>
+    <p style="font-weight:800;margin:0 0 6px">⑤ URLと合言葉を設定</p>
+    <p style="margin:0 0 10px">このアプリの「GAS WebアプリURL」にそのURLを貼り、「パスワード」を入れて「接続して同期開始」を押します。最初に接続したときのパスワードが自動でサーバーに登録されます。他の端末でも同じURLと同じパスワードを入れれば全員で共有されます。</p>
+    <p style="font-weight:800;margin:0 0 6px">⑥ スタッフが辞めたとき</p>
+    <p style="margin:0 0 10px">スプレッドシートの「store」シートの <b>C1</b> セルに登録されている合言葉を新しいものに書き換えてください。そのあと、残るスタッフの各端末で「合言葉」を新しいものに変更して「接続して同期開始」を押し直します。古い合言葉では読み書きできなくなり、辞めた人を締め出せます。</p>
   </div>
   <div class="dlg-foot"><button class="btn" id="cloudHelpClose" style="flex:1">閉じる</button></div>
 </dialog>
 
 <script>
-const OPEN=8, CLOSE=24, ROOMS=13, SHOWN=18, HOURS=CLOSE-OPEN;
-const KEY="cast_mgmt_v9";
-let state=load();
-let cur=new Date(); cur.setDate(1);
-let roomDay=null, editing=null, pickStatus="work";
-let castGroup="hiru", calGroup="hiru", calSearch="", calScrollLeft=null;
-let selBar=null, moveTarget=null, delTarget=null, statTarget=null;
-let lendStore=null, lendMode="lend"; // lend=加盟店へ掛け持ち / borrow=ロイヤルに掛け持ち
+/* =========================================================================
+   ロイヤル利用表・リスピラ管理
+   -------------------------------------------------------------------------
+   構成（このスクリプトの目次）
+     1.  定数・状態
+     2.  永続化（localStorage）と正規化
+     3.  クラウド同期（Googleスプレッドシート + GAS）
+     4.  汎用ヘルパー（id / 日付 / 時間 span など）
+     5.  描画ヘルパー（バー位置・色・スクロール保持・ダイアログ）
+     6.  部屋割り当てロジック（computeAssignment）
+     7.  集計カード（renderStats）
+     8.  リスピラ編集（renderRooms ＋ 入店予定 / undo / 最適化）
+     9.  部屋移動・掛け持ち（openMove / openLend）
+     10. リスピラ一覧（renderRoomsList）
+     11. 月間利用表（calTable / renderCalendar ＋ 個人集計 / イベント / 列名）
+     12. キャスト管理（renderManage / 追加・編集・削除）
+     13. 利用入力ダイアログ（openDlg / 保存）
+     14. タブ・月送り・全体描画（renderAll）
+     15. 起動とクラウドUI初期化
+   ※ データ構造・localStorageキー・DOM ID・GASコードは従来版と完全互換。
+   ========================================================================= */
 
-function load(){
-  try{const d=JSON.parse(localStorage.getItem(KEY));if(d&&d.casts){d.memos=d.memos||{};d.assign=d.assign||{};d.lends=d.lends||{};d.borrows=d.borrows||{};d.events=d.events||{};d.askLabels=d.askLabels||{l1:"",l2:""};d.casts.forEach(c=>{if(c.availDates==null)c.availDates="";if(c.canAsk==null)c.canAsk="";if(c.canAsk2==null)c.canAsk2="";});return d;}}catch(e){}
-  return {casts:[{id:id(),name:"あおい",group:"hiru",availDates:"",canAsk:"",canAsk2:""},{id:id(),name:"るあ",group:"yoru",availDates:"",canAsk:"",canAsk2:""}], records:{}, memos:{}, assign:{}, lends:{}, borrows:{}, events:{}, askLabels:{l1:"",l2:""}};
+/* ===== 1. 定数・状態 ================================================== */
+const OPEN = 8, CLOSE = 24, ROOMS = 13, SHOWN = 18, HOURS = CLOSE - OPEN;
+const KEY = "cast_mgmt_v9";
+const WK = ["日", "月", "火", "水", "木", "金", "土"];
+const STORES = ["M", "T", "E", "L", "MR", "F"];
+// 部屋のインデックス(0〜12) → 実際の部屋番号
+const ROOM_LABELS = [1, 2, 3, 5, 6, 7, 8, 10, 11, 12, 13, 15, 16];
+const roomLabel = ri => ROOM_LABELS[ri] != null ? ROOM_LABELS[ri] : (ri + 1);
+
+let state = load();
+let cur = new Date(); cur.setDate(1);
+let roomDay = null, editing = null, pickStatus = "work";
+let castGroup = "hiru", calGroup = "hiru", calSearch = "", calScrollLeft = null;
+let selBar = null, moveTarget = null, delTarget = null, statTarget = null;
+let lendStore = null, lendMode = "lend";   // lend=加盟店へ掛け持ち / borrow=ロイヤルに掛け持ち
+let eventDay = null, askLabelCol = null, editCastId = null;
+let undoStack = [];                          // [{day, assign, lends, borrows(JSON)}…] 末尾が最新（上限50段）
+let roomsListScrollTarget = null;            // リスピラ一覧で次回スクロールする対象日（チップからのジャンプ用）
+
+/* ===== 2. 永続化と正規化 ============================================ */
+// 読み込んだデータに後付けフィールドを補完して欠損を防ぐ
+function normalize(d) {
+  d.memos = d.memos || {};
+  d.assign = d.assign || {};
+  d.lends = d.lends || {};
+  d.borrows = d.borrows || {};
+  d.events = d.events || {};
+  d.askLabels = d.askLabels || { l1: "", l2: "" };
+  d.newcomers = d.newcomers || {};
+  d.locks = d.locks || {};
+  d.soukeiStatus = d.soukeiStatus || {};
+  d.casts.forEach(c => {
+    if (c.availDates == null) c.availDates = "";
+    if (c.canAsk == null) c.canAsk = "";
+    if (c.canAsk2 == null) c.canAsk2 = "";
+  });
+  return d;
 }
-function save(){localStorage.setItem(KEY,JSON.stringify(state));cloudPush();}
-
-// ===== クラウド同期（Googleスプレッドシート + GAS） =====
-const CLOUD_URL_KEY="cast_mgmt_cloud_url";
-let cloudUrl=localStorage.getItem(CLOUD_URL_KEY)||"";
-let lastSyncedRev=0;        // 最後にサーバーから取り込んだリビジョン
-let cloudPushTimer=null;    // 送信デバウンス
-let cloudBusy=false;        // 送信中フラグ
-let suppressPush=false;     // サーバー取り込み中はpushを抑制
-function setCloudUrl(u){cloudUrl=(u||"").trim();localStorage.setItem(CLOUD_URL_KEY,cloudUrl);}
-function cloudStatus(msg,color){const el=document.getElementById("cloudStatus");if(el){el.textContent=msg;el.style.color=color||"var(--ink-soft)";}}
-
-// サーバーへ全体を送信（デバウンス0.8秒）。競合を避けるためサーバー側でマージ。
-function cloudPush(){
-  if(!cloudUrl||suppressPush)return;
-  if(cloudPushTimer)clearTimeout(cloudPushTimer);
-  cloudPushTimer=setTimeout(doCloudPush,800);
+function load() {
+  try {
+    const d = JSON.parse(localStorage.getItem(KEY));
+    if (d && d.casts) return normalize(d);
+  } catch (e) {}
+  return {
+    casts: [
+      { id: id(), name: "あおい", group: "hiru", availDates: "", canAsk: "", canAsk2: "" },
+      { id: id(), name: "るあ", group: "yoru", availDates: "", canAsk: "", canAsk2: "" }
+    ],
+    records: {}, memos: {}, assign: {}, lends: {}, borrows: {},
+    events: {}, askLabels: { l1: "", l2: "" }, newcomers: {}, locks: {}, soukeiStatus: {}
+  };
 }
-async function doCloudPush(){
-  if(!cloudUrl||cloudBusy)return;cloudBusy=true;cloudStatus("保存中…","#c77");
-  try{
-    const body={action:"save",rev:lastSyncedRev,data:state,ts:Date.now()};
-    const res=await fetch(cloudUrl,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(body)});
-    const j=await res.json();
-    if(j&&j.ok){
-      if(j.merged){ // サーバーが他者の変更とマージした最新を返してきた
-        suppressPush=true;applyCloudData(j.data);suppressPush=false;
-        localStorage.setItem(KEY,JSON.stringify(state));
+function save() {
+  localStorage.setItem(KEY, JSON.stringify(state));
+  cloudPush();
+}
+function persistLocal() { localStorage.setItem(KEY, JSON.stringify(state)); }
+
+/* ===== 3. クラウド同期（Googleスプレッドシート + GAS） ================ */
+const CLOUD_URL_KEY = "cast_mgmt_cloud_url";
+const CLOUD_PASS_KEY = "cast_mgmt_cloud_pass";
+let cloudUrl = localStorage.getItem(CLOUD_URL_KEY) || "";
+let cloudPass = localStorage.getItem(CLOUD_PASS_KEY) || "";
+let lastSyncedRev = 0;     // 最後にサーバーから取り込んだリビジョン
+let cloudPushTimer = null; // 送信デバウンス
+let cloudBusy = false;     // 送信中フラグ
+let suppressPush = false;  // サーバー取り込み中はpushを抑制
+
+function setCloudUrl(u) {
+  cloudUrl = (u || "").trim();
+  localStorage.setItem(CLOUD_URL_KEY, cloudUrl);
+}
+function setCloudPass(p) {
+  cloudPass = (p || "").trim();
+  localStorage.setItem(CLOUD_PASS_KEY, cloudPass);
+}
+function cloudStatus(msg, color) {
+  const el = document.getElementById("cloudStatus");
+  if (el) { el.textContent = msg; el.style.color = color || "var(--ink-soft)"; }
+}
+function cloudGetUrl(params) {
+  const p = cloudPass ? "&pass=" + encodeURIComponent(cloudPass) : "";
+  return cloudUrl + (cloudUrl.includes("?") ? "&" : "?") + params + p;
+}
+
+// サーバーへ全体を送信（デバウンス0.8秒）。競合はサーバー側でマージ。
+function cloudPush() {
+  if (!cloudUrl || suppressPush) return;
+  if (cloudPushTimer) clearTimeout(cloudPushTimer);
+  cloudPushTimer = setTimeout(doCloudPush, 800);
+}
+async function doCloudPush() {
+  if (!cloudUrl || cloudBusy) return;
+  cloudBusy = true; cloudStatus("保存中…", "#c77");
+  try {
+    const body = { action: "save", rev: lastSyncedRev, data: state, ts: Date.now(), pass: cloudPass };
+    const res = await fetch(cloudUrl, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(body)
+    });
+    const j = await res.json();
+    if (j && j.ok) {
+      if (j.merged) { // サーバーが他者の変更とマージした最新を返してきた
+        suppressPush = true; applyCloudData(j.data); suppressPush = false;
+        persistLocal();
       }
-      lastSyncedRev=j.rev;cloudStatus("同期済み ✓","#2d8a4a");
-    }else{cloudStatus("保存失敗","#d12");}
-  }catch(e){cloudStatus("オフライン（後で再送）","#c77");}
-  cloudBusy=false;
+      lastSyncedRev = j.rev; cloudStatus("同期済み ✓", "#2d8a4a");
+    } else if (j && j.error === "auth") {
+      cloudStatus("合言葉が違います（保存できません）", "#d12");
+    } else {
+      cloudStatus("保存失敗", "#d12");
+    }
+  } catch (e) {
+    cloudStatus("オフライン（後で再送）", "#c77");
+  }
+  cloudBusy = false;
 }
 
 // サーバーから最新を取得。自分のリビジョンより新しければ反映。
-async function cloudPull(){
-  if(!cloudUrl||cloudBusy)return;
-  try{
-    const res=await fetch(cloudUrl+(cloudUrl.includes("?")?"&":"?")+"action=get&rev="+lastSyncedRev,{method:"GET"});
-    const j=await res.json();
-    if(j&&j.ok&&j.changed&&j.data){
-      // 自分が編集ダイアログを開いている最中は反映を保留（入力の邪魔をしない）
-      const editingOpen=["dlg","castDlg","moveDlg","lendDlg","eventDlg","askLabelDlg"].some(idd=>{const d=document.getElementById(idd);return d&&d.open;});
-      if(editingOpen)return;
-      suppressPush=true;applyCloudData(j.data);suppressPush=false;
-      localStorage.setItem(KEY,JSON.stringify(state));
-      lastSyncedRev=j.rev;
-      const sy=window.scrollY;renderAll();window.scrollTo(0,sy);
-      cloudStatus("最新を反映 ✓","#2d8a4a");
+async function cloudPull() {
+  if (!cloudUrl || cloudBusy) return;
+  try {
+    const res = await fetch(cloudGetUrl("action=get&rev=" + lastSyncedRev), { method: "GET" });
+    const j = await res.json();
+    if (j && j.error === "auth") { cloudStatus("合言葉が違います", "#d12"); return; }
+    if (j && j.ok && j.changed && j.data) {
+      // 編集ダイアログを開いている最中は反映を保留（入力の邪魔をしない）
+      const editingOpen = ["dlg", "castDlg", "moveDlg", "lendDlg", "eventDlg", "askLabelDlg"]
+        .some(idd => { const d = document.getElementById(idd); return d && d.open; });
+      if (editingOpen) return;
+      suppressPush = true; applyCloudData(j.data); suppressPush = false;
+      persistLocal();
+      lastSyncedRev = j.rev;
+      scrollPreserve(renderAll);
+      cloudStatus("最新を反映 ✓", "#2d8a4a");
     }
-  }catch(e){/* オフラインは無視 */}
+  } catch (e) { /* オフラインは無視 */ }
 }
-function applyCloudData(d){
-  if(!d||!d.casts)return;
-  d.memos=d.memos||{};d.assign=d.assign||{};d.lends=d.lends||{};d.borrows=d.borrows||{};d.events=d.events||{};d.askLabels=d.askLabels||{l1:"",l2:""};
-  d.casts.forEach(c=>{if(c.availDates==null)c.availDates="";if(c.canAsk==null)c.canAsk="";if(c.canAsk2==null)c.canAsk2="";});
-  state=d;
+function applyCloudData(d) {
+  if (!d || !d.casts) return;
+  state = normalize(d);
 }
-function startCloudSync(){
-  if(!cloudUrl)return;
-  // 10秒ごとに自動取得
-  if(window._cloudTimer)clearInterval(window._cloudTimer);
-  window._cloudTimer=setInterval(cloudPull,10000);
+function startCloudSync() {
+  if (!cloudUrl) return;
+  if (window._cloudTimer) clearInterval(window._cloudTimer);
+  window._cloudTimer = setInterval(cloudPull, 10000); // 10秒ごとに自動取得
 }
-// 「接続して同期開始」専用：まずサーバーの状態を確認し、
-//  ・サーバーにデータがある → 取り込む（この端末のデータは上書きしない）
-//  ・サーバーが空            → この端末のデータを初期データとして送信
-async function connectCloud(){
-  if(!cloudUrl)return;
-  cloudStatus("接続中…","#c77");
-  try{
-    // rev=0 で問い合わせ、サーバーに何かあれば必ず返ってくる
-    const res=await fetch(cloudUrl+(cloudUrl.includes("?")?"&":"?")+"action=get&rev=0",{method:"GET"});
-    const j=await res.json();
-    if(j&&j.ok){
-      if(j.changed&&j.data&&j.data.casts){
-        // サーバーにデータあり → 取り込む（端末データは送らない）
-        suppressPush=true;applyCloudData(j.data);suppressPush=false;
-        localStorage.setItem(KEY,JSON.stringify(state));
-        lastSyncedRev=j.rev;
-        const sy=window.scrollY;renderAll();window.scrollTo(0,sy);
-        cloudStatus("サーバーのデータを取り込みました ✓","#2d8a4a");
-      }else{
-        // サーバーが空 → この端末のデータを初期データとして送信
-        lastSyncedRev=j.rev||0;
+// 「接続して同期開始」専用：
+//   ・サーバーにデータがある → 取り込む（この端末のデータは上書きしない）
+//   ・サーバーが空            → この端末のデータを初期データとして送信
+async function connectCloud() {
+  if (!cloudUrl) return;
+  cloudStatus("接続中…", "#c77");
+  try {
+    const res = await fetch(cloudGetUrl("action=get&rev=0"), { method: "GET" });
+    const j = await res.json();
+    if (j && j.error === "auth") { cloudStatus("合言葉が違います（接続できません）", "#d12"); return; }
+    if (j && j.ok) {
+      if (j.changed && j.data && j.data.casts) {
+        suppressPush = true; applyCloudData(j.data); suppressPush = false;
+        persistLocal();
+        lastSyncedRev = j.rev;
+        scrollPreserve(renderAll);
+        cloudStatus("サーバーのデータを取り込みました ✓", "#2d8a4a");
+      } else {
+        lastSyncedRev = j.rev || 0;
         await doCloudPush();
-        cloudStatus("この端末のデータを初期登録しました ✓","#2d8a4a");
+        cloudStatus("この端末のデータを初期登録しました ✓", "#2d8a4a");
       }
       startCloudSync();
-    }else{cloudStatus("接続失敗","#d12");}
-  }catch(e){cloudStatus("オフライン（接続できません）","#d12");}
-}
-function id(){return Math.random().toString(36).slice(2,9);}
-function ym(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");}
-function daysIn(d){return new Date(d.getFullYear(),d.getMonth()+1,0).getDate();}
-function dkey(day){return ym(cur)+"-"+String(day).padStart(2,"0");}
-function recKey(cid,day){return cid+"_"+dkey(day);}
-function rec(cid,day){return state.records[recKey(cid,day)];}
-function num(v){const n=parseFloat(v);return isNaN(n)?null:n;}
-function fmtTime(r){if(!r)return "";const s=r.start||"",e=r.end||"";if(!s&&!e)return "";return s+"-"+e;}
-function isUse(st){return st==="work"||st==="furikae"||st==="shukuhaku"||st==="tenpaku";}
-function span(r){if(!r||!isUse(r.status))return null;let s=num(r.start);if(s===null)return null;let e=num(r.end);if(e===null)e=CLOSE;
-  s=Math.max(OPEN,Math.min(CLOSE,s));e=Math.max(OPEN,Math.min(CLOSE,e));if(e<=s)e=CLOSE;return [s,e];}
-function spanRaw(s,e){let a=num(s);if(a===null)a=OPEN;let b=num(e);if(b===null)b=CLOSE;
-  a=Math.max(OPEN,Math.min(CLOSE,a));b=Math.max(OPEN,Math.min(CLOSE,b));if(b<=a)b=CLOSE;return [a,b];}
-function overlap(a,b){return a[0]<b[1]&&b[0]<a[1];}
-// 時間帯[h,h+1)が利用[s,e)に少しでも重なれば占有(=空きにしない)。0.5端数も埋まり扱い。
-function occupies(sp,h){return sp[0]<h+1 && h<sp[1];}
-// バー表示用：spから時間文字列（中抜けの各枠用）
-function fmtSp(sp){if(!sp)return "";const e=sp[1]>=CLOSE?"L":sp[1];return sp[0]+"-"+e;}
-function sortedCasts(group){return state.casts.filter(c=>c.group===group).slice().sort((a,b)=>a.name.localeCompare(b.name,"ja"));}
-
-function computeAssignment(day){
-  const force=state.assign[dkey(day)]||{};
-  const workers=[];
-  state.casts.forEach(c=>{const r=rec(c.id,day);const sp=span(r);if(sp)workers.push({cid:c.id,name:c.name,sp,r});
-    // 中抜け（2回目）があれば別枠として追加
-    if(r&&isUse(r.status)&&r.start2){const sp2=spanRaw(r.start2,r.end2);if(sp2)workers.push({cid:c.id,name:c.name,sp:sp2,r,seg2:true});}});
-  workers.sort((a,b)=>a.sp[0]-b.sp[0] || a.sp[1]-b.sp[1]);
-  const rooms=Array.from({length:ROOMS},()=>[]);const placed=new Set();const forcedOver=[];
-  // 手動でOVER（溢れ）指定されたものは最初に確保
-  workers.forEach(w=>{if(w.seg2)return;if(force[w.cid]==="OVER"){forcedOver.push(w);placed.add(w);}});
-  // ① 手動で部屋番号を指定されたキャストを先に部屋へ入れて占有を確保
-  const manualCids=new Set();
-  workers.forEach(w=>{if(placed.has(w)||w.seg2)return;const ri=force[w.cid];
-    if(typeof ri==="number"&&ri>=0&&ri<ROOMS){rooms[ri].push(w);placed.add(w);manualCids.add(w);}});
-  // ② 残り（自動配置対象）を、手動が占有する時間も含めて被らない部屋に詰める
-  workers.forEach(w=>{if(placed.has(w))return;let put=false;
-    for(let ri=0;ri<ROOMS;ri++){if(rooms[ri].every(x=>!overlap(x.sp,w.sp))){rooms[ri].push(w);placed.add(w);put=true;break;}}
-    if(!put)forcedOver.push(w);});
-  const overRooms=[];forcedOver.sort((a,b)=>a.sp[0]-b.sp[0]);
-  forcedOver.forEach(w=>{let put=false;for(const orow of overRooms){if(orow.every(x=>!overlap(x.sp,w.sp))){orow.push(w);put=true;break;}}if(!put)overRooms.push([w]);});
-  rooms.forEach(r=>r.sort((a,b)=>a.sp[0]-b.sp[0]));overRooms.forEach(r=>r.sort((a,b)=>a.sp[0]-b.sp[0]));
-  // 同じ部屋で時間が被るworkerに clash フラグ
-  rooms.forEach(r=>{r.forEach(w=>{w.clash=r.some(x=>x!==w&&overlap(x.sp,w.sp));});});
-  return {rooms,overRooms,overflowCount:forcedOver.length};
-}
-
-function renderStats(){
-  const dim=daysIn(cur);const today=new Date();
-  const isCur=today.getFullYear()===cur.getFullYear()&&today.getMonth()===cur.getMonth();
-  let todayAbsent=0,overflowToday=0,usedToday=0;
-  // 今月1度も利用なし
-  const usedSet=new Set();
-  state.casts.forEach(c=>{for(let d=1;d<=dim;d++){const r=rec(c.id,d);if(r&&isUse(r.status)){usedSet.add(c.id);break;}}});
-  const noUseHiru=state.casts.filter(c=>c.group==="hiru"&&!usedSet.has(c.id));
-  const noUseYoru=state.casts.filter(c=>c.group==="yoru"&&!usedSet.has(c.id));
-  const noUseAll=new Set([...noUseHiru,...noUseYoru].map(c=>c.id));
-  // 明日以降の利用予定が1つもない人（今月利用なしは除外）
-  const tomorrow=isCur?today.getDate()+1:1;
-  function hasFuture(cid){for(let d=Math.max(1,tomorrow);d<=dim;d++){const r=rec(cid,d);if(r&&isUse(r.status))return true;}return false;}
-  const futureNone=state.casts.filter(c=>!noUseAll.has(c.id)&&!hasFuture(c.id));
-  if(isCur){const a=computeAssignment(today.getDate());overflowToday=a.overflowCount;usedToday=a.rooms.filter(r=>r.length).length;
-    state.casts.forEach(c=>{const r=rec(c.id,today.getDate());if(r&&r.status==="absent")todayAbsent++;});}
-  const nh=noUseHiru.length?noUseHiru.map(c=>`<span class="nm">${c.name}</span>`).join(""):'<span class="none">なし</span>';
-  const ny=noUseYoru.length?noUseYoru.map(c=>`<span class="nm">${c.name}</span>`).join(""):'<span class="none">なし</span>';
-  const fn=futureNone.length?futureNone.map(c=>`<span class="nm blue">${c.name}</span>`).join(""):'<span class="none">なし</span>';
-  // 利用が少ない日（翌日以降の各日について、各時間の空き部屋数を全時間合計＝大きいほど利用が少ない）
-  const wkx=["日","月","火","水","木","金","土"];
-  const lowDays=[];
-  const fromDay=isCur?today.getDate()+1:1;
-  for(let d=fromDay;d<=dim;d++){
-    const {rooms}=computeAssignment(d);
-    const borrows=state.borrows[dkey(d)]||[];
-    let freeSum=0;
-    for(let h=OPEN;h<CLOSE;h++){let used=0;
-      for(let ri=0;ri<ROOMS;ri++){if(rooms[ri].some(w=>occupies(w.sp,h)))used++;}
-      borrows.forEach(b=>{const sp=spanRaw(b.start,b.end);if(occupies(sp,h))used++;});
-      freeSum+=Math.max(0,ROOMS-used);}
-    const w=new Date(cur.getFullYear(),cur.getMonth(),d).getDay();
-    lowDays.push({d,w,freeSum});
+    } else {
+      cloudStatus("接続失敗", "#d12");
+    }
+  } catch (e) {
+    cloudStatus("オフライン（接続できません）", "#d12");
   }
-  lowDays.sort((a,b)=>b.freeSum-a.freeSum);
-  const topLow=lowDays.slice(0,7);
-  const lowHtml=topLow.length?topLow.map((o,i)=>
-    `<span class="lowday"><b>${cur.getMonth()+1}/${o.d}</b>(${wkx[o.w]})<small>空${o.freeSum}</small></span>`).join("")
-    :'<span class="none">対象日なし</span>';
-  // 利用が多い日（空き合計が少ない順）
-  const highDays=lowDays.slice().sort((a,b)=>a.freeSum-b.freeSum).slice(0,7);
-  const highHtml=highDays.length?highDays.map(o=>
-    `<span class="highday"><b>${cur.getMonth()+1}/${o.d}</b>(${wkx[o.w]})<small>空${o.freeSum}</small></span>`).join("")
-    :'<span class="none">対象日なし</span>';
-  // 本日利用を確認（聞く日=今日の日付に設定されたキャスト・当月表示時のみ）
-  const askToday=isCur?state.casts.filter(c=>String(c.availDates)===String(today.getDate())):[];
-  const askHtml=askToday.length?askToday.map(c=>`<span class="nm ask">${c.name}</span>`).join(""):'<span class="none">なし</span>';
-  document.getElementById("statCards").innerHTML=
-    `<div class="card list"><div class="lbl">今月まだ1度も利用なし</div>
-       <div class="grp">☀ 昼（${noUseHiru.length}名）</div><div class="names">${nh}</div>
-       <div class="grp">🌙 夜（${noUseYoru.length}名）</div><div class="names">${ny}</div></div>
-     <div class="card list"><div class="lbl">本日利用 明日以降未定</div>
+}
+
+/* ===== 4. 汎用ヘルパー =============================================== */
+function id() { return Math.random().toString(36).slice(2, 9); }
+function ym(d) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0"); }
+function daysIn(d) { return new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate(); }
+function dkey(day) { return ym(cur) + "-" + String(day).padStart(2, "0"); }
+function dkeyForDate(dt) { return dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0") + "-" + String(dt.getDate()).padStart(2, "0"); }
+function recByKey(cid, dk) { return state.records[cid + "_" + dk]; }
+function recKey(cid, day) { return cid + "_" + dkey(day); }
+function rec(cid, day) { return state.records[recKey(cid, day)]; }
+function num(v) { const n = parseFloat(v); return isNaN(n) ? null : n; }
+function fmtTime(r) {
+  if (!r) return "";
+  const s = r.start || "", e = r.end || "";
+  if (!s && !e) return "";
+  return s + "-" + e;
+}
+function isUse(st) { return st === "work" || st === "furikae" || st === "shukuhaku" || st === "tenpaku"; }
+// 利用記録 → 占有時間帯 [start,end]（範囲外は丸め、終了未指定はCLOSE）
+function span(r) {
+  if (!r || !isUse(r.status)) return null;
+  let s = num(r.start); if (s === null) return null;
+  let e = num(r.end); if (e === null) e = CLOSE;
+  s = Math.max(OPEN, Math.min(CLOSE, s));
+  e = Math.max(OPEN, Math.min(CLOSE, e));
+  if (e <= s) e = CLOSE;
+  return [s, e];
+}
+// 開始/終了の文字列 → [start,end]（空欄は営業時間端で補完）
+function spanRaw(s, e) {
+  let a = num(s); if (a === null) a = OPEN;
+  let b = num(e); if (b === null) b = CLOSE;
+  a = Math.max(OPEN, Math.min(CLOSE, a));
+  b = Math.max(OPEN, Math.min(CLOSE, b));
+  if (b <= a) b = CLOSE;
+  return [a, b];
+}
+function overlap(a, b) { return a[0] < b[1] && b[0] < a[1]; }
+// 時間帯[h,h+1)が利用[s,e)に少しでも重なれば占有（=空きにしない）。0.5端数も埋まり扱い。
+function occupies(sp, h) { return sp[0] < h + 1 && h < sp[1]; }
+// バー表示用：spから時間文字列（中抜けの各枠用、終了がCLOSEなら "L"）
+function fmtSp(sp) { if (!sp) return ""; const e = sp[1] >= CLOSE ? "L" : sp[1]; return sp[0] + "-" + e; }
+function sortedCasts(group) {
+  return state.casts.filter(c => c.group === group).slice()
+    .sort((a, b) => a.name.localeCompare(b.name, "ja"));
+}
+
+/* ===== 5. 描画ヘルパー =============================================== */
+// バーの left/width（%）。タイムライン全体に対する占有割合。
+function barLeft(sp) { return (sp[0] - OPEN) / HOURS * 100; }
+function barWidth(sp) { return (sp[1] - sp[0]) / HOURS * 100; }
+// 同じ部屋で時間が被る相手との重複帯（赤ハッチ）のHTML
+function clashOverlayHtml(w, arr) {
+  if (!w.clash) return "";
+  let ov = "";
+  arr.forEach(x => {
+    if (x === w || !overlap(x.sp, w.sp)) return;
+    const os = Math.max(w.sp[0], x.sp[0]), oe = Math.min(w.sp[1], x.sp[1]);
+    const ol = (os - w.sp[0]) / (w.sp[1] - w.sp[0]) * 100;
+    const ow = (oe - os) / (w.sp[1] - w.sp[0]) * 100;
+    ov += `<span class="clash-ov" style="left:${ol}%;width:${ow}%"></span>`;
+  });
+  return ov;
+}
+// 空き部屋数に応じた背景色（緑＝空き多い）と文字色
+function freeBg(ratio) { return `hsl(${ratio * 130},60%,${60 + ratio * 28}%)`; }
+// 指定日の各時間の使用部屋数 → 空き部屋数の配列（借りは部屋を使わないので数えない）
+function freePerHour(rooms) {
+  const out = [];
+  for (let h = OPEN; h < CLOSE; h++) {
+    let used = 0;
+    for (let ri = 0; ri < ROOMS; ri++) if (rooms[ri].some(w => occupies(w.sp, h))) used++;
+    out.push(Math.max(0, ROOMS - used));
+  }
+  return out;
+}
+// スクロール位置を保持したまま再描画
+function scrollPreserve(fn) { const sy = window.scrollY; fn(); window.scrollTo(0, sy); }
+// HTMLエスケープ（メモなどの自由入力をそのまま表示用に）
+function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+// ダイアログ操作の薄いラッパ
+function dlgOpen(idd) { document.getElementById(idd).showModal(); }
+function dlgClose(idd) { document.getElementById(idd).close(); }
+function $(idd) { return document.getElementById(idd); }
+function val(idd) { return document.getElementById(idd).value.trim(); }
+// 月間利用表のテーブルだけ差し替え（無ければ全体）
+function refreshCalendar() {
+  if ($("calTableWrap")) renderCalendarTable(); else renderCalendar();
+}
+
+/* ===== 6. 部屋割り当てロジック ====================================== */
+// 指定日の利用者を13部屋へ配置。手動指定(force)→自動詰め→溢れの順。
+function computeAssignment(day) { return computeAssignmentByKey(dkey(day)); }
+function computeAssignmentForDate(dt) { return computeAssignmentByKey(dkeyForDate(dt)); }
+function computeAssignmentByKey(dk) {
+  const force = state.assign[dk] || {};
+  // 「自動溢れ」キャストは、手動で部屋番号を指定していない限り常に溢れ扱い
+  const autoOverSet = new Set(state.casts.filter(c => c.autoOver).map(c => c.id));
+  const isForcedOver = cid =>
+    force[cid] === "OVER" || (autoOverSet.has(cid) && typeof force[cid] !== "number");
+  const workers = [];
+  state.casts.forEach(c => {
+    const r = recByKey(c.id, dk), sp = span(r);
+    if (sp) workers.push({ cid: c.id, name: c.name, sp, r, group: c.group });
+    // 中抜け（2回目）があれば別枠として追加
+    if (r && isUse(r.status) && r.start2) {
+      const sp2 = spanRaw(r.start2, r.end2);
+      if (sp2) workers.push({ cid: c.id, name: c.name, sp: sp2, r, seg2: true, group: c.group });
+    }
+  });
+  // 入店予定（新人・仮）を追加
+  ((state.newcomers && state.newcomers[dk]) || []).forEach(nc => {
+    const sp = spanRaw(nc.start, nc.end);
+    if (sp) workers.push({ cid: "nc:" + nc.id, name: "入店予定", sp, r: null, newcomer: true });
+  });
+  // ロイヤルに掛け持ち（借り）は溢れに表示する。名前があれば「店舗名 名前」
+  const borrowWorkers = [];
+  ((state.borrows && state.borrows[dk]) || []).forEach((b, bi) => {
+    const sp = spanRaw(b.start, b.end);
+    const label = b.name ? (b.store + " " + b.name) : b.store;
+    if (sp) borrowWorkers.push({ cid: "bw:" + bi, name: label, sp, r: null, borrow: true });
+  });
+  workers.sort((a, b) => a.sp[0] - b.sp[0] || a.sp[1] - b.sp[1]);
+
+  const rooms = Array.from({ length: ROOMS }, () => []);
+  const placed = new Set();
+  const forcedOver = [];
+  // 借り（ロイヤルに掛け持ち）：部屋番号が指定されていれば部屋へ、なければ溢れへ
+  borrowWorkers.forEach(w => {
+    const ri = force[w.cid];
+    if (typeof ri === "number" && ri >= 0 && ri < ROOMS) { rooms[ri].push(w); placed.add(w); }
+    else forcedOver.push(w);
+  });
+  // 溢れ指定（手動OVER または 自動溢れ）のものを最初に確保（中抜け2回目も同じ扱い）
+  workers.forEach(w => { if (isForcedOver(w.cid)) { forcedOver.push(w); placed.add(w); } });
+  // ① 手動で部屋番号を指定されたキャストを先に部屋へ入れて占有を確保
+  workers.forEach(w => {
+    if (placed.has(w) || w.seg2) return;
+    const ri = force[w.cid];
+    if (typeof ri === "number" && ri >= 0 && ri < ROOMS) { rooms[ri].push(w); placed.add(w); }
+  });
+  // ② 残り（自動配置対象）を、被らない部屋に詰める
+  workers.forEach(w => {
+    if (placed.has(w)) return;
+    let put = false;
+    for (let ri = 0; ri < ROOMS; ri++) {
+      if (rooms[ri].every(x => !overlap(x.sp, w.sp))) { rooms[ri].push(w); placed.add(w); put = true; break; }
+    }
+    if (!put) forcedOver.push(w);
+  });
+  // 溢れを溢れ行へ詰め直し
+  const overRooms = [];
+  forcedOver.sort((a, b) => a.sp[0] - b.sp[0]);
+  forcedOver.forEach(w => {
+    let put = false;
+    for (const orow of overRooms) { if (orow.every(x => !overlap(x.sp, w.sp))) { orow.push(w); put = true; break; } }
+    if (!put) overRooms.push([w]);
+  });
+  rooms.forEach(r => r.sort((a, b) => a.sp[0] - b.sp[0]));
+  overRooms.forEach(r => r.sort((a, b) => a.sp[0] - b.sp[0]));
+  // 同じ部屋で時間が被るworkerに clash フラグ
+  rooms.forEach(r => r.forEach(w => { w.clash = r.some(x => x !== w && overlap(x.sp, w.sp)); }));
+  const overflowCount = forcedOver.filter(w => !w.borrow).length;
+  return { rooms, overRooms, overflowCount };
+}
+
+/* ===== 7. 集計カード =============================================== */
+function renderStats() {
+  const dim = daysIn(cur), today = new Date();
+  const isCur = today.getFullYear() === cur.getFullYear() && today.getMonth() === cur.getMonth();
+  const monthDiff = (cur.getFullYear() - today.getFullYear()) * 12 + (cur.getMonth() - today.getMonth());
+  const moLabel = monthDiff === 0 ? "今月" : (cur.getMonth() + 1) + "月";
+
+  // その月にまだ一度も利用なし
+  const usedSet = new Set();
+  state.casts.forEach(c => {
+    for (let d = 1; d <= dim; d++) { const r = rec(c.id, d); if (r && isUse(r.status)) { usedSet.add(c.id); break; } }
+  });
+  const noUseHiru = state.casts.filter(c => c.group === "hiru" && !usedSet.has(c.id));
+  const noUseYoru = state.casts.filter(c => c.group === "yoru" && !usedSet.has(c.id));
+  const noUseAll = new Set([...noUseHiru, ...noUseYoru].map(c => c.id));
+
+  // 明日以降の利用予定が1つもない人（今月利用なしは除外）
+  const tomorrow = isCur ? today.getDate() + 1 : 1;
+  const hasFuture = cid => {
+    for (let d = Math.max(1, tomorrow); d <= dim; d++) { const r = rec(cid, d); if (r && isUse(r.status)) return true; }
+    return false;
+  };
+  const futureNone = state.casts.filter(c => !noUseAll.has(c.id) && !hasFuture(c.id));
+
+  const nameSpan = (c, extra = "") => `<span class="nm${extra}" style="cursor:pointer" onclick="searchCastInCalendar('${c.name.replace(/'/g, "\\'")}')">${c.name}</span>`;
+  const listOrNone = (arr, extra) => arr.length ? arr.map(c => nameSpan(c, extra)).join("") : '<span class="none">なし</span>';
+  const nh = listOrNone(noUseHiru, "");
+  const ny = listOrNone(noUseYoru, "");
+  const fn = listOrNone(futureNone, " blue");
+
+  // 利用が多い/少ない日（今日から直近20日分。月をまたぐ場合も対応）
+  const lowDays = [];
+  const baseStart = isCur ? new Date(today.getFullYear(), today.getMonth(), today.getDate())
+                          : new Date(cur.getFullYear(), cur.getMonth(), 1);
+  for (let k = 0; k < 20; k++) {
+    const dt = new Date(baseStart.getFullYear(), baseStart.getMonth(), baseStart.getDate() + k);
+    const { rooms } = computeAssignmentForDate(dt);
+    const freeSum = freePerHour(rooms).reduce((a, b) => a + b, 0);
+    lowDays.push({ dt, mo: dt.getMonth() + 1, d: dt.getDate(), w: dt.getDay(), freeSum });
+  }
+  lowDays.sort((a, b) => b.freeSum - a.freeSum);
+  const dayChip = (o, cls) =>
+    `<span class="${cls}" onclick="jumpToListDate(${o.dt.getFullYear()},${o.dt.getMonth()},${o.d})" style="cursor:pointer"><b>${o.mo}/${o.d}</b>(${WK[o.w]})<small>空${o.freeSum}</small></span>`;
+  const lowHtml = lowDays.length
+    ? lowDays.slice(0, 7).map(o => dayChip(o, "lowday")).join("") : '<span class="none">対象日なし</span>';
+  const highHtml = lowDays.length
+    ? lowDays.slice().sort((a, b) => a.freeSum - b.freeSum).slice(0, 7).map(o => dayChip(o, "highday")).join("")
+    : '<span class="none">対象日なし</span>';
+
+  // 本日利用を確認（確認日=今日に設定されたキャスト・当月のみ）
+  const askToday = isCur ? state.casts.filter(c => String(c.availDates) === String(today.getDate())) : [];
+  const askHtml = askToday.length ? askToday.map(c => nameSpan(c, " ask")).join("") : '<span class="none">なし</span>';
+
+  const todayCards = isCur ?
+    `<div class="card list"><div class="lbl">本日利用 明日以降未定</div>
        <div class="cnt">${futureNone.length}<span style="font-size:12px;color:var(--ink-soft)"> 名</span></div>
        <div class="names" style="margin-top:4px">${fn}</div></div>
      <div class="card list"><div class="lbl">本日利用を確認</div>
        <div class="cnt">${askToday.length}<span style="font-size:12px;color:var(--ink-soft)"> 名</span></div>
-       <div class="names" style="margin-top:4px">${askHtml}</div></div>
+       <div class="names" style="margin-top:4px">${askHtml}</div></div>` : "";
+
+  $("statCards").innerHTML =
+    `<div class="card list"><div class="lbl">${moLabel}まだ一度も利用なし</div>
+       <div class="grp">昼（${noUseHiru.length}名）</div><div class="names">${nh}</div>
+       <div class="grp">夜（${noUseYoru.length}名）</div><div class="names">${ny}</div></div>
+     ${todayCards}
      <div class="card list" style="grid-column:span 2"><div class="lbl">利用が多い日</div>
        <div class="lowdays">${highHtml}</div></div>
      <div class="card list" style="grid-column:span 2"><div class="lbl">利用が少ない日</div>
        <div class="lowdays">${lowHtml}</div></div>`;
 }
 
-function renderRooms(){
-  const dim=daysIn(cur);
-  if(roomDay===null||roomDay>dim){const t=new Date();roomDay=(t.getFullYear()===cur.getFullYear()&&t.getMonth()===cur.getMonth())?t.getDate():1;}
-  const y=cur.getFullYear(),m=cur.getMonth();const wk=["日","月","火","水","木","金","土"];
-  const dateStr=`${y}-${String(m+1).padStart(2,"0")}-${String(roomDay).padStart(2,"0")}`;
-  const {rooms,overRooms,overflowCount}=computeAssignment(roomDay);
-  let axis="";for(let h=OPEN;h<CLOSE;h++)axis+=`<span class="${h===17?'border17':''}">${h}</span>`;
-  // 昼夜ラベル帯（8-17が昼=9コマ、17-24が夜=7コマ）
-  const dnLabel=`<div class="dn-band"><div class="dn-hiru" style="grid-column:1 / 10">☀ 昼の部</div><div class="dn-yoru" style="grid-column:10 / 17">🌙 夜の部</div></div>`;
-  function barsHtml(arr){return arr.map((w,k)=>{const left=(w.sp[0]-OPEN)/HOURS*100,width=(w.sp[1]-w.sp[0])/HOURS*100;
-    // この部屋で自分と重なる相手との重複時間帯を求める
-    let ov="";
-    if(w.clash){arr.forEach(x=>{if(x===w||!overlap(x.sp,w.sp))return;
-      const os=Math.max(w.sp[0],x.sp[0]),oe=Math.min(w.sp[1],x.sp[1]);
-      const ol=(os-w.sp[0])/(w.sp[1]-w.sp[0])*100,ow=(oe-os)/(w.sp[1]-w.sp[0])*100;
-      ov+=`<span class="clash-ov" style="left:${ol}%;width:${ow}%"></span>`;});}
-    return `<div class="rt-bar ${k%2?'b2':'b1'} ${w.clash?'clash':''} ${selBar===w.cid?'sel':''}" style="left:${left}%;width:${width}%" onclick="openMove('${w.cid}',event)">${ov}<span class="rt-barlabel">${w.name} ${fmtSp(w.sp)}${w.r&&w.r.hideNet?'<span class="hidenet-bar">非掲載</span>':''}</span></div>`;}).join("");}
-  let roomRows="";
-  for(let ri=0;ri<ROOMS;ri++){roomRows+=`<div class="rt-row"><div class="rt-room">${ri+1}</div><div class="rt-track">${barsHtml(rooms[ri])}</div></div>`;}
-  roomRows+=`<div class="redline-label"><div class="rl">▼ ここから下は溢れ</div></div>`;
-  const overRowCount=Math.max(SHOWN-ROOMS,overRooms.length);
-  for(let i=0;i<overRowCount;i++){const arr=overRooms[i]||[];
-    const bars=arr.map(w=>{const left=(w.sp[0]-OPEN)/HOURS*100,width=(w.sp[1]-w.sp[0])/HOURS*100;
-      return `<div class="rt-bar ov ${selBar===w.cid?'sel':''}" style="left:${left}%;width:${width}%" onclick="openMove('${w.cid}',event)">${w.name} ${fmtSp(w.sp)}</div>`;}).join("");
-    roomRows+=`<div class="rt-row over ${i===0?'firstover':''}"><div class="rt-room">${ROOMS+1+i}</div><div class="rt-track">${bars}</div></div>`;}
-  let freeCells="";
-  for(let h=OPEN;h<CLOSE;h++){let used=0;for(let ri=0;ri<ROOMS;ri++){if(rooms[ri].some(w=>occupies(w.sp,h)))used++;}
-    const free=ROOMS-used;const ratio=free/ROOMS;const bg=`hsl(${ratio*130},60%,${60+ratio*28}%)`;
-    freeCells+=`<div class="fc" style="background:${bg};color:${ratio<.4?'#fff':'#3a2630'}">${free}</div>`;}
-  const memo=(state.memos[dkey(roomDay)]||"");
-  let hiruN=0,yoruN=0,total=0;
-  state.casts.forEach(c=>{if(span(rec(c.id,roomDay))){total++;if(c.group==="hiru")hiruN++;else yoruN++;}});
-  const overBanner=overflowCount?`<div class="over-banner">⚠ ${overflowCount}名 溢れています</div>`:"";
-  // この日の当欠一覧
-  const absentList=state.casts.filter(c=>{const r=rec(c.id,roomDay);return r&&r.status==="absent";});
-  const absentHtml=`<div class="absent-zone"><div class="az-title">本日の当欠（${absentList.length}名）</div>`+
-    (absentList.length?absentList.map(c=>{const r=rec(c.id,roomDay);const t=fmtTime(r);
-      return `<span class="absent-item">${c.name}${t?`<small>${t}</small>`:""}</span>`;}).join(""):`<span class="hint">なし</span>`)+`</div>`;
+/* ===== 8. リスピラ編集 ============================================= */
+function renderRooms() {
+  const dim = daysIn(cur);
+  if (roomDay === null || roomDay > dim) {
+    const t = new Date();
+    roomDay = (t.getFullYear() === cur.getFullYear() && t.getMonth() === cur.getMonth()) ? t.getDate() : 1;
+  }
+  const y = cur.getFullYear(), m = cur.getMonth();
+  const dateStr = `${y}-${String(m + 1).padStart(2, "0")}-${String(roomDay).padStart(2, "0")}`;
+  const { rooms, overRooms, overflowCount } = computeAssignment(roomDay);
+
+  let axis = "";
+  for (let h = OPEN; h < CLOSE; h++) axis += `<span class="${h === 17 ? 'border17' : ''}">${h}</span>`;
+  const dnLabel = `<div class="dn-band"><div class="dn-hiru" style="grid-column:1 / 10">昼の部</div><div class="dn-yoru" style="grid-column:10 / 17">夜の部</div></div>`;
+
+  // 部屋内バー（名前の下に利用時間を表示）
+  function barsHtml(arr) {
+    return arr.map((w, k) => {
+      const left = barLeft(w.sp), width = barWidth(w.sp), ov = clashOverlayHtml(w, arr);
+      const tip = `${w.name} ${fmtSp(w.sp)}${w.r && w.r.hideNet ? ' 非掲載' : ''}`;
+      if (w.borrow)
+        return `<div class="rt-bar bw ${w.clash ? 'clash' : ''} ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${left}%;width:${width}%" title="${w.name} ${fmtSp(w.sp)}（掛け持ち）" onclick="openMove('${w.cid}',event)">${ov}<span class="rt-barlabel">${w.name}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
+      if (w.newcomer)
+        return `<div class="rt-bar newcomer ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${left}%;width:${width}%" title="入店予定 ${fmtSp(w.sp)}" onclick="openMove('${w.cid}',event)"><span class="rt-barlabel">入店予定</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
+      return `<div class="rt-bar ${k % 2 ? 'b2' : 'b1'} ${w.clash ? 'clash' : ''} ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${left}%;width:${width}%" title="${tip}" onclick="openMove('${w.cid}',event)">${ov}<span class="rt-barlabel">${w.name}${w.r && w.r.hideNet ? '<span class="hidenet-bar">非掲載</span>' : ''}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
+    }).join("");
+  }
+
+  let roomRows = "";
+  for (let ri = 0; ri < ROOMS; ri++)
+    roomRows += `<div class="rt-row"><div class="rt-room">${roomLabel(ri)}</div><div class="rt-track" data-ri="${ri}">${barsHtml(rooms[ri])}</div></div>`;
+  roomRows += `<div class="redline-label"><div class="rl">▼ ここから下は溢れ</div></div>`;
+  // 溢れ行：最低5行。使用中の行が埋まったら常に空き行を1つ追加で確保
+  const overRowCount = Math.max(SHOWN - ROOMS, overRooms.length + 1);
+  let rtOvNo = 0;
+  for (let i = 0; i < overRowCount; i++) {
+    const arr = overRooms[i] || [];
+    const bars = arr.map(w => {
+      if (w.borrow)
+        return `<div class="rt-bar bw ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name} ${fmtSp(w.sp)}（ロイヤルに掛け持ち）" onclick="openMove('${w.cid}',event)"><span class="rt-barlabel">${w.name}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
+      return `<div class="rt-bar ov ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name} ${fmtSp(w.sp)}" onclick="openMove('${w.cid}',event)"><span class="rt-barlabel">${w.name}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
+    }).join("");
+    const hasCast = arr.some(w => !w.borrow);
+    const allBorrow = arr.length && arr.every(w => w.borrow);
+    const rno = hasCast ? (++rtOvNo) : (allBorrow ? "借" : "");
+    roomRows += `<div class="rt-row over ${i === 0 ? 'firstover' : ''}"><div class="rt-room">${rno}</div><div class="rt-track" data-ri="OVER">${bars}</div></div>`;
+  }
+
+  // 空き部屋ヒートマップ
+  const free = freePerHour(rooms);
+  let freeCells = "";
+  free.forEach(f => {
+    const ratio = f / ROOMS;
+    freeCells += `<div class="fc" style="background:${freeBg(ratio)};color:${ratio < .4 ? '#fff' : '#3a2630'}">${f}</div>`;
+  });
+
+  const memo = state.memos[dkey(roomDay)] || "";
+  let hiruN = 0, yoruN = 0, total = 0;
+  state.casts.forEach(c => { if (span(rec(c.id, roomDay))) { total++; if (c.group === "hiru") hiruN++; else yoruN++; } });
+  const overBanner = overflowCount ? `<div class="over-banner">⚠ ${overflowCount}名 溢れています</div>` : "";
+  const locked = isLocked(roomDay);
+  const lockBanner = locked ? `<div class="lock-banner">🔒 部屋割り確定済みです。お部屋の移動はロックされています。</div>` : "";
+  const dayEvent = state.events[dkey(roomDay)] || "";
+  const eventTag = dayEvent ? `<span class="rt-event">${esc(dayEvent)}</span>` : "";
+
+  // この日の当欠一覧（当欠があった場合のみ表示）
+  const absentList = state.casts.filter(c => { const r = rec(c.id, roomDay); return r && r.status === "absent"; });
+  const absentHtml = absentList.length
+    ? `<div class="absent-zone"><div class="az-title">本日の当欠（${absentList.length}名）</div>` +
+      absentList.map(c => { const t = fmtTime(rec(c.id, roomDay)); return `<span class="absent-item">${c.name}${t ? `<small>${t}</small>` : ""}</span>`; }).join("") + `</div>`
+    : "";
+
+  // 本日の送迎（当日のみ。送迎設定があり、利用が24時(L)までのキャスト）
+  const tdy0 = new Date();
+  const isToday0 = tdy0.getFullYear() === cur.getFullYear() && tdy0.getMonth() === cur.getMonth() && tdy0.getDate() === roomDay;
+  let soukeiHtml = "";
+  if (isToday0) {
+    const soukeiList = state.casts.filter(c => {
+      if (c.soukei !== "ari" && c.soukei !== "kakunin") return false;
+      const r = rec(c.id, roomDay);
+      const sp = span(r);
+      // 通常の利用が24時(L)まで、または中抜け2回目が24時(L)まで
+      if (sp && sp[1] >= CLOSE) return true;
+      if (r && isUse(r.status) && r.start2) {
+        const sp2 = spanRaw(r.start2, r.end2);
+        if (sp2 && sp2[1] >= CLOSE) return true;
+      }
+      return false;
+    });
+    if (soukeiList.length) {
+      const stMap = (state.soukeiStatus && state.soukeiStatus[dkey(roomDay)]) || {};
+      soukeiHtml = `<div class="soukei-zone"><div class="sk-title">本日の送迎（${soukeiList.length}名）<button class="btn sm" id="soukeiReqBtn" style="margin-left:auto">依頼を作成</button></div>` +
+        soukeiList.map(c => {
+          if (c.soukei === "ari") {
+            return `<span class="soukei-item ari">${c.name}</span>`;
+          }
+          // 要確認：クリックで 要確認→必要→不要 を循環
+          const st = stMap[c.id]; // undefined=要確認 / "hitsuyou"=必要 / "fuyou"=不要
+          const label = st === "hitsuyou" ? "必要" : st === "fuyou" ? "不要" : "要確認";
+          const klass = st === "hitsuyou" ? "need" : st === "fuyou" ? "noneed" : "kakunin";
+          return `<span class="soukei-item ${klass}" onclick="cycleSoukei('${c.id}')">${c.name}<small>${label}</small></span>`;
+        }).join("") + `</div>`;
+    }
+  }
+
   // 加盟店へ掛け持ち
-  const lends=state.lends[dkey(roomDay)]||[];
-  const lendHtml=`<div class="lend-zone"><div class="lz-title l">↗ 加盟店へ掛け持ち（${lends.length}件）
-      <button class="btn lend sm" onclick="openLend('lend')">＋ 追加</button></div>`+
-    (lends.length?lends.map((l,i)=>{const c=state.casts.find(x=>x.id===l.cid);const nm=c?c.name:"(削除)";
-      return `<span class="lend-item"><span class="store">${l.store}</span>${nm} ${l.start}-${l.end}<span class="del" onclick="removeLend('lends',${i})">×</span></span>`;}).join("")
-      :`<div class="hint"></div>`)+`</div>`;
+  const lends = state.lends[dkey(roomDay)] || [];
+  const lendHtml = `<div class="lend-zone"><div class="lz-title l">↗ 加盟店へ掛け持ち（${lends.length}件）
+      <button class="btn lend sm" onclick="openLend('lend')">＋ 追加</button></div>` +
+    (lends.length
+      ? lends.map((l, i) => { const c = state.casts.find(x => x.id === l.cid); const nm = c ? c.name : "(削除)";
+          return `<span class="lend-item"><span class="store">${l.store}</span>${nm} ${l.start}-${l.end}<span class="del" onclick="removeLend('lends',${i})">×</span></span>`; }).join("")
+      : `<div class="hint"></div>`) + `</div>`;
+
   // ロイヤルに掛け持ち（加盟店から部屋を借りる）
-  const borrows=state.borrows[dkey(roomDay)]||[];
-  const borrowHtml=`<div class="lend-zone borrow"><div class="lz-title b">↘ ロイヤルに掛け持ち（${borrows.length}件）
-      <button class="btn borrow sm" onclick="openLend('borrow')">＋ 追加</button></div>`+
-    (borrows.length?borrows.map((l,i)=>
-      `<span class="lend-item borrow"><span class="store">${l.store}</span>${l.store}${l.start}-${l.end}<span class="del" onclick="removeLend('borrows',${i})">×</span></span>`).join("")
-      :`<div class="hint"></div>`)+`</div>`;
-  document.getElementById("view-rooms").innerHTML=
+  const borrows = state.borrows[dkey(roomDay)] || [];
+  const borrowHtml = `<div class="lend-zone borrow"><div class="lz-title b">↘ ロイヤルに掛け持ち（${borrows.length}件）
+      <button class="btn borrow sm" onclick="openLend('borrow')">＋ 追加</button></div>` +
+    (borrows.length
+      ? borrows.map((l, i) =>
+          `<span class="lend-item borrow"><span class="store">${l.store}</span>${l.name ? esc(l.name) + " " : ""}${l.start}-${l.end}<span class="del" onclick="removeLend('borrows',${i})">×</span></span>`).join("")
+      : `<div class="hint"></div>`) + `</div>`;
+
+  $("view-rooms").innerHTML =
     `<div class="panel">
       <div class="bar" style="margin:0 0 10px">
         <div class="roomday-nav"><button onclick="changeRoomDay(-1)">‹</button>
           <input type="date" id="roomDateInput" value="${dateStr}"><button onclick="changeRoomDay(1)">›</button></div>
-        <span style="font-weight:800">${m+1}/${roomDay}（${wk[new Date(y,m,roomDay).getDay()]}）　利用${total}名</span>
+        <span style="font-weight:800">${m + 1}/${roomDay}（${WK[new Date(y, m, roomDay).getDay()]}）　利用${total}名</span>${eventTag}
         <span style="font-size:12px;font-weight:700"><span class="tag hiru">昼 ${hiruN}名</span> <span class="tag yoru">夜 ${yoruN}名</span></span>
-        <button class="btn sm" id="optimizeBtn" style="margin-left:auto">最適に並べ替え</button>
-        <button class="btn ghost sm" id="undoBtn" ${canUndo()?"":"disabled"}>一つ前に戻す</button>
+        <button class="lock-toggle ${locked ? 'on' : 'off'}" id="lockBtn" style="margin-left:auto">${locked ? '🔒 確定済み' : '🔓 未確定'}</button>
+        <button class="btn sm" id="optimizeBtn" ${locked ? "disabled" : ""}>最適に並べ替え</button>
+        <button class="btn ghost sm" id="undoBtn" ${(canUndo() && !locked) ? "" : "disabled"}>一つ前に戻す</button>
+        <button class="btn ghost sm" id="addNewcomerBtn" ${locked ? "disabled" : ""}>＋入店予定</button>
       </div>
+      ${lockBanner}
       ${overBanner}
       ${absentHtml}
       <div class="legend"><span><i class="dot b1" style="background:var(--bar)"></i>割当済</span>
-        <span><i class="dot ov" style="background:var(--over)"></i>溢れ</span></div>
-      <div class="rt-wrap"><div class="rt">
+        <span><i class="dot ov" style="background:var(--over)"></i>溢れ</span>
+        <span><i class="dot bw" style="background:var(--borrow)"></i>掛け持ち</span></div>
+      <div class="rt-wrap ${locked ? 'locked' : ''}"><div class="rt">
         <div class="rt-axis"><div></div>${dnLabel}</div>
         <div class="rt-axis"><div></div><div class="ax">${axis}</div></div>
         ${roomRows}
@@ -759,288 +1196,638 @@ function renderRooms(){
       </div></div>
       ${lendHtml}
       ${borrowHtml}
+      ${soukeiHtml}
       <label style="font-weight:700;font-size:12px;color:var(--ink-soft);display:block;margin-top:14px">メモ</label>
       <textarea class="memo-box" id="dayMemo" rows="2" placeholder="">${memo}</textarea>
     </div>`;
-  document.getElementById("roomDateInput").onchange=e=>{const d=new Date(e.target.value+"T00:00:00");if(isNaN(d))return;
-    cur=new Date(d.getFullYear(),d.getMonth(),1);roomDay=d.getDate();renderAll();};
-  document.getElementById("dayMemo").onchange=e=>{state.memos[dkey(roomDay)]=e.target.value;save();};
-  const ob=document.getElementById("optimizeBtn");if(ob)ob.onclick=()=>optimizeRooms();
-  const ub=document.getElementById("undoBtn");if(ub)ub.onclick=()=>doUndo();
-}
-// 使う部屋数が最少になるよう詰め直す（空き部屋を最大化）。掛け持ち(掛け先)・借りは対象外。
-// 配置変更の直前状態を1日分だけ保存（一つ前に戻す用）
-let undoStack=[]; // [{day, assign,lends,borrows(JSON)} ...] 末尾が最新
-function pushUndo(day){
-  undoStack.push({day,
-    assign:JSON.stringify(state.assign[dkey(day)]||{}),
-    lends:JSON.stringify(state.lends[dkey(day)]||[]),
-    borrows:JSON.stringify(state.borrows[dkey(day)]||[])});
-  if(undoStack.length>50)undoStack.shift(); // 上限50段
-  const ub=document.getElementById("undoBtn");if(ub)ub.disabled=false;}
-function canUndo(){return undoStack.some(s=>s.day===roomDay);}
-function doUndo(){
-  // 現在表示中の日(roomDay)の直近スナップショットを探して戻す
-  let idx=-1;for(let i=undoStack.length-1;i>=0;i--){if(undoStack[i].day===roomDay){idx=i;break;}}
-  if(idx<0)return;
-  const snap=undoStack[idx];const d=snap.day;
-  state.assign[dkey(d)]=JSON.parse(snap.assign);
-  state.lends[dkey(d)]=JSON.parse(snap.lends);
-  state.borrows[dkey(d)]=JSON.parse(snap.borrows);
-  undoStack.splice(idx,1);save();selBar=null;
-  const sy=window.scrollY;renderAll();window.scrollTo(0,sy);}
-function optimizeRooms(){
-  const day=roomDay;
-  pushUndo(day);
-  // 当日の利用者（中抜けseg2含む）をspanで集め、開始順→終了順に並べる
-  const lentSet=new Set((state.lends[dkey(day)]||[]).map(l=>l.cid)); // 加盟店へ掛け持ちは溢れ扱いのため対象外
-  const items=[];
-  state.casts.forEach(c=>{const r=rec(c.id,day);const sp=span(r);
-    if(sp&&!lentSet.has(c.id))items.push({cid:c.id,sp});});
-  items.sort((a,b)=>a.sp[0]-b.sp[0]||a.sp[1]-b.sp[1]);
-  // 隙間最小の貪欲法：入れられる部屋のうち、前の退室時刻との隙間が最小の部屋に入れる。
-  const roomEnd=[]; // 各部屋の最終終了時刻
-  const roomItems=[]; // 各部屋に入るitem
-  items.forEach(it=>{let best=-1,bestGap=Infinity;
-    for(let ri=0;ri<roomEnd.length;ri++){
-      if(roomEnd[ri]<=it.sp[0]){const gap=it.sp[0]-roomEnd[ri];if(gap<bestGap){bestGap=gap;best=ri;}}}
-    if(best===-1){best=roomEnd.length;roomEnd.push(it.sp[1]);roomItems.push([]);}
-    else roomEnd[best]=it.sp[1];
-    roomItems[best].push(it);});
-  // 各部屋の利用時間合計を出し、合計が多い（=空き時間が少ない）順に並べ替え
-  const order=roomItems.map((arr,ri)=>({ri,used:arr.reduce((s,it)=>s+(it.sp[1]-it.sp[0]),0),arr}));
-  order.sort((a,b)=>b.used-a.used);
-  // 並べ替え後の部屋番号を割り当て
-  const newForce={};
-  order.forEach((o,newRi)=>{o.arr.forEach(it=>{newForce[it.cid]=(newRi<ROOMS)?newRi:"OVER";});});
-  // 既存の掛け持ち(lends)のcidは溢れのまま維持
-  lentSet.forEach(cid=>{newForce[cid]="OVER";});
-  state.assign[dkey(day)]=newForce;save();selBar=null;
-  const sy=window.scrollY;renderAll();window.scrollTo(0,sy);}
-function changeRoomDay(delta){const dim=daysIn(cur);let nd=roomDay+delta;
-  if(nd<1){cur.setMonth(cur.getMonth()-1);roomDay=daysIn(cur);}
-  else if(nd>dim){cur.setMonth(cur.getMonth()+1);roomDay=1;}else roomDay=nd;selBar=null;renderAll();}
 
-// ===== リスピラ一覧（翌日以降の各日を横スクロールで連続表示） =====
-function renderRoomsList(){
-  const today=new Date();
-  const dim=daysIn(cur),y=cur.getFullYear(),m=cur.getMonth();const wk=["日","月","火","水","木","金","土"];
-  const isCur=today.getFullYear()===y&&today.getMonth()===m;
-  // 翌日以降（当月表示なら明日から、先の月表示なら1日から）
-  const fromDay=isCur?today.getDate()+1:1;
-  let axisTop="";for(let h=OPEN;h<CLOSE;h++)axisTop+=`<span class="${h===17?'border17':''}">${h}</span>`;
-  const lfDnLabel=`<div class="lf-dn"><span></span><span class="lf-dn-h">☀ 昼</span><span class="lf-dn-y">🌙 夜</span></div>`;
-  let dayBlocks="";
-  let anyDay=false;
-  for(let d=fromDay;d<=dim;d++){
-    anyDay=true;
-    const {rooms,overRooms,overflowCount}=computeAssignment(d);
-    const borrows=state.borrows&&state.borrows[dkey(d)]?state.borrows[dkey(d)]:[];
-    // 各時間の空き部屋数
-    let freeCells="";let freeSum=0;
-    for(let h=OPEN;h<CLOSE;h++){let used=0;
-      for(let ri=0;ri<ROOMS;ri++){if(rooms[ri].some(w=>occupies(w.sp,h)))used++;}
-      borrows.forEach(b=>{const sp=spanRaw(b.start,b.end);if(occupies(sp,h))used++;});
-      const free=Math.max(0,ROOMS-used);freeSum+=free;const ratio=free/ROOMS;
-      const bg=`hsl(${ratio*130},60%,${60+ratio*28}%)`;
-      freeCells+=`<div class="lf-cell" style="background:${bg};color:${ratio<.4?'#fff':'#2d4a36'}">${free}</div>`;}
-    // 部屋行（13部屋＋借り）
-    function barsHtml(arr){return arr.map((w,k)=>{const left=(w.sp[0]-OPEN)/HOURS*100,width=(w.sp[1]-w.sp[0])/HOURS*100;
-      let ov="";
-      if(w.clash){arr.forEach(x=>{if(x===w||!overlap(x.sp,w.sp))return;
-        const os=Math.max(w.sp[0],x.sp[0]),oe=Math.min(w.sp[1],x.sp[1]);
-        const ol=(os-w.sp[0])/(w.sp[1]-w.sp[0])*100,ow=(oe-os)/(w.sp[1]-w.sp[0])*100;
-        ov+=`<span class="clash-ov" style="left:${ol}%;width:${ow}%"></span>`;});}
-      return `<div class="lf-bar ${k%2?'b2':'b1'} ${w.clash?'clash':''}" style="left:${left}%;width:${width}%" title="${w.name} ${fmtSp(w.sp)}${w.r&&w.r.hideNet?' 非掲載':''}">${ov}<span class="lf-barlabel">${w.name}${w.r&&w.r.hideNet?'<span class="hidenet-bar">非掲載</span>':''}</span></div>`;}).join("");}
-    let roomRows="";
-    for(let ri=0;ri<ROOMS;ri++){roomRows+=`<div class="lf-row"><div class="lf-rno">${ri+1}</div><div class="lf-track">${barsHtml(rooms[ri])}</div></div>`;}
-    borrows.forEach((b,i)=>{const sp=spanRaw(b.start,b.end);const left=(sp[0]-OPEN)/HOURS*100,width=(sp[1]-sp[0])/HOURS*100;
-      roomRows+=`<div class="lf-row"><div class="lf-rno" style="background:#eef7f9;color:var(--borrow)">借</div><div class="lf-track"><div class="lf-bar bw" style="left:${left}%;width:${width}%">${b.store}${b.start}-${b.end}</div></div></div>`;});
-    if(overflowCount>0){roomRows+=`<div class="lf-overline">▼ 溢れ ${overflowCount}名</div>`;}
-    (overRooms||[]).forEach((arr,i)=>{const bars=arr.map(w=>{const left=(w.sp[0]-OPEN)/HOURS*100,width=(w.sp[1]-w.sp[0])/HOURS*100;
-      return `<div class="lf-bar ov" style="left:${left}%;width:${width}%" title="${w.name} ${fmtSp(w.sp)}">${w.name}</div>`;}).join("");
-      roomRows+=`<div class="lf-row over"><div class="lf-rno" style="background:var(--over-bg);color:var(--over)">${ROOMS+1+i}</div><div class="lf-track">${bars}</div></div>`;});
-    const wd=new Date(y,m,d).getDay();const wkcls=wd===0?"sun":wd===6?"sat":"";
-    dayBlocks+=`<div class="lf-day" onclick="jumpToDay(${d})">
-        <div class="lf-dayhead ${wkcls}">${m+1}/${d}<small>(${wk[wd]})</small>${overflowCount?`<span class="lf-over">溢${overflowCount}</span>`:""}<span class="lf-freesum">空計${freeSum}</span></div>
+  $("roomDateInput").onchange = e => {
+    const d = new Date(e.target.value + "T00:00:00"); if (isNaN(d)) return;
+    cur = new Date(d.getFullYear(), d.getMonth(), 1); roomDay = d.getDate(); renderAll();
+  };
+  $("dayMemo").onchange = e => { state.memos[dkey(roomDay)] = e.target.value; save(); };
+  const ob = $("optimizeBtn"); if (ob) ob.onclick = () => { if (!isLocked(roomDay)) optimizeRooms(); };
+  const anb = $("addNewcomerBtn"); if (anb) anb.onclick = () => { if (!isLocked(roomDay)) openNewcomerDlg(); };
+  const ub = $("undoBtn"); if (ub) ub.onclick = () => { if (!isLocked(roomDay)) doUndo(); };
+  const lb = $("lockBtn"); if (lb) lb.onclick = () => toggleLock(roomDay);
+  const srb = $("soukeiReqBtn"); if (srb) srb.onclick = () => buildSoukeiRequest();
+}
+
+// --- 部屋割り確定（ロック） ---
+function isLocked(day) { return !!(state.locks && state.locks[dkey(day)]); }
+function toggleLock(day) {
+  if (!state.locks) state.locks = {};
+  if (state.locks[dkey(day)]) delete state.locks[dkey(day)];
+  else state.locks[dkey(day)] = true;
+  save(); selBar = null;
+  scrollPreserve(renderAll);
+}
+
+// --- 送迎（要確認の必要/不要切り替え・依頼作成） ---
+// 要確認 → 必要 → 不要 → 要確認 を循環（日ごと）
+function cycleSoukei(cid) {
+  const k = dkey(roomDay);
+  if (!state.soukeiStatus) state.soukeiStatus = {};
+  if (!state.soukeiStatus[k]) state.soukeiStatus[k] = {};
+  const cur0 = state.soukeiStatus[k][cid];
+  const next = cur0 === "hitsuyou" ? "fuyou" : cur0 === "fuyou" ? undefined : "hitsuyou";
+  if (next === undefined) delete state.soukeiStatus[k][cid];
+  else state.soukeiStatus[k][cid] = next;
+  save();
+  scrollPreserve(renderRooms);
+}
+// 半角英数字を全角に変換
+function toZen(s) {
+  return String(s).replace(/[A-Za-z0-9]/g, ch => String.fromCharCode(ch.charCodeAt(0) + 0xFEE0)).replace(/ /g, "　");
+}
+// 送迎依頼テキストを作成して表示（要確認=必要 と 送迎あり のみ。不要は除外）
+function buildSoukeiRequest() {
+  const stMap = (state.soukeiStatus && state.soukeiStatus[dkey(roomDay)]) || {};
+  const targets = state.casts.filter(c => {
+    if (c.soukei !== "ari" && c.soukei !== "kakunin") return false;
+    const r = rec(c.id, roomDay), sp = span(r);
+    let endsL = (sp && sp[1] >= CLOSE);
+    if (!endsL && r && isUse(r.status) && r.start2) { const sp2 = spanRaw(r.start2, r.end2); if (sp2 && sp2[1] >= CLOSE) endsL = true; }
+    if (!endsL) return false;
+    // 送迎あり=常に対象。要確認は「不要」のみ除外（要確認・必要は対象）
+    if (c.soukei === "ari") return true;
+    return stMap[c.id] !== "fuyou";
+  });
+  // 全角で「Ｒキャスト名　送迎先」
+  const lines = targets.map(c => "Ｒ" + toZen(c.name) + "　" + toZen(c.soukeiPlace || ""));
+  $("soukeiReqText").value = lines.join("\n");
+  $("soukeiReqCount").textContent = targets.length + "名";
+  dlgOpen("soukeiReqDlg");
+}
+
+// --- undo（配置変更の直前状態を1日分だけ保存） ---
+function pushUndo(day) {
+  undoStack.push({
+    day,
+    assign: JSON.stringify(state.assign[dkey(day)] || {}),
+    lends: JSON.stringify(state.lends[dkey(day)] || []),
+    borrows: JSON.stringify(state.borrows[dkey(day)] || [])
+  });
+  if (undoStack.length > 50) undoStack.shift();
+  const ub = $("undoBtn"); if (ub) ub.disabled = false;
+}
+function canUndo() { return undoStack.some(s => s.day === roomDay); }
+function doUndo() {
+  let idx = -1;
+  for (let i = undoStack.length - 1; i >= 0; i--) { if (undoStack[i].day === roomDay) { idx = i; break; } }
+  if (idx < 0) return;
+  const snap = undoStack[idx], d = snap.day;
+  state.assign[dkey(d)] = JSON.parse(snap.assign);
+  state.lends[dkey(d)] = JSON.parse(snap.lends);
+  state.borrows[dkey(d)] = JSON.parse(snap.borrows);
+  undoStack.splice(idx, 1); save(); selBar = null;
+  scrollPreserve(renderAll);
+}
+
+// 使う部屋数が最少になるよう詰め直す（空き部屋を最大化）。掛け持ち(掛け先)・借りは対象外。
+function optimizeRooms() {
+  const day = roomDay;
+  pushUndo(day);
+  const prevForce = state.assign[dkey(day)] || {};
+  const keepOver = new Set(Object.keys(prevForce).filter(cid => prevForce[cid] === "OVER"));
+  const autoOverSet = new Set(state.casts.filter(c => c.autoOver).map(c => c.id)); // 自動溢れも溢れ維持
+  const lentSet = new Set((state.lends[dkey(day)] || []).map(l => l.cid)); // 掛け持ちは溢れ扱い
+
+  const items = [];
+  state.casts.forEach(c => {
+    const sp = span(rec(c.id, day));
+    if (sp && !lentSet.has(c.id) && !keepOver.has(c.id) && !autoOverSet.has(c.id)) items.push({ cid: c.id, sp });
+  });
+  items.sort((a, b) => a.sp[0] - b.sp[0] || a.sp[1] - b.sp[1]);
+
+  // 隙間最小の貪欲法：前の退室時刻との隙間が最小の部屋に入れる。
+  const roomEnd = [], roomItems = [];
+  items.forEach(it => {
+    let best = -1, bestGap = Infinity;
+    for (let ri = 0; ri < roomEnd.length; ri++) {
+      if (roomEnd[ri] <= it.sp[0]) { const gap = it.sp[0] - roomEnd[ri]; if (gap < bestGap) { bestGap = gap; best = ri; } }
+    }
+    if (best === -1) { best = roomEnd.length; roomEnd.push(it.sp[1]); roomItems.push([]); }
+    else roomEnd[best] = it.sp[1];
+    roomItems[best].push(it);
+  });
+  // 利用時間合計が多い順に部屋番号を割り当て
+  const order = roomItems.map((arr, ri) => ({ ri, used: arr.reduce((s, it) => s + (it.sp[1] - it.sp[0]), 0), arr }));
+  order.sort((a, b) => b.used - a.used);
+  const newForce = {};
+  order.forEach((o, newRi) => o.arr.forEach(it => { newForce[it.cid] = (newRi < ROOMS) ? newRi : "OVER"; }));
+  lentSet.forEach(cid => { newForce[cid] = "OVER"; });
+  keepOver.forEach(cid => { newForce[cid] = "OVER"; });
+  autoOverSet.forEach(cid => { newForce[cid] = "OVER"; });
+  state.assign[dkey(day)] = newForce; save(); selBar = null;
+  scrollPreserve(renderAll);
+}
+function changeRoomDay(delta) {
+  const dim = daysIn(cur), nd = roomDay + delta;
+  if (nd < 1) { cur.setMonth(cur.getMonth() - 1); roomDay = daysIn(cur); }
+  else if (nd > dim) { cur.setMonth(cur.getMonth() + 1); roomDay = 1; }
+  else roomDay = nd;
+  selBar = null; renderAll();
+}
+
+// --- 入店予定（新人・仮） ---
+function ncListHtml() {
+  const ncs = (state.newcomers && state.newcomers[dkey(roomDay)]) || [];
+  if (!ncs.length) return '<div class="hint">この日の入店予定はまだありません。</div>';
+  return '<div style="font-size:12px;font-weight:700;margin-bottom:4px">この日の入店予定</div>' +
+    ncs.map(nc => `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--line)"><span style="flex:1">入店予定 ${nc.start}-${nc.end || 'L'}</span><button class="btn ghost sm" onclick="delNewcomer('${nc.id}')">削除</button></div>`).join("");
+}
+function openNewcomerDlg() {
+  setTime("ncStart", ""); setTime("ncEnd", "");
+  $("ncList").innerHTML = ncListHtml();
+  dlgOpen("newcomerDlg");
+}
+function openNewcomerEdit(cid, ev) { if (ev) ev.stopPropagation(); openNewcomerDlg(); }
+function delNewcomer(ncid) {
+  const k = dkey(roomDay);
+  if (!state.newcomers[k]) return;
+  state.newcomers[k] = state.newcomers[k].filter(x => x.id !== ncid);
+  if (!state.newcomers[k].length) delete state.newcomers[k];
+  save(); $("ncList").innerHTML = ncListHtml();
+  scrollPreserve(renderAll);
+}
+$("ncSave").onclick = () => {
+  const s = val("ncStart"); let e = val("ncEnd");
+  if (!s) { alert("開始時間を入力してください"); return; }
+  if (!e) e = "L";
+  const k = dkey(roomDay);
+  if (!state.newcomers[k]) state.newcomers[k] = [];
+  state.newcomers[k].push({ id: id(), start: s, end: e });
+  save(); setTime("ncStart", ""); setTime("ncEnd", "");
+  dlgClose("newcomerDlg");
+  // リスピラタブを表示してその日を再描画
+  document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+  const rt = document.querySelector('.tab[data-tab="rooms"]'); if (rt) rt.classList.add("active");
+  ["rooms", "roomslist", "calendar", "manage"].forEach(v =>
+    $("view-" + v).style.display = v === "rooms" ? "block" : "none");
+  scrollPreserve(renderAll);
+};
+$("newcomerX").onclick = () => dlgClose("newcomerDlg");
+$("soukeiReqX").onclick = () => dlgClose("soukeiReqDlg");
+$("soukeiReqClose").onclick = () => dlgClose("soukeiReqDlg");
+$("soukeiReqCopy").onclick = () => {
+  const t = $("soukeiReqText"); t.select(); t.setSelectionRange(0, 99999);
+  let ok = false;
+  try { ok = document.execCommand("copy"); } catch (e) {}
+  if (navigator.clipboard) { navigator.clipboard.writeText(t.value).catch(() => {}); }
+  const b = $("soukeiReqCopy"); b.textContent = "コピーしました ✓";
+  setTimeout(() => b.textContent = "コピー", 1500);
+};
+
+/* ===== 9. 部屋移動・掛け持ち ======================================== */
+function openMove(cid, ev) {
+  if (ev) ev.stopPropagation();
+  if (dragMoved) return; // ドラッグ直後のクリックは無視
+  if (isLocked(roomDay)) { alert("部屋割りが確定（ロック）されています。解除してから移動してください。"); return; }
+  moveTarget = { cid, day: roomDay }; selBar = cid;
+  const isNc = String(cid).startsWith("nc:");
+  const isBw = String(cid).startsWith("bw:");
+  const isSpecial = isNc || isBw;
+  const { rooms, overRooms } = computeAssignment(roomDay);
+  let target = null;
+  rooms.forEach(rm => rm.forEach(w => { if (w.cid === cid) target = w; }));
+  if (!target) overRooms.forEach(rm => rm.forEach(w => { if (w.cid === cid) target = w; }));
+  const c = isSpecial ? null : state.casts.find(x => x.id === cid);
+  const r = isSpecial ? null : rec(cid, roomDay);
+  const sp = isSpecial ? (target ? target.sp : null) : span(r);
+  const nm = isNc ? "入店予定" : isBw ? (target ? target.name + "（掛け持ち）" : "掛け持ち") : (c ? c.name : "");
+
+  $("moveTitle").textContent = `${nm} の部屋`;
+  $("moveInfo").innerHTML = `時間：<b>${isSpecial ? fmtSp(sp) : fmtTime(r)}</b>　部屋を選んで移動／溢れ送りができます。`;
+  let curRoom = -1;
+  rooms.forEach((rm, ri) => { if (rm.some(w => w.cid === cid)) curRoom = ri; });
+  let btns = "";
+  for (let ri = 0; ri < ROOMS; ri++) {
+    const others = rooms[ri].filter(w => w.cid !== cid);
+    const free = sp ? others.every(w => !overlap(w.sp, sp)) : true;
+    const isCur = ri === curRoom;
+    btns += `<button class="${isCur ? 'cur' : ''} ${free ? '' : 'clashbtn'}" onclick="assignRoom('${cid}',${ri})">${roomLabel(ri)}${isCur ? "(現)" : (free ? "" : "⚠")}</button>`;
+  }
+  $("moveList").innerHTML = btns;
+  $("moveHint").textContent = "⚠＝時間が被る部屋。選ぶと被ったまま同じ部屋に入り、被る時間帯が赤く表示されます。";
+
+  // 加盟店へ掛け持ちは通常キャストのみ（入店予定・借りでは非表示）
+  const storeWrap = $("moveStoreGrid").parentElement;
+  storeWrap.style.display = isSpecial ? "none" : "block";
+  if (!isSpecial) {
+    document.querySelectorAll("#moveStoreGrid button").forEach(b => {
+      b.classList.remove("sel");
+      b.onclick = () => {
+        const st = b.dataset.st, rr = rec(cid, roomDay);
+        if (!rr || !isUse(rr.status)) { alert("利用時間が未入力です"); return; }
+        pushUndo(roomDay);
+        addLend("lends", { cid, store: st, start: rr.start, end: rr.end || "L" });
+        if (!state.assign[dkey(roomDay)]) state.assign[dkey(roomDay)] = {};
+        state.assign[dkey(roomDay)][cid] = "OVER"; save();
+        dlgClose("moveDlg"); selBar = null; renderAll();
+      };
+    });
+  }
+  dlgOpen("moveDlg"); renderRooms();
+}
+function assignRoom(cid, ri) {
+  pushUndo(roomDay);
+  if (!state.assign[dkey(roomDay)]) state.assign[dkey(roomDay)] = {};
+  state.assign[dkey(roomDay)][cid] = ri; save();
+  dlgClose("moveDlg"); selBar = null; renderAll();
+}
+
+/* --- ドラッグ＆ドロップで部屋移動 --- */
+// ri に number（部屋番号）または "OVER"（溢れ）を渡して移動。ダイアログは閉じない。
+function moveCidToRoom(cid, ri) {
+  if (isLocked(roomDay)) return;
+  pushUndo(roomDay);
+  if (!state.assign[dkey(roomDay)]) state.assign[dkey(roomDay)] = {};
+  state.assign[dkey(roomDay)][cid] = (ri === "OVER") ? "OVER" : Number(ri);
+  save(); selBar = null;
+  scrollPreserve(renderAll);
+}
+let dragCid = null, dragMoved = false;
+document.addEventListener("dragstart", e => {
+  const bar = e.target.closest(".rt-bar[draggable=true]");
+  if (!bar || !bar.dataset.cid) return;
+  if (isLocked(roomDay)) { e.preventDefault(); return; } // 確定中は移動不可
+  dragCid = bar.dataset.cid; dragMoved = true;
+  bar.classList.add("dragging");
+  if (e.dataTransfer) { e.dataTransfer.effectAllowed = "move"; try { e.dataTransfer.setData("text/plain", dragCid); } catch (_) {} }
+});
+document.addEventListener("dragend", e => {
+  const bar = e.target.closest(".rt-bar");
+  if (bar) bar.classList.remove("dragging");
+  document.querySelectorAll(".rt-track.dropok").forEach(t => t.classList.remove("dropok"));
+  dragCid = null;
+  setTimeout(() => { dragMoved = false; }, 0); // 直後のclick抑止
+});
+document.addEventListener("dragover", e => {
+  const track = e.target.closest(".rt-track[data-ri]");
+  if (!track || !dragCid) return;
+  e.preventDefault();
+  if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
+  if (!track.classList.contains("dropok")) {
+    document.querySelectorAll(".rt-track.dropok").forEach(t => t.classList.remove("dropok"));
+    track.classList.add("dropok");
+  }
+});
+document.addEventListener("drop", e => {
+  const track = e.target.closest(".rt-track[data-ri]");
+  if (!track || !dragCid) return;
+  e.preventDefault();
+  const ri = track.dataset.ri;
+  const cid = dragCid;
+  document.querySelectorAll(".rt-track.dropok").forEach(t => t.classList.remove("dropok"));
+  dragCid = null;
+  moveCidToRoom(cid, ri);
+});
+$("moveForceOver").onclick = () => {
+  if (!moveTarget) return;
+  pushUndo(moveTarget.day);
+  if (!state.assign[dkey(moveTarget.day)]) state.assign[dkey(moveTarget.day)] = {};
+  state.assign[dkey(moveTarget.day)][moveTarget.cid] = "OVER"; save();
+  dlgClose("moveDlg"); selBar = null; renderAll();
+};
+$("moveAuto").onclick = () => {
+  if (moveTarget) {
+    pushUndo(moveTarget.day);
+    const a = state.assign[dkey(moveTarget.day)]; if (a) delete a[moveTarget.cid]; save();
+  }
+  dlgClose("moveDlg"); selBar = null; renderAll();
+};
+$("moveX").onclick = () => { dlgClose("moveDlg"); selBar = null; renderRooms(); };
+
+function addLend(bucket, obj) {
+  const k = dkey(roomDay);
+  if (!state[bucket][k]) state[bucket][k] = [];
+  state[bucket][k].push(obj); save();
+}
+function removeLend(bucket, i) {
+  if (isLocked(roomDay)) { alert("部屋割りが確定（ロック）されています。解除してから操作してください。"); return; }
+  const k = dkey(roomDay);
+  if (state[bucket][k]) { state[bucket][k].splice(i, 1); save(); renderAll(); }
+}
+function openLend(mode) {
+  if (isLocked(roomDay)) { alert("部屋割りが確定（ロック）されています。解除してから操作してください。"); return; }
+  lendMode = mode; lendStore = null;
+  const isLend = mode === "lend";
+  $("lendTitle").textContent = isLend ? "加盟店へ掛け持ち" : "ロイヤルに掛け持ち";
+  $("lendCast").parentElement.style.display = isLend ? "block" : "none";
+  $("lendStoreLabel").textContent = isLend ? "加盟店" : "相手の加盟店";
+  if (isLend) {
+    const workers = state.casts.filter(c => span(rec(c.id, roomDay)));
+    $("lendCast").innerHTML = workers.length
+      ? workers.map(c => `<option value="${c.id}">${c.name}（${fmtTime(rec(c.id, roomDay))}）</option>`).join("")
+      : `<option value="">この日に利用のキャストがいません</option>`;
+  }
+  const grid = $("lendStoreGrid"); grid.className = "store-grid" + (isLend ? "" : " bw");
+  document.querySelectorAll("#lendStoreGrid button").forEach(b => {
+    b.classList.remove("sel");
+    b.onclick = () => {
+      lendStore = b.dataset.st;
+      document.querySelectorAll("#lendStoreGrid button").forEach(x => x.classList.toggle("sel", x.dataset.st === lendStore));
+    };
+  });
+  const saveBtn = $("lendSave"); saveBtn.className = "btn " + (isLend ? "lend" : "borrow");
+  $("lendNameField").style.display = isLend ? "none" : "block"; // 名前欄は「ロイヤルに掛け持ち」のみ
+  $("lendName").value = "";
+  setTime("lendStart", ""); setTime("lendEnd", "");
+  dlgOpen("lendDlg");
+}
+$("lendSave").onclick = () => {
+  if (!lendStore) { alert("加盟店を選んでください"); return; }
+  const s = val("lendStart"); if (!s) { alert("開始時間を入力してください"); return; }
+  const e = val("lendEnd") || "L";
+  if (lendMode === "lend") {
+    const cid = $("lendCast").value;
+    if (!cid) { alert("キャストを選んでください"); return; }
+    addLend("lends", { cid, store: lendStore, start: s, end: e });
+    if (!state.assign[dkey(roomDay)]) state.assign[dkey(roomDay)] = {};
+    state.assign[dkey(roomDay)][cid] = "OVER"; save();
+  } else {
+    const nm = val("lendName");
+    addLend("borrows", { store: lendStore, start: s, end: e, name: nm });
+  }
+  dlgClose("lendDlg"); renderAll();
+};
+$("lendCancel").onclick = () => dlgClose("lendDlg");
+$("lendX").onclick = () => dlgClose("lendDlg");
+
+/* ===== 10. リスピラ一覧（翌日以降を横スクロール表示） ================= */
+function renderRoomsList() {
+  const today = new Date();
+  const dim = daysIn(cur), y = cur.getFullYear(), m = cur.getMonth();
+  const isCur = today.getFullYear() === y && today.getMonth() === m;
+  const todayD = isCur ? today.getDate() : -1;
+  const fromDay = 1; // 月の全日を表示
+
+  let axisTop = "";
+  for (let h = OPEN; h < CLOSE; h++) axisTop += `<span class="${h === 17 ? 'border17' : ''}">${h}</span>`;
+  const lfDnLabel = `<div class="lf-dn"><span></span><span class="lf-dn-h">昼</span><span class="lf-dn-y">夜</span></div>`;
+
+  let dayBlocks = "", anyDay = false;
+  for (let d = fromDay; d <= dim; d++) {
+    anyDay = true;
+    const { rooms, overRooms, overflowCount } = computeAssignment(d);
+    const borrows = (state.borrows && state.borrows[dkey(d)]) ? state.borrows[dkey(d)] : [];
+
+    const free = freePerHour(rooms);
+    const freeSum = free.reduce((a, b) => a + b, 0);
+    let freeCells = "";
+    free.forEach(f => {
+      const ratio = f / ROOMS;
+      freeCells += `<div class="lf-cell" style="background:${freeBg(ratio)};color:${ratio < .4 ? '#fff' : '#2d4a36'}">${f}</div>`;
+    });
+
+    function barsHtml(arr) {
+      return arr.map((w, k) => {
+        const ov = clashOverlayHtml(w, arr);
+        return `<div class="lf-bar ${k % 2 ? 'b2' : 'b1'} ${w.clash ? 'clash' : ''}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name} ${fmtSp(w.sp)}${w.r && w.r.hideNet ? ' 非掲載' : ''}">${ov}<span class="lf-barlabel">${w.name}${w.r && w.r.hideNet ? '<span class="hidenet-bar">非掲載</span>' : ''}</span></div>`;
+      }).join("");
+    }
+    let roomRows = "";
+    for (let ri = 0; ri < ROOMS; ri++)
+      roomRows += `<div class="lf-row"><div class="lf-rno">${roomLabel(ri)}</div><div class="lf-track">${barsHtml(rooms[ri])}</div></div>`;
+    if (overRooms && overRooms.length) roomRows += `<div class="lf-overline">▼ 溢れ</div>`;
+    let ovNo = 0;
+    (overRooms || []).forEach((arr) => {
+      const bars = arr.map(w => {
+        if (w.borrow)
+          return `<div class="lf-bar bw" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name} ${fmtSp(w.sp)}（掛け持ち）"><span class="lf-barlabel">${w.name}</span></div>`;
+        return `<div class="lf-bar ov" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name} ${fmtSp(w.sp)}"><span class="lf-barlabel">${w.name}</span></div>`;
+      }).join("");
+      const allBorrow = arr.length && arr.every(x => x.borrow);
+      const rno = allBorrow ? "借" : (++ovNo);
+      roomRows += `<div class="lf-row over"><div class="lf-rno" style="background:var(--over-bg);color:var(--over)">${rno}</div><div class="lf-track">${bars}</div></div>`;
+    });
+
+    const wd = new Date(y, m, d).getDay(), wkcls = wd === 0 ? "sun" : wd === 6 ? "sat" : "";
+    const isToday = d === todayD;
+    const todayMk = isToday ? '<span class="lf-todaymk">今日</span>' : "";
+    const memo = (state.memos && state.memos[dkey(d)]) ? state.memos[dkey(d)] : "";
+    const memoHtml = memo ? `<div class="lf-memo">${esc(memo)}</div>` : "";
+    const ev = (state.events && state.events[dkey(d)]) ? state.events[dkey(d)] : "";
+    const evHtml = ev ? `<div class="lf-event">${esc(ev)}</div>` : "";
+    dayBlocks += `<div class="lf-day ${isToday ? 'today' : ''}" data-day="${d}" onclick="jumpToDay(${d})">
+        <div class="lf-dayhead ${wkcls}">${todayMk}${m + 1}/${d}<small>(${WK[wd]})</small>${overflowCount ? `<span class="lf-over">溢${overflowCount}</span>` : ""}<span class="lf-freesum">空計${freeSum}</span></div>
+        ${evHtml}
         ${lfDnLabel}
         <div class="lf-axis"><span style="border:none"></span>${axisTop}</div>
         ${roomRows}
         <div class="lf-freerow"><div class="lf-rno" style="font-size:9px">空き</div><div class="lf-freebar">${freeCells}</div></div>
+        ${memoHtml}
       </div>`;
   }
-  if(!anyDay)dayBlocks=`<div class="empty-msg">この先に表示できる日がありません（翌日以降が対象です）。</div>`;
-  document.getElementById("view-roomslist").innerHTML=
+  if (!anyDay) dayBlocks = `<div class="empty-msg">表示できる日がありません。</div>`;
+
+  $("view-roomslist").innerHTML =
     `<div class="panel">
       <div class="sec-title">リスピラ一覧</div>
       <div class="legend">
         <span><i class="dot b1" style="background:var(--bar)"></i>利用</span>
-        <span><i class="dot bw" style="background:var(--borrow)"></i>借り</span>
         <span><i class="dot ov" style="background:var(--over)"></i>溢れ</span>
+        <span><i class="dot bw" style="background:var(--borrow)"></i>掛け持ち</span>
         </div>
       <div class="lf-scroll">${dayBlocks}</div>
     </div>`;
+  // 横スクロール位置：指定日（チップからのジャンプ）優先、なければ当日へ
+  const targetDay = (roomsListScrollTarget != null) ? roomsListScrollTarget : todayD;
+  if (targetDay > 0) {
+    const scroller = $("view-roomslist").querySelector(".lf-scroll");
+    const card = $("view-roomslist").querySelector(`.lf-day[data-day="${targetDay}"]`);
+    if (scroller && card) {
+      scroller.scrollLeft = Math.max(0, card.offsetLeft - 12);
+      if (roomsListScrollTarget != null) {
+        card.classList.add("flash");
+        setTimeout(() => card.classList.remove("flash"), 1200);
+      }
+    }
+  }
+  roomsListScrollTarget = null;
 }
-function jumpToDay(d){roomDay=d;
-  // リスピラ編集タブへ
-  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+// 集計カードの「利用が多い/少ない日」チップからリスピラ一覧の該当日へ移動
+function scrollToTabs() {
+  const t = $("tabsBar");
+  if (t) t.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+// 集計カードのキャスト名をタップ → 月間利用表でそのキャストを検索表示
+function searchCastInCalendar(name) {
+  calSearch = name;
+  document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+  const tab = document.querySelector('.tab[data-tab="calendar"]');
+  if (tab) tab.classList.add("active");
+  ["rooms", "roomslist", "calendar", "manage"].forEach(v =>
+    $("view-" + v).style.display = v === "calendar" ? "block" : "none");
+  renderCalendar();
+  scrollToTabs();
+}
+function jumpToListDay(d) {
+  roomsListScrollTarget = d;
+  document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+  const tab = document.querySelector('.tab[data-tab="roomslist"]');
+  if (tab) tab.classList.add("active");
+  ["rooms", "roomslist", "calendar", "manage"].forEach(v =>
+    $("view-" + v).style.display = v === "roomslist" ? "block" : "none");
+  renderRoomsList();
+  scrollToTabs();
+}
+// 月をまたぐ日付チップから、その月のリスピラ一覧へ移動
+function jumpToListDate(yy, mm, dd) {
+  if (cur.getFullYear() !== yy || cur.getMonth() !== mm) {
+    cur = new Date(yy, mm, 1); roomDay = null; renderAll();
+  }
+  jumpToListDay(dd);
+}
+function jumpToDay(d) {
+  roomDay = d;
+  document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
   document.querySelector('.tab[data-tab="rooms"]').classList.add("active");
-  ["rooms","roomslist","calendar","manage"].forEach(v=>document.getElementById("view-"+v).style.display=v==="rooms"?"block":"none");
-  renderAll();window.scrollTo({top:0,behavior:"smooth"});}
-
-function openMove(cid,ev){if(ev)ev.stopPropagation();moveTarget={cid,day:roomDay};selBar=cid;
-  const c=state.casts.find(x=>x.id===cid);const r=rec(cid,roomDay);const sp=span(r);
-  document.getElementById("moveTitle").textContent=`${c.name} の部屋`;
-  document.getElementById("moveInfo").innerHTML=`時間：<b>${fmtTime(r)}</b>　部屋を選んで移動／溢れ送り／加盟店へ掛け持ちができます。`;
-  const {rooms}=computeAssignment(roomDay);let curRoom=-1;
-  rooms.forEach((rm,ri)=>{if(rm.some(w=>w.cid===cid))curRoom=ri;});
-  let btns="";for(let ri=0;ri<ROOMS;ri++){const others=rooms[ri].filter(w=>w.cid!==cid);const free=others.every(w=>!overlap(w.sp,sp));const isCur=ri===curRoom;
-    btns+=`<button class="${isCur?'cur':''} ${free?'':'clashbtn'}" onclick="assignRoom('${cid}',${ri})">${ri+1}${isCur?"(現)":(free?"":"⚠")}</button>`;}
-  document.getElementById("moveList").innerHTML=btns;
-  document.getElementById("moveHint").textContent="⚠＝時間が被る部屋。選ぶと被ったまま同じ部屋に入り、被る時間帯が赤く表示されます。";
-  document.querySelectorAll("#moveStoreGrid button").forEach(b=>{b.classList.remove("sel");b.onclick=()=>{
-    const st=b.dataset.st;const rr=rec(cid,roomDay);if(!rr||!isUse(rr.status)){alert("利用時間が未入力です");return;}
-    pushUndo(roomDay);
-    addLend("lends",{cid,store:st,start:rr.start,end:rr.end||"L"});
-    if(!state.assign[dkey(roomDay)])state.assign[dkey(roomDay)]={};
-    state.assign[dkey(roomDay)][cid]="OVER";save();
-    document.getElementById("moveDlg").close();selBar=null;renderAll();};});
-  document.getElementById("moveDlg").showModal();renderRooms();}
-function assignRoom(cid,ri){pushUndo(roomDay);if(!state.assign[dkey(roomDay)])state.assign[dkey(roomDay)]={};
-  state.assign[dkey(roomDay)][cid]=ri;save();document.getElementById("moveDlg").close();selBar=null;renderAll();}
-document.getElementById("moveForceOver").onclick=()=>{if(!moveTarget)return;pushUndo(moveTarget.day);if(!state.assign[dkey(moveTarget.day)])state.assign[dkey(moveTarget.day)]={};
-  state.assign[dkey(moveTarget.day)][moveTarget.cid]="OVER";save();document.getElementById("moveDlg").close();selBar=null;renderAll();};
-document.getElementById("moveAuto").onclick=()=>{if(moveTarget){pushUndo(moveTarget.day);const a=state.assign[dkey(moveTarget.day)];if(a)delete a[moveTarget.cid];save();}
-  document.getElementById("moveDlg").close();selBar=null;renderAll();};
-document.getElementById("moveX").onclick=()=>{document.getElementById("moveDlg").close();selBar=null;renderRooms();};
-
-function addLend(bucket,obj){const k=dkey(roomDay);if(!state[bucket][k])state[bucket][k]=[];state[bucket][k].push(obj);save();}
-function removeLend(bucket,i){const k=dkey(roomDay);if(state[bucket][k]){state[bucket][k].splice(i,1);save();renderAll();}}
-function openLend(mode){lendMode=mode;lendStore=null;
-  const isLend=mode==="lend";
-  document.getElementById("lendTitle").textContent=isLend?"加盟店へ掛け持ち":"ロイヤルに掛け持ち";
-  const castField=document.getElementById("lendCast").parentElement;
-  castField.style.display=isLend?"block":"none";
-  document.getElementById("lendStoreLabel").textContent=isLend?"加盟店":"相手の加盟店";
-  if(isLend){
-    const workers=state.casts.filter(c=>span(rec(c.id,roomDay)));
-    document.getElementById("lendCast").innerHTML=workers.length
-      ?workers.map(c=>`<option value="${c.id}">${c.name}（${fmtTime(rec(c.id,roomDay))}）</option>`).join("")
-      :`<option value="">この日に利用のキャストがいません</option>`;
-  }
-  const grid=document.getElementById("lendStoreGrid");grid.className="store-grid"+(isLend?"":" bw");
-  document.querySelectorAll("#lendStoreGrid button").forEach(b=>{b.classList.remove("sel");b.onclick=()=>{lendStore=b.dataset.st;
-    document.querySelectorAll("#lendStoreGrid button").forEach(x=>x.classList.toggle("sel",x.dataset.st===lendStore));};});
-  const saveBtn=document.getElementById("lendSave");saveBtn.className="btn "+(isLend?"lend":"borrow");
-  document.getElementById("lendStart").value="";document.getElementById("lendEnd").value="";
-  document.getElementById("lendDlg").showModal();}
-document.getElementById("lendSave").onclick=()=>{
-  if(!lendStore){alert("加盟店を選んでください");return;}
-  const s=document.getElementById("lendStart").value.trim();if(!s){alert("開始時間を入力してください");return;}
-  let e=document.getElementById("lendEnd").value.trim()||"L";
-  if(lendMode==="lend"){const cid=document.getElementById("lendCast").value;
-    if(!cid){alert("キャストを選んでください");return;}
-    addLend("lends",{cid,store:lendStore,start:s,end:e});
-    // 掛け持ちにしたキャストは自動で溢れに
-    if(!state.assign[dkey(roomDay)])state.assign[dkey(roomDay)]={};
-    state.assign[dkey(roomDay)][cid]="OVER";save();}
-  else{addLend("borrows",{store:lendStore,start:s,end:e});}
-  document.getElementById("lendDlg").close();renderAll();};
-document.getElementById("lendCancel").onclick=()=>document.getElementById("lendDlg").close();
-document.getElementById("lendX").onclick=()=>document.getElementById("lendDlg").close();
-
-// ===== 月間利用表 =====
-function cellInner(rc){
-  if(!rc)return {inner:"",cls:""};
-  const note=rc.note?`<span class="note">${rc.note}</span>`:"";
-  if(rc.status==="work")return {inner:`<span class="timeunder">${fmtTime(rc)}${rc.start2?'<br>'+rc.start2+'-'+(rc.end2||'L'):''}${rc.hideNet?'<br><span class="hidenet">非掲載</span>':''}</span>${note}`,cls:rc.start2?"nakanuke":""};
-  if(rc.status==="furikae")return {inner:`<span class="timeunder">${fmtTime(rc)}</span><span class="omark">○</span>${note}`,cls:""};
-  if(rc.status==="mitei")return {inner:"未"+note,cls:"st-mitei"};
-  if(rc.status==="seiri")return {inner:"生"+note,cls:"st-seiri"};
-  if(rc.status==="shukuhaku")return {inner:`<span class="timeunder">${fmtTime(rc)}</span>${note}`,cls:"st-shukuhaku"};
-  if(rc.status==="yotei")return {inner:"予"+note,cls:"st-yotei"};
-  if(rc.status==="tenpaku")return {inner:`<span class="timeunder">${fmtTime(rc)}</span>${note}`,cls:"st-tenpaku"};
-  if(rc.status==="absent")return {inner:`<span class="timeunder">${fmtTime(rc)}</span><span class="xmark red">✕</span>${note}`,cls:rc.stayBg==="shukuhaku"?"st-shukuhaku":rc.stayBg==="tenpaku"?"st-tenpaku":""};
-  if(rc.status==="off")return {inner:`<span class="timeunder">${fmtTime(rc)}</span><span class="xmark black">✕</span>${note}`,cls:rc.stayBg==="shukuhaku"?"st-shukuhaku":rc.stayBg==="tenpaku"?"st-tenpaku":""};
-  return {inner:"",cls:""};
+  ["rooms", "roomslist", "calendar", "manage"].forEach(v =>
+    $("view-" + v).style.display = v === "rooms" ? "block" : "none");
+  renderAll(); scrollToTabs();
 }
-function askMark(v){return v==="o"?"○":v==="t"?"△":v==="x"?"✕":"−";}
-function nextAsk(v){return v==="o"?"t":v==="t"?"x":v==="x"?"":"o";}
-function calTable(group){
-  const dim=daysIn(cur),y=cur.getFullYear(),m=cur.getMonth();const wk=["日","月","火","水","木","金","土"];
-  const tdy=new Date();const todayD=(tdy.getFullYear()===y&&tdy.getMonth()===m)?tdy.getDate():-1;
-  let casts;
-  if(calSearch){
-    // 検索中は昼夜問わず名前部分一致で抽出
-    casts=state.casts.filter(c=>c.name.includes(calSearch)).slice().sort((a,b)=>a.name.localeCompare(b.name,"ja"));
-  }else{
-    casts=sortedCasts(group);
+
+/* ===== 11. 月間利用表 ============================================== */
+// 利用記録 → セルの中身と背景クラス
+function cellInner(rc) {
+  if (!rc) return { inner: "", cls: "" };
+  const note = rc.note ? `<span class="note">${rc.note}</span>` : "";
+  const stayCls = rc.stayBg === "shukuhaku" ? "st-shukuhaku" : rc.stayBg === "tenpaku" ? "st-tenpaku" : "";
+  switch (rc.status) {
+    case "work":
+      return { inner: `<span class="timeunder">${fmtTime(rc)}${rc.start2 ? '<br>' + rc.start2 + '-' + (rc.end2 || 'L') : ''}${rc.hideNet ? '<br><span class="hidenet">非掲載</span>' : ''}</span>${note}`, cls: rc.start2 ? "nakanuke" : "" };
+    case "furikae":
+      return { inner: `<span class="timeunder">${fmtTime(rc)}</span><span class="omark">○</span>${note}`, cls: "" };
+    case "mitei":
+      return { inner: "未" + note, cls: "st-mitei" };
+    case "seiri":
+      return { inner: "生" + note, cls: "st-seiri" };
+    case "shukuhaku":
+      return { inner: `<span class="timeunder">${fmtTime(rc)}</span>${note}`, cls: "st-shukuhaku" };
+    case "yotei":
+      return { inner: "予" + note, cls: "st-yotei" };
+    case "tenpaku":
+      return { inner: `<span class="timeunder">${fmtTime(rc)}</span>${note}`, cls: "st-tenpaku" };
+    case "absent":
+      return { inner: `<span class="timeunder">${fmtTime(rc)}</span><span class="xmark red">✕</span>${note}`, cls: stayCls };
+    case "off":
+      return { inner: `<span class="timeunder">${fmtTime(rc)}</span><span class="xmark black">✕</span>${note}`, cls: stayCls };
+    default:
+      return { inner: "", cls: "" };
   }
-  if(casts.length===0)return `<div class="empty-msg">${calSearch?`「${calSearch}」に一致するキャストがいません`:"この部のキャスト未登録"}</div>`;
-  const al1=state.askLabels&&state.askLabels.l1?state.askLabels.l1:"";
-  const al2=state.askLabels&&state.askLabels.l2?state.askLabels.l2:"";
-  let head="<th class='name-col'>キャスト</th><th class='avail-col'><small>確認</small></th>"+
-    `<th class='canask-col' onclick="editAskLabel(1)"><small>${al1}</small></th>`+
+}
+function askMark(v) { return v === "o" ? "○" : v === "t" ? "△" : v === "x" ? "✕" : "−"; }
+function nextAsk(v) { return v === "o" ? "t" : v === "t" ? "x" : v === "x" ? "" : "o"; }
+
+function calTable(group) {
+  const dim = daysIn(cur), y = cur.getFullYear(), m = cur.getMonth();
+  const tdy = new Date();
+  const todayD = (tdy.getFullYear() === y && tdy.getMonth() === m) ? tdy.getDate() : -1;
+  // 予約開始日＝今日から7日後。表示中の月に該当する日があれば印をつける
+  const bookDate = new Date(tdy.getFullYear(), tdy.getMonth(), tdy.getDate() + 7);
+  const bookD = (bookDate.getFullYear() === y && bookDate.getMonth() === m) ? bookDate.getDate() : -1;
+
+  let casts;
+  if (calSearch) {
+    casts = state.casts.filter(c => c.name.includes(calSearch)).slice()
+      .sort((a, b) => a.name.localeCompare(b.name, "ja"));
+  } else {
+    casts = sortedCasts(group);
+  }
+  if (casts.length === 0)
+    return `<div class="empty-msg">${calSearch ? `「${calSearch}」に一致するキャストがいません` : "この部のキャスト未登録"}</div>`;
+
+  const al1 = (state.askLabels && state.askLabels.l1) ? state.askLabels.l1 : "";
+  const al2 = (state.askLabels && state.askLabels.l2) ? state.askLabels.l2 : "";
+  let head = "<th class='name-col'>キャスト</th><th class='avail-col'><small>確認</small></th>" +
+    `<th class='canask-col' onclick="editAskLabel(1)"><small>${al1}</small></th>` +
     `<th class='canask-col' onclick="editAskLabel(2)"><small>${al2}</small></th>`;
-  for(let d=1;d<=dim;d++){const w=new Date(y,m,d).getDay();let cls=w===0?"sun":w===6?"sat":"";if(d===todayD)cls+=" todaycol";
-    const ev=state.events[dkey(d)];if(ev)cls+=" eventcol";
-    const evlabel=ev?`<span class="evname">${ev}</span>`:"";
-    head+=`<th class='${cls}' onclick="openEvent(${d})">${d===todayD?'<span class="todaymk">今日</span><br>':''}${evlabel}${d}<br><small>${wk[w]}</small></th>`;}
-  head+="<th class='total-col'>利用<br>合計</th>";
-  let rows="";
-  casts.forEach(c=>{
-    const gmark=calSearch?`<span class="gmk ${c.group}">${c.group==="hiru"?"昼":"夜"}</span>`:"";
-    let r=`<td class='name-col' onclick="openStat('${c.id}')">${gmark}${c.name}</td>`;
-    let dayOpts=`<option value="">−</option>`;
-    for(let dd=1;dd<=dim;dd++){dayOpts+=`<option value="${dd}" ${String(c.availDates)===String(dd)?"selected":""}>${dd}日</option>`;}
-    r+=`<td class='avail-col'><select class="availin" onchange="setAvail('${c.id}',this.value)" onclick="event.stopPropagation()">${dayOpts}</select></td>`;
-    r+=`<td class='canask-col'><span class="askbtn" onclick="cycleAsk('${c.id}',1)">${askMark(c.canAsk)}</span></td>`;
-    r+=`<td class='canask-col'><span class="askbtn" onclick="cycleAsk('${c.id}',2)">${askMark(c.canAsk2)}</span></td>`;
-    let tot=0;
-    for(let d=1;d<=dim;d++){const w=new Date(y,m,d).getDay();let cls=w===0?"sun":w===6?"sat":"";if(d===todayD)cls+=" todaycol";if(state.events[dkey(d)])cls+=" eventcell";
-      const rc=rec(c.id,d);const ci=cellInner(rc);if(rc&&isUse(rc.status)&&(rc.status==="work"||rc.status==="furikae"||rc.start))tot++;
-      r+=`<td class='cell ${cls} ${ci.cls}' onclick="openDlg('${c.id}',${d})">${ci.inner}</td>`;}
-    r+=`<td class='total-col'>${tot}</td>`;rows+=`<tr>${r}</tr>`;});
+  for (let d = 1; d <= dim; d++) {
+    const w = new Date(y, m, d).getDay();
+    const isTodayCol = (d === todayD);
+    const isBookCol = (d === bookD);
+    let cls = w === 0 ? "sun" : w === 6 ? "sat" : "";
+    if (isTodayCol) cls += " todaycol";
+    const ev = state.events[dkey(d)];
+    if (ev && !isTodayCol) cls += " eventcol"; // 今日はイベント色より今日の色を優先
+    if (isBookCol && !isTodayCol) cls += " bookcol";
+    const evlabel = ev ? `<span class="evname">${ev}</span>` : "";
+    const bookmk = (isBookCol && !isTodayCol) ? '<span class="bookmk">予約開始</span><br>' : '';
+    const todaymk = isTodayCol ? '<span class="todaymk">今日</span><br>' : '';
+    head += `<th class='${cls}' onclick="openEvent(${d})">${todaymk}${bookmk}${evlabel}<span class="daynum">${d}</span><br><small>${WK[w]}</small></th>`;
+  }
+  head += "<th class='total-col'>利用<br>合計</th>";
+
+  let rows = "";
+  casts.forEach(c => {
+    const gmark = calSearch ? `<span class="gmk ${c.group}">${c.group === "hiru" ? "昼" : "夜"}</span>` : "";
+    let r = `<td class='name-col' onclick="openStat('${c.id}')">${gmark}${c.name}</td>`;
+    let dayOpts = `<option value="">−</option>`;
+    for (let dd = 1; dd <= dim; dd++) dayOpts += `<option value="${dd}" ${String(c.availDates) === String(dd) ? "selected" : ""}>${dd}日</option>`;
+    r += `<td class='avail-col'><select class="availin" onchange="setAvail('${c.id}',this.value)" onclick="event.stopPropagation()">${dayOpts}</select></td>`;
+    r += `<td class='canask-col'><span class="askbtn" onclick="cycleAsk('${c.id}',1)">${askMark(c.canAsk)}</span></td>`;
+    r += `<td class='canask-col'><span class="askbtn" onclick="cycleAsk('${c.id}',2)">${askMark(c.canAsk2)}</span></td>`;
+    let tot = 0;
+    for (let d = 1; d <= dim; d++) {
+      const w = new Date(y, m, d).getDay();
+      const isTodayCol = (d === todayD);
+      let cls = w === 0 ? "sun" : w === 6 ? "sat" : "";
+      if (isTodayCol) cls += " todaycol";
+      const hasEv = !!state.events[dkey(d)];
+      if (hasEv && !isTodayCol) cls += " eventcell"; // 今日はイベント色より優先
+      if (d === bookD && !isTodayCol) cls += " bookcell";
+      const rc = rec(c.id, d), ci = cellInner(rc);
+      if (rc && isUse(rc.status) && (rc.status === "work" || rc.status === "furikae" || rc.start)) tot++;
+      r += `<td class='cell ${cls} ${ci.cls}' onclick="openDlg('${c.id}',${d})">${ci.inner}</td>`;
+    }
+    r += `<td class='total-col'>${tot}</td>`;
+    rows += `<tr>${r}</tr>`;
+  });
   return `<table class="cal"><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table>`;
 }
-function setAvail(cid,v){const c=state.casts.find(x=>x.id===cid);if(c){c.availDates=v;save();}}
-function cycleAsk(cid,col){const c=state.casts.find(x=>x.id===cid);if(c){
-  if(col===2)c.canAsk2=nextAsk(c.canAsk2||"");else c.canAsk=nextAsk(c.canAsk||"");save();
-  const sy=window.scrollY;
-  if(document.getElementById("calTableWrap")){renderCalendarTable();}else{renderCalendar();}
-  window.scrollTo(0,sy);}}
-let askLabelCol=null;
-function editAskLabel(col){askLabelCol=col;
-  const cur0=col===2?(state.askLabels.l2||""):(state.askLabels.l1||"");
-  document.getElementById("askLabelTitle").textContent=`${col}列目の名前`;
-  document.getElementById("askLabelInput").value=cur0;
-  document.getElementById("askLabelDlg").showModal();
-  setTimeout(()=>document.getElementById("askLabelInput").focus(),50);}
-function saveAskLabel(v){
-  if(askLabelCol===2)state.askLabels.l2=(v||"").trim();else state.askLabels.l1=(v||"").trim();
-  save();document.getElementById("askLabelDlg").close();
-  const sy=window.scrollY;
-  if(document.getElementById("calTableWrap")){renderCalendarTable();}else{renderCalendar();}window.scrollTo(0,sy);}
-function renderCalendarTable(){
-  const wrap=document.getElementById("calTableWrap");if(!wrap)return;
-  const keep=wrap.scrollLeft;
-  wrap.innerHTML=calTable(calGroup);
-  wrap.scrollLeft=(calScrollLeft!=null?calScrollLeft:keep);
-  const cc=document.getElementById("calSearchClear");
-  // サブタブの無効化状態を更新
-  const st=document.getElementById("calSubtabs");if(st)st.style.cssText=calSearch?"opacity:.4;pointer-events:none":"";
-  const note=document.getElementById("calSearchNote");if(note)note.textContent=calSearch?`「${calSearch}」の検索結果（昼夜横断）`:"";
+function setAvail(cid, v) { const c = state.casts.find(x => x.id === cid); if (c) { c.availDates = v; save(); } }
+function cycleAsk(cid, col) {
+  const c = state.casts.find(x => x.id === cid);
+  if (!c) return;
+  if (col === 2) c.canAsk2 = nextAsk(c.canAsk2 || ""); else c.canAsk = nextAsk(c.canAsk || "");
+  save();
+  scrollPreserve(refreshCalendar);
 }
-function renderCalendar(){
-  document.getElementById("view-calendar").innerHTML=
+function editAskLabel(col) {
+  askLabelCol = col;
+  const cur0 = col === 2 ? (state.askLabels.l2 || "") : (state.askLabels.l1 || "");
+  $("askLabelTitle").textContent = `${col}列目の名前`;
+  $("askLabelInput").value = cur0;
+  dlgOpen("askLabelDlg");
+  setTimeout(() => $("askLabelInput").focus(), 50);
+}
+function saveAskLabel(v) {
+  if (askLabelCol === 2) state.askLabels.l2 = (v || "").trim();
+  else state.askLabels.l1 = (v || "").trim();
+  save(); dlgClose("askLabelDlg");
+  scrollPreserve(refreshCalendar);
+}
+function renderCalendarTable() {
+  const wrap = $("calTableWrap");
+  if (!wrap) return;
+  const keep = wrap.scrollLeft;
+  wrap.innerHTML = calTable(calGroup);
+  wrap.scrollLeft = (calScrollLeft != null ? calScrollLeft : keep);
+  const st = $("calSubtabs"); if (st) st.style.cssText = calSearch ? "opacity:.4;pointer-events:none" : "";
+  const note = $("calSearchNote"); if (note) note.textContent = calSearch ? `「${calSearch}」の検索結果` : "";
+}
+function renderCalendar() {
+  $("view-calendar").innerHTML =
     `<div class="panel">
       <div class="bar" style="margin:0 0 10px;gap:8px">
-        <input id="calSearchBox" placeholder="🔍 キャスト名で検索" value="${calSearch.replace(/"/g,'&quot;')}" style="flex:1;min-width:160px;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px">
+        <input id="calSearchBox" placeholder="🔍 キャスト名で検索" value="${calSearch.replace(/"/g, '&quot;')}" style="flex:1;min-width:160px;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px">
         <button class="btn ghost sm" id="calSearchClear">クリア</button>
       </div>
       <div class="subtabs" id="calSubtabs">
-        <button class="subtab ${calGroup==='hiru'?'active hiru':''}" data-g="hiru">☀ 昼の部</button>
-        <button class="subtab ${calGroup==='yoru'?'active yoru':''}" data-g="yoru">🌙 夜の部</button>
+        <button class="subtab ${calGroup === 'hiru' ? 'active hiru' : ''}" data-g="hiru">昼の部</button>
+        <button class="subtab ${calGroup === 'yoru' ? 'active yoru' : ''}" data-g="yoru">夜の部</button>
       </div>
       <div class="hint" id="calSearchNote" style="margin-bottom:8px"></div>
       <div class="legend">
@@ -1054,206 +1841,453 @@ function renderCalendar(){
         </div>
       <div id="calTableWrap" style="overflow:auto;max-height:70vh"></div></div>`;
   renderCalendarTable();
-  // スクロール位置の復元
-  const wrap0=document.getElementById("calTableWrap");
-  if(wrap0&&calScrollLeft!=null){wrap0.scrollLeft=calScrollLeft;}
-  if(wrap0){wrap0.addEventListener("scroll",()=>{calScrollLeft=wrap0.scrollLeft;});}
-  document.querySelectorAll(".subtab").forEach(b=>b.onclick=()=>{calGroup=b.dataset.g;
-    document.querySelectorAll(".subtab").forEach(x=>x.classList.remove("active","hiru","yoru"));
-    b.classList.add("active",b.dataset.g);renderCalendarTable();});
-  const sb=document.getElementById("calSearchBox");
-  if(sb){
-    let composing=false;
-    sb.addEventListener("compositionstart",()=>composing=true);
-    sb.addEventListener("compositionend",()=>{composing=false;calSearch=sb.value.trim();renderCalendarTable();});
-    sb.addEventListener("input",()=>{if(composing)return;calSearch=sb.value.trim();renderCalendarTable();});
+
+  const wrap0 = $("calTableWrap");
+  if (wrap0 && calScrollLeft != null) wrap0.scrollLeft = calScrollLeft;
+  if (wrap0) wrap0.addEventListener("scroll", () => { calScrollLeft = wrap0.scrollLeft; });
+
+  document.querySelectorAll(".subtab").forEach(b => b.onclick = () => {
+    calGroup = b.dataset.g;
+    document.querySelectorAll(".subtab").forEach(x => x.classList.remove("active", "hiru", "yoru"));
+    b.classList.add("active", b.dataset.g);
+    renderCalendarTable();
+  });
+  const sb = $("calSearchBox");
+  if (sb) {
+    let composing = false;
+    sb.addEventListener("compositionstart", () => composing = true);
+    sb.addEventListener("compositionend", () => { composing = false; calSearch = sb.value.trim(); renderCalendarTable(); });
+    sb.addEventListener("input", () => { if (composing) return; calSearch = sb.value.trim(); renderCalendarTable(); });
   }
-  const cc=document.getElementById("calSearchClear");if(cc)cc.onclick=()=>{calSearch="";const b=document.getElementById("calSearchBox");if(b)b.value="";renderCalendarTable();};
+  const cc = $("calSearchClear");
+  if (cc) cc.onclick = () => { calSearch = ""; const b = $("calSearchBox"); if (b) b.value = ""; renderCalendarTable(); };
 }
 
-function openStat(cid){const c=state.casts.find(x=>x.id===cid);if(!c)return;statTarget=cid;
-  const dim=daysIn(cur);let use=0,absent=0,furikae=0;
-  for(let d=1;d<=dim;d++){const r=rec(cid,d);if(!r)continue;
-    if(r.status==="work")use++;
-    else if(r.status==="shukuhaku"||r.status==="tenpaku"){if(r.start)use++;}
-    else if(r.status==="furikae"){use++;furikae++;}else if(r.status==="absent")absent++;}
-  document.getElementById("statTitle").textContent=`${c.name}　${cur.getMonth()+1}月の集計`;
-  document.getElementById("statBody").innerHTML=
+// --- 個人の月間集計 ---
+function openStat(cid) {
+  const c = state.casts.find(x => x.id === cid);
+  if (!c) return;
+  statTarget = cid;
+  const dim = daysIn(cur);
+  let use = 0, absent = 0, furikae = 0, totalHours = 0;
+  for (let d = 1; d <= dim; d++) {
+    const r = rec(cid, d);
+    if (!r) continue;
+    if (r.status === "work") use++;
+    else if (r.status === "shukuhaku" || r.status === "tenpaku") { if (r.start) use++; }
+    else if (r.status === "furikae") { use++; furikae++; }
+    else if (r.status === "absent") absent++;
+    // 合計利用時間（出勤系のみ。中抜け2回目も加算）
+    const sp = span(r);
+    if (sp) totalHours += (sp[1] - sp[0]);
+    if (r && isUse(r.status) && r.start2) {
+      const sp2 = spanRaw(r.start2, r.end2);
+      if (sp2) totalHours += (sp2[1] - sp2[0]);
+    }
+  }
+  // 時間表記（小数は0.5刻みで「○時間△分」に）
+  const hWhole = Math.floor(totalHours);
+  const hMin = Math.round((totalHours - hWhole) * 60);
+  const hoursLabel = hMin ? `${hWhole}時間${hMin}分` : `${hWhole}時間`;
+  $("statTitle").textContent = `${c.name}　${cur.getMonth() + 1}月の集計`;
+  $("statBody").innerHTML =
     `<div class="stat-row"><span>利用日数</span><b>${use}日</b></div>
+     <div class="stat-row"><span>合計利用時間</span><b>${hoursLabel}</b></div>
      <div class="stat-row"><span>振替</span><b>${furikae}日</b></div>
      <div class="stat-row"><span>当欠</span><b style="color:var(--over)">${absent}日</b></div>`;
-  document.getElementById("statDlg").showModal();}
-document.getElementById("statClose").onclick=()=>document.getElementById("statDlg").close();
-document.getElementById("statX").onclick=()=>document.getElementById("statDlg").close();
+  dlgOpen("statDlg");
+}
+$("statClose").onclick = () => dlgClose("statDlg");
+$("statX").onclick = () => dlgClose("statDlg");
 
-let eventDay=null;
-function openEvent(d){eventDay=d;
-  document.getElementById("eventTitle").textContent=`${cur.getMonth()+1}/${d} のイベント`;
-  document.getElementById("eventName").value=state.events[dkey(d)]||"";
-  document.getElementById("eventDlg").showModal();
-  setTimeout(()=>document.getElementById("eventName").focus(),50);}
-document.getElementById("eventSave").onclick=()=>{const v=document.getElementById("eventName").value.trim();
-  if(v)state.events[dkey(eventDay)]=v;else delete state.events[dkey(eventDay)];
-  save();document.getElementById("eventDlg").close();
-  const sy=window.scrollY;if(document.getElementById("calTableWrap")){renderCalendarTable();}else{renderCalendar();}window.scrollTo(0,sy);};
-document.getElementById("eventDel").onclick=()=>{delete state.events[dkey(eventDay)];save();document.getElementById("eventDlg").close();
-  const sy=window.scrollY;if(document.getElementById("calTableWrap")){renderCalendarTable();}else{renderCalendar();}window.scrollTo(0,sy);};
-document.getElementById("eventX").onclick=()=>document.getElementById("eventDlg").close();
-document.getElementById("eventName").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();document.getElementById("eventSave").click();}});
-document.getElementById("askLabelSave").onclick=()=>saveAskLabel(document.getElementById("askLabelInput").value);
-document.getElementById("askLabelDel").onclick=()=>saveAskLabel("");
-document.getElementById("askLabelX").onclick=()=>document.getElementById("askLabelDlg").close();
-document.getElementById("askLabelInput").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();document.getElementById("askLabelSave").click();}});
+// --- イベント・連休 ---
+function openEvent(d) {
+  eventDay = d;
+  $("eventTitle").textContent = `${cur.getMonth() + 1}/${d} のイベント`;
+  $("eventName").value = state.events[dkey(d)] || "";
+  dlgOpen("eventDlg");
+  setTimeout(() => $("eventName").focus(), 50);
+}
+$("eventSave").onclick = () => {
+  const v = val("eventName");
+  if (v) state.events[dkey(eventDay)] = v; else delete state.events[dkey(eventDay)];
+  save(); dlgClose("eventDlg");
+  scrollPreserve(refreshCalendar);
+};
+$("eventDel").onclick = () => {
+  delete state.events[dkey(eventDay)]; save(); dlgClose("eventDlg");
+  scrollPreserve(refreshCalendar);
+};
+$("eventX").onclick = () => dlgClose("eventDlg");
+$("eventName").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); $("eventSave").click(); } });
 
-function renderManage(){
-  function chips(group){const cs=sortedCasts(group);
-    return cs.map(c=>`<span class="chip ${group}">${c.name}<span class="del" data-del="${c.id}">×</span></span>`).join("")||'<span class="empty-msg">未登録</span>';}
-  document.getElementById("view-manage").innerHTML=
+$("askLabelSave").onclick = () => saveAskLabel(val("askLabelInput"));
+$("askLabelDel").onclick = () => saveAskLabel("");
+$("askLabelX").onclick = () => dlgClose("askLabelDlg");
+$("askLabelInput").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); $("askLabelSave").click(); } });
+
+/* ===== 12. キャスト管理 ============================================ */
+function renderManage() {
+  function chips(group) {
+    const cs = sortedCasts(group);
+    return cs.map(c =>
+      `<span class="chip ${group}"><span class="chipname" onclick="openCastDlg('${c.id}')">${c.autoOver ? '<span class="ao-mark">溢</span>' : ''}${c.name}</span></span>`).join("")
+      || '<span class="empty-msg">未登録</span>';
+  }
+  $("view-manage").innerHTML =
     `<div class="panel">
       <div class="card" style="margin-bottom:14px;max-width:200px"><div class="lbl">登録キャスト</div><div class="num">${state.casts.length}</div><div class="sub">名</div></div>
-      <div class="sec-title"><span class="tag hiru">昼の部</span>（${state.casts.filter(c=>c.group==="hiru").length}名）</div><div>${chips("hiru")}</div>
-      <div class="sec-title" style="margin-top:14px"><span class="tag yoru">夜の部</span>（${state.casts.filter(c=>c.group==="yoru").length}名）</div><div>${chips("yoru")}</div>
+      <div class="sec-title"><span class="tag hiru">昼の部</span>（${state.casts.filter(c => c.group === "hiru").length}名）</div><div>${chips("hiru")}</div>
+      <div class="sec-title" style="margin-top:14px"><span class="tag yoru">夜の部</span>（${state.casts.filter(c => c.group === "yoru").length}名）</div><div>${chips("yoru")}</div>
       <div style="margin-top:16px"><button class="btn" id="addCast2">＋ キャストを追加</button></div>
-      <div class="hint" style="margin-top:10px">※削除すると利用記録も消えます。名前の右の×で削除。五十音順。</div>
-      <div class="sec-title" style="margin-top:22px">☁ クラウド同期（全端末で共有）</div>
-      <div class="hint" style="margin-bottom:8px">GoogleスプレッドシートのGAS URLを入れると、パソコン・スマホ全端末でデータが共有され、10秒ごとに自動更新されます。設定手順は「使い方」を押してください。</div>
+      <div class="sec-title" style="margin-top:22px">☁ クラウド同期</div>
       <div class="field"><label>GAS WebアプリURL</label>
-        <input id="cloudUrlInput" placeholder="https://script.google.com/macros/s/.../exec" value="${(cloudUrl||'').replace(/"/g,'&quot;')}"></div>
+        <input id="cloudUrlInput" placeholder="https://script.google.com/macros/s/.../exec" value="${(cloudUrl || '').replace(/"/g, '&quot;')}"></div>
+      <div class="field"><label>パスワード</label>
+        <input id="cloudPassInput" placeholder="" value="${(cloudPass || '').replace(/"/g, '&quot;')}"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
         <button class="btn" id="cloudSaveBtn">接続して同期開始</button>
         <button class="btn ghost" id="cloudPullBtn">今すぐ最新を取得</button>
         <button class="btn ghost" id="cloudHelpBtn">使い方</button>
       </div>
-      <div id="cloudStatus" style="margin-top:8px;font-size:12px;font-weight:700">${cloudUrl?"接続済み":"未接続（この端末のみ保存）"}</div>
+      <div id="cloudStatus" style="margin-top:8px;font-size:12px;font-weight:700">${cloudUrl ? "接続済み" : "未接続（この端末のみ保存）"}</div>
     </div>`;
-  document.getElementById("addCast2").onclick=()=>openCastDlg();
-  const cs=document.getElementById("cloudSaveBtn");if(cs)cs.onclick=()=>{
-    setCloudUrl(document.getElementById("cloudUrlInput").value);
-    if(cloudUrl){lastSyncedRev=0;connectCloud();}
-    else cloudStatus("未接続（この端末のみ保存）");};
-  const cp=document.getElementById("cloudPullBtn");if(cp)cp.onclick=()=>{if(cloudUrl){lastSyncedRev=0;cloudPull();}else alert("先にURLを設定してください");};
-  const ch=document.getElementById("cloudHelpBtn");if(ch)ch.onclick=()=>document.getElementById("cloudHelpDlg").showModal();
+  $("addCast2").onclick = () => openCastDlg();
+  const cs = $("cloudSaveBtn");
+  if (cs) cs.onclick = () => {
+    setCloudUrl(val("cloudUrlInput"));
+    setCloudPass(val("cloudPassInput"));
+    if (cloudUrl) { lastSyncedRev = 0; connectCloud(); }
+    else cloudStatus("未接続（この端末のみ保存）");
+  };
+  const cp = $("cloudPullBtn");
+  if (cp) cp.onclick = () => { if (cloudUrl) { lastSyncedRev = 0; cloudPull(); } else alert("先にURLを設定してください"); };
+  const ch = $("cloudHelpBtn");
+  if (ch) ch.onclick = () => dlgOpen("cloudHelpDlg");
 }
-document.addEventListener("click",e=>{const t=e.target.closest(".del");if(t&&t.dataset.del){e.stopPropagation();openDelDlg(t.dataset.del);}});
-function openDelDlg(cid){const c=state.casts.find(x=>x.id===cid);if(!c)return;delTarget=cid;
-  document.getElementById("delInfo").textContent=`「${c.name}」を削除しますか？`;document.getElementById("delDlg").showModal();}
-document.getElementById("delConfirm").onclick=()=>{const cid=delTarget;if(!cid){document.getElementById("delDlg").close();return;}
-  state.casts=state.casts.filter(c=>c.id!==cid);
-  Object.keys(state.records).forEach(k=>{if(k.startsWith(cid+"_"))delete state.records[k];});
-  Object.values(state.assign).forEach(a=>{if(a&&a[cid]!=null)delete a[cid];});
-  Object.keys(state.lends).forEach(k=>{state.lends[k]=state.lends[k].filter(l=>l.cid!==cid);});
-  save();delTarget=null;document.getElementById("delDlg").close();renderAll();};
-document.getElementById("delCancel").onclick=()=>{delTarget=null;document.getElementById("delDlg").close();};
-document.getElementById("delX").onclick=()=>{delTarget=null;document.getElementById("delDlg").close();};
+document.addEventListener("click", e => {
+  const t = e.target.closest(".del");
+  if (t && t.dataset.del) { e.stopPropagation(); openDelDlg(t.dataset.del); }
+});
+function openDelDlg(cid) {
+  const c = state.casts.find(x => x.id === cid);
+  if (!c) return;
+  delTarget = cid;
+  $("delInfo").textContent = `「${c.name}」を削除しますか？`;
+  dlgOpen("delDlg");
+}
+$("delConfirm").onclick = () => {
+  const cid = delTarget;
+  if (!cid) { dlgClose("delDlg"); return; }
+  state.casts = state.casts.filter(c => c.id !== cid);
+  Object.keys(state.records).forEach(k => { if (k.startsWith(cid + "_")) delete state.records[k]; });
+  Object.values(state.assign).forEach(a => { if (a && a[cid] != null) delete a[cid]; });
+  Object.keys(state.lends).forEach(k => { state.lends[k] = state.lends[k].filter(l => l.cid !== cid); });
+  save(); delTarget = null; dlgClose("delDlg"); renderAll();
+};
+$("delCancel").onclick = () => { delTarget = null; dlgClose("delDlg"); };
+$("delX").onclick = () => { delTarget = null; dlgClose("delDlg"); };
 
-function openDlg(cid,day){editing={cid,day};const c=state.casts.find(x=>x.id===cid);
-  document.getElementById("dlgTitle").textContent=`${c.name}　${cur.getMonth()+1}/${day}`;
-  const r=rec(cid,day);pickStatus=r?r.status:"work";
-  document.getElementById("startTime").value=r&&r.start!=null?r.start:"";
-  document.getElementById("endTime").value=r&&r.end!=null?r.end:"";
-  document.getElementById("startTime2").value=r&&r.start2!=null?r.start2:"";
-  document.getElementById("endTime2").value=r&&r.end2!=null?r.end2:"";
-  document.getElementById("nakanukeChk").checked=!!(r&&r.start2);
-  document.getElementById("hideNetChk").checked=!!(r&&r.hideNet);
-  document.getElementById("noteText").value=r&&r.note?r.note:"";
-  refreshPick();document.getElementById("dlg").showModal();}
-function refreshPick(){document.querySelectorAll("#statusGrid button").forEach(b=>b.classList.toggle("sel",b.dataset.s===pickStatus));
-  const isStay=(pickStatus==="shukuhaku"||pickStatus==="tenpaku");
-  const isRange=(pickStatus==="shukuhaku"||pickStatus==="tenpaku"||pickStatus==="yotei"||pickStatus==="seiri");
-  const showTime=(pickStatus==="work"||pickStatus==="furikae"||pickStatus==="absent"||pickStatus==="off"||isStay);
-  document.getElementById("timeFields").style.display=showTime?"block":"none";
-  document.getElementById("absentNote").style.display=(pickStatus==="absent"||pickStatus==="off")?"block":"none";
-  document.getElementById("stayNote").style.display=isRange?"block":"none";
-  // 中抜けは「利用」のみ
-  const nk=document.getElementById("nakanukeRow");if(nk)nk.style.display=(pickStatus==="work")?"block":"none";
-  const nf=document.getElementById("nakanukeFields");const chk=document.getElementById("nakanukeChk");
-  if(nf&&chk)nf.style.display=(pickStatus==="work"&&chk.checked)?"flex":"none";
-  if(isRange&&editing){const dim=daysIn(cur);let opts="";
-    for(let d=editing.day;d<=dim;d++)opts+=`<option value="${d}" ${d===editing.day?"selected":""}>${cur.getMonth()+1}/${d}</option>`;
-    document.getElementById("stayEndDay").innerHTML=opts;}}
-document.getElementById("statusGrid").onclick=e=>{if(e.target.dataset.s){pickStatus=e.target.dataset.s;refreshPick();}};
-document.getElementById("nakanukeChk").onchange=()=>{const nf=document.getElementById("nakanukeFields");
-  nf.style.display=document.getElementById("nakanukeChk").checked?"flex":"none";};
-document.getElementById("dlgSave").onclick=()=>{const{cid,day}=editing;const k=recKey(cid,day);
-  const s=document.getElementById("startTime").value.trim();let e=document.getElementById("endTime").value.trim();
-  const note=document.getElementById("noteText").value.trim();
-  if(pickStatus==="off"&&!s&&!note&&!(state.records[k]&&state.records[k].stayBg)){delete state.records[k];if(state.assign[dkey(day)])delete state.assign[dkey(day)][cid];save();document.getElementById("dlg").close();renderAfterEdit();return;}
-  if(pickStatus==="work"||pickStatus==="furikae"){if(!s){alert("時間を入力してください");return;}if(!e)e="L";
-    const rec0={status:pickStatus,start:s,end:e,note};
-    if(pickStatus==="work"&&document.getElementById("nakanukeChk").checked){
-      const s2=document.getElementById("startTime2").value.trim();let e2=document.getElementById("endTime2").value.trim();
-      if(s2){if(!e2)e2="L";rec0.start2=s2;rec0.end2=e2;}}
-    if(pickStatus==="work"&&document.getElementById("hideNetChk").checked)rec0.hideNet=true;
-    state.records[k]=rec0;
-    // 月間利用表で利用を入力したら、その日のこのキャストの手動配置を解除して自動配置（重なり回避）に戻す
-    if(state.assign[dkey(day)])delete state.assign[dkey(day)][cid];}
-  else if(pickStatus==="yotei"||pickStatus==="seiri"){
+function openCastDlg(cid) {
+  editCastId = cid || null;
+  if (editCastId) {
+    const c = state.casts.find(x => x.id === editCastId);
+    if (!c) return;
+    $("castDlgTitle").textContent = "キャスト編集";
+    $("castName").value = c.name; castGroup = c.group;
+    $("castAutoOver").checked = !!c.autoOver;
+    $("castSoukeiAri").checked = c.soukei === "ari";
+    $("castSoukeiKakunin").checked = c.soukei === "kakunin";
+    $("castSoukeiPlace").value = c.soukeiPlace || "";
+    $("castDelete").style.display = "block";
+  } else {
+    $("castDlgTitle").textContent = "キャスト追加";
+    castGroup = "hiru"; $("castName").value = ""; $("castAutoOver").checked = false;
+    $("castSoukeiAri").checked = false; $("castSoukeiKakunin").checked = false;
+    $("castSoukeiPlace").value = "";
+    $("castDelete").style.display = "none";
+  }
+  refreshSoukeiPlace();
+  refreshCastSeg();
+  dlgOpen("castDlg");
+  setTimeout(() => $("castName").focus(), 50);
+}
+// 送迎場所欄は、どちらかのチェックがある時のみ表示
+function refreshSoukeiPlace() {
+  const on = $("castSoukeiAri").checked || $("castSoukeiKakunin").checked;
+  $("castSoukeiPlaceField").style.display = on ? "block" : "none";
+}
+// 送迎チェックは片方のみ
+$("castSoukeiAri").onchange = () => { if ($("castSoukeiAri").checked) $("castSoukeiKakunin").checked = false; refreshSoukeiPlace(); };
+$("castSoukeiKakunin").onchange = () => { if ($("castSoukeiKakunin").checked) $("castSoukeiAri").checked = false; refreshSoukeiPlace(); };
+function refreshCastSeg() {
+  document.querySelectorAll("#castSeg button").forEach(b => {
+    b.className = ""; if (b.dataset.g === castGroup) b.className = "sel-" + castGroup;
+  });
+}
+$("castSeg").onclick = e => { if (e.target.dataset.g) { castGroup = e.target.dataset.g; refreshCastSeg(); } };
+$("castSave").onclick = () => {
+  const n = val("castName");
+  if (!n) { alert("名前を入力してください"); return; }
+  const ao = $("castAutoOver").checked;
+  const soukei = $("castSoukeiAri").checked ? "ari" : ($("castSoukeiKakunin").checked ? "kakunin" : "");
+  const soukeiPlace = soukei ? val("castSoukeiPlace") : "";
+  if (editCastId) {
+    const c = state.casts.find(x => x.id === editCastId);
+    if (c) { c.name = n; c.group = castGroup; c.autoOver = ao; c.soukei = soukei; c.soukeiPlace = soukeiPlace; }
+  } else {
+    state.casts.push({ id: id(), name: n, group: castGroup, availDates: "", canAsk: "", canAsk2: "", autoOver: ao, soukei: soukei, soukeiPlace: soukeiPlace });
+  }
+  save(); dlgClose("castDlg"); renderAll();
+};
+$("castX").onclick = () => dlgClose("castDlg");
+$("castDelete").onclick = () => {
+  if (!editCastId) return;
+  dlgClose("castDlg");
+  openDelDlg(editCastId);
+};
+$("castName").addEventListener("keydown", e => { if (e.key === "Enter") e.preventDefault(); });
+
+/* ===== 13. 利用入力ダイアログ ====================================== */
+// 開始時間ドロップダウン（時：OPEN〜23、分：00 / .5）を初期化
+// 時間プルダウンの汎用ファクトリ
+//   prefix : 隠しフィールドのid（例 "startTime"）。時/分selectは prefix+"Hour" / prefix+"Min"
+//   kind   : "start"（8〜23・昇順）/ "end"（24〜8・降順、24はL表記）
+//   保存値 : 数値（9 / 9.5）。kind="end" の未選択は空欄（=L扱い）
+const timeSelects = {};
+function makeTimeSelect(prefix, kind) {
+  const hourEl = $(prefix + "Hour"), minEl = $(prefix + "Min"), hidEl = $(prefix);
+  if (!hourEl || !minEl || !hidEl) return;
+  // 時の選択肢を生成
+  let opts = '<option value="">−</option>';
+  if (kind === "end") {
+    for (let h = CLOSE; h >= OPEN; h--) opts += `<option value="${h}">${h >= CLOSE ? "L" : h + "時"}</option>`;
+  } else {
+    for (let h = OPEN; h <= 23; h++) opts += `<option value="${h}">${h}時</option>`;
+  }
+  hourEl.innerHTML = opts;
+  // 隠しフィールドへ合成
+  function sync() {
+    const h = hourEl.value;
+    if (h === "") { hidEl.value = ""; return; }
+    if (kind === "end" && parseFloat(h) >= CLOSE) { hidEl.value = String(CLOSE); return; } // L=24時は分なし
+    const min = parseFloat(minEl.value) || 0;
+    const v = parseFloat(h) + min;
+    hidEl.value = (min ? v.toString() : h); // 9 または 9.5
+  }
+  // 保存値からプルダウンを設定
+  function set(v) {
+    if (v == null || v === "" || v === "L") { hourEl.value = ""; minEl.value = "0"; hidEl.value = ""; return; }
+    const n = parseFloat(v);
+    if (isNaN(n)) { hourEl.value = ""; minEl.value = "0"; hidEl.value = ""; return; }
+    const h = Math.floor(n);
+    hourEl.value = String(h);
+    minEl.value = (n - h >= 0.5) ? "0.5" : "0";
+    sync();
+  }
+  hourEl.onchange = sync;
+  minEl.onchange = sync;
+  timeSelects[prefix] = { set, sync };
+  return timeSelects[prefix];
+}
+// 全ダイアログの時間プルダウンを初期化
+makeTimeSelect("startTime", "start");   // 月間利用：開始
+makeTimeSelect("endTime", "end");       // 月間利用：終了
+makeTimeSelect("startTime2", "start");  // 中抜け：開始
+makeTimeSelect("endTime2", "end");      // 中抜け：終了
+makeTimeSelect("ncStart", "start");     // 入店予定：開始
+makeTimeSelect("ncEnd", "end");         // 入店予定：終了
+makeTimeSelect("lendStart", "start");   // 掛け持ち：開始
+makeTimeSelect("lendEnd", "end");       // 掛け持ち：終了
+// 値設定の共通ショートカット
+function setTime(prefix, v) { if (timeSelects[prefix]) timeSelects[prefix].set(v); }
+
+function openDlg(cid, day) {
+  editing = { cid, day };
+  const c = state.casts.find(x => x.id === cid);
+  $("dlgTitle").textContent = `${c.name}　${cur.getMonth() + 1}/${day}`;
+  const r = rec(cid, day);
+  pickStatus = r ? r.status : "work";
+  setTime("startTime", r && r.start != null ? r.start : "");
+  setTime("endTime", r && r.end != null ? r.end : "");
+  setTime("startTime2", r && r.start2 != null ? r.start2 : "");
+  setTime("endTime2", r && r.end2 != null ? r.end2 : "");
+  $("nakanukeChk").checked = !!(r && r.start2);
+  $("hideNetChk").checked = !!(r && r.hideNet);
+  $("noteText").value = r && r.note ? r.note : "";
+  refreshPick();
+  dlgOpen("dlg");
+}
+// 状態に応じて時間欄・中抜け・連休終了日などの表示を切り替え
+function refreshPick() {
+  document.querySelectorAll("#statusGrid button").forEach(b => b.classList.toggle("sel", b.dataset.s === pickStatus));
+  const isStay = (pickStatus === "shukuhaku" || pickStatus === "tenpaku");
+  const isRange = (pickStatus === "shukuhaku" || pickStatus === "tenpaku" || pickStatus === "yotei" || pickStatus === "seiri");
+  const showTime = (pickStatus === "work" || pickStatus === "furikae" || pickStatus === "absent" || pickStatus === "off" || isStay);
+  $("timeFields").style.display = showTime ? "block" : "none";
+  $("absentNote").style.display = (pickStatus === "absent" || pickStatus === "off") ? "block" : "none";
+  $("stayNote").style.display = isRange ? "block" : "none";
+  const nk = $("nakanukeRow"); if (nk) nk.style.display = (pickStatus === "work") ? "block" : "none";
+  const nf = $("nakanukeFields"), chk = $("nakanukeChk");
+  if (nf && chk) nf.style.display = (pickStatus === "work" && chk.checked) ? "flex" : "none";
+  if (isRange && editing) {
+    const dim = daysIn(cur);
+    let opts = "";
+    for (let d = editing.day; d <= dim; d++)
+      opts += `<option value="${d}" ${d === editing.day ? "selected" : ""}>${cur.getMonth() + 1}/${d}</option>`;
+    $("stayEndDay").innerHTML = opts;
+  }
+}
+$("statusGrid").onclick = e => { if (e.target.dataset.s) { pickStatus = e.target.dataset.s; refreshPick(); } };
+$("nakanukeChk").onchange = () => {
+  $("nakanukeFields").style.display = $("nakanukeChk").checked ? "flex" : "none";
+};
+$("dlgSave").onclick = () => {
+  const { cid, day } = editing, k = recKey(cid, day);
+  const s = val("startTime"); let e = val("endTime");
+  const note = val("noteText");
+
+  // 「休み」で時間・備考・宿泊背景が無ければ記録ごと削除
+  if (pickStatus === "off" && !s && !note && !(state.records[k] && state.records[k].stayBg)) {
+    delete state.records[k];
+    if (state.assign[dkey(day)]) delete state.assign[dkey(day)][cid];
+    save(); dlgClose("dlg"); renderAfterEdit(); return;
+  }
+
+  if (pickStatus === "work" || pickStatus === "furikae") {
+    if (!s) { alert("時間を入力してください"); return; }
+    if (!e) e = "L";
+    const rec0 = { status: pickStatus, start: s, end: e, note };
+    if (pickStatus === "work" && $("nakanukeChk").checked) {
+      const s2 = val("startTime2"); let e2 = val("endTime2");
+      if (s2) { if (!e2) e2 = "L"; rec0.start2 = s2; rec0.end2 = e2; }
+    }
+    if (pickStatus === "work" && $("hideNetChk").checked) rec0.hideNet = true;
+    state.records[k] = rec0;
+    // 自動溢れキャストは溢れに、それ以外は手動配置を解除して自動配置に
+    const cobj = state.casts.find(x => x.id === cid);
+    if (cobj && cobj.autoOver) {
+      if (!state.assign[dkey(day)]) state.assign[dkey(day)] = {};
+      state.assign[dkey(day)][cid] = "OVER";
+    } else if (state.assign[dkey(day)]) {
+      delete state.assign[dkey(day)][cid];
+    }
+  } else if (pickStatus === "yotei" || pickStatus === "seiri") {
     // 開始日〜終了日を一括登録（時間なし・色のみ）
-    const endD=parseInt(document.getElementById("stayEndDay").value)||day;
-    const lo=Math.min(day,endD),hi=Math.max(day,endD);
-    for(let d=lo;d<=hi;d++){state.records[recKey(cid,d)]={status:pickStatus,note:(d===day?note:"")};
-      if(state.assign[dkey(d)])delete state.assign[dkey(d)][cid];}}
-  else if(pickStatus==="shukuhaku"||pickStatus==="tenpaku"){
-    const endD=parseInt(document.getElementById("stayEndDay").value)||day;
-    const lo=Math.min(day,endD),hi=Math.max(day,endD);
-    if(hi>lo){
+    const endD = parseInt($("stayEndDay").value) || day;
+    const lo = Math.min(day, endD), hi = Math.max(day, endD);
+    for (let d = lo; d <= hi; d++) {
+      state.records[recKey(cid, d)] = { status: pickStatus, note: (d === day ? note : "") };
+      if (state.assign[dkey(d)]) delete state.assign[dkey(d)][cid];
+    }
+  } else if (pickStatus === "shukuhaku" || pickStatus === "tenpaku") {
+    const endD = parseInt($("stayEndDay").value) || day;
+    const lo = Math.min(day, endD), hi = Math.max(day, endD);
+    if (hi > lo) {
       // 期間あり：全日を色のみ（出勤なし）にし、開始日に時間があればその日だけ出勤
-      for(let d=lo;d<=hi;d++){const ex=state.records[recKey(cid,d)];
-        if(d===day&&s){if(!e)e="L";state.records[recKey(cid,d)]={status:pickStatus,start:s,end:e,note,stayBg:pickStatus};if(state.assign[dkey(d)])delete state.assign[dkey(d)][cid];}
-        else{
-          if(ex&&ex.status===pickStatus&&ex.start){ex.stayBg=pickStatus;continue;} // 既存の出勤日は維持
-          state.records[recKey(cid,d)]={status:pickStatus,start:"",end:"",note:(d===day?note:(ex&&ex.note?ex.note:"")),stayBg:pickStatus};
-          if(state.assign[dkey(d)])delete state.assign[dkey(d)][cid];}}
-    }else{
+      for (let d = lo; d <= hi; d++) {
+        const ex = state.records[recKey(cid, d)];
+        if (d === day && s) {
+          if (!e) e = "L";
+          state.records[recKey(cid, d)] = { status: pickStatus, start: s, end: e, note, stayBg: pickStatus };
+          if (state.assign[dkey(d)]) delete state.assign[dkey(d)][cid];
+        } else {
+          if (ex && ex.status === pickStatus && ex.start) { ex.stayBg = pickStatus; continue; } // 既存の出勤日は維持
+          state.records[recKey(cid, d)] = { status: pickStatus, start: "", end: "", note: (d === day ? note : (ex && ex.note ? ex.note : "")), stayBg: pickStatus };
+          if (state.assign[dkey(d)]) delete state.assign[dkey(d)][cid];
+        }
+      }
+    } else {
       // 単日
-      if(s){if(!e)e="L";state.records[k]={status:pickStatus,start:s,end:e,note,stayBg:pickStatus};if(state.assign[dkey(day)])delete state.assign[dkey(day)][cid];}
-      else{state.records[k]={status:pickStatus,start:"",end:"",note,stayBg:pickStatus};if(state.assign[dkey(day)])delete state.assign[dkey(day)][cid];}
-    }}
-  else if(pickStatus==="absent"||pickStatus==="off"){const ex=state.records[k];const sb=ex&&ex.stayBg?ex.stayBg:undefined;
-    state.records[k]={status:pickStatus,start:s,end:e,note};if(sb)state.records[k].stayBg=sb;if(state.assign[dkey(day)])delete state.assign[dkey(day)][cid];}
-  else{state.records[k]={status:pickStatus,note};if(state.assign[dkey(day)])delete state.assign[dkey(day)][cid];}
-  save();document.getElementById("dlg").close();renderAfterEdit();};
-document.getElementById("dlgClear").onclick=()=>{const k=recKey(editing.cid,editing.day);delete state.records[k];
-  if(state.assign[dkey(editing.day)])delete state.assign[dkey(editing.day)][editing.cid];save();document.getElementById("dlg").close();renderAfterEdit();};
-document.getElementById("dlgX").onclick=()=>document.getElementById("dlg").close();
+      if (s) {
+        if (!e) e = "L";
+        state.records[k] = { status: pickStatus, start: s, end: e, note, stayBg: pickStatus };
+      } else {
+        state.records[k] = { status: pickStatus, start: "", end: "", note, stayBg: pickStatus };
+      }
+      if (state.assign[dkey(day)]) delete state.assign[dkey(day)][cid];
+    }
+  } else if (pickStatus === "absent" || pickStatus === "off") {
+    const ex = state.records[k], sb = ex && ex.stayBg ? ex.stayBg : undefined;
+    state.records[k] = { status: pickStatus, start: s, end: e, note };
+    if (sb) state.records[k].stayBg = sb;
+    if (state.assign[dkey(day)]) delete state.assign[dkey(day)][cid];
+  } else {
+    state.records[k] = { status: pickStatus, note };
+    if (state.assign[dkey(day)]) delete state.assign[dkey(day)][cid];
+  }
+  save(); dlgClose("dlg"); renderAfterEdit();
+};
+$("dlgClear").onclick = () => {
+  const k = recKey(editing.cid, editing.day);
+  delete state.records[k];
+  if (state.assign[dkey(editing.day)]) delete state.assign[dkey(editing.day)][editing.cid];
+  save(); dlgClose("dlg"); renderAfterEdit();
+};
+$("dlgX").onclick = () => dlgClose("dlg");
 
-function openCastDlg(){castGroup="hiru";document.getElementById("castName").value="";refreshCastSeg();
-  document.getElementById("castDlg").showModal();setTimeout(()=>document.getElementById("castName").focus(),50);}
-function refreshCastSeg(){document.querySelectorAll("#castSeg button").forEach(b=>{b.className="";if(b.dataset.g===castGroup)b.className="sel-"+castGroup;});}
-document.getElementById("castSeg").onclick=e=>{if(e.target.dataset.g){castGroup=e.target.dataset.g;refreshCastSeg();}};
-document.getElementById("castSave").onclick=()=>{const n=document.getElementById("castName").value.trim();if(!n){alert("名前を入力してください");return;}
-  state.casts.push({id:id(),name:n,group:castGroup,availDates:"",canAsk:"",canAsk2:""});save();document.getElementById("castDlg").close();renderAll();};
-document.getElementById("castX").onclick=()=>document.getElementById("castDlg").close();
-document.getElementById("castName").addEventListener("keydown",e=>{if(e.key==="Enter")e.preventDefault();});
+/* ===== 14. タブ・月送り・全体描画 ================================== */
+document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
+  document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+  t.classList.add("active");
+  ["rooms", "roomslist", "calendar", "manage"].forEach(v =>
+    $("view-" + v).style.display = v === t.dataset.tab ? "block" : "none");
+  renderAll();
+});
+$("prevM").onclick = () => { cur.setMonth(cur.getMonth() - 1); roomDay = null; renderAll(); };
+$("nextM").onclick = () => { cur.setMonth(cur.getMonth() + 1); roomDay = null; renderAll(); };
 
-document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));t.classList.add("active");
-  ["rooms","roomslist","calendar","manage"].forEach(v=>document.getElementById("view-"+v).style.display=v===t.dataset.tab?"block":"none");renderAll();});
-document.getElementById("prevM").onclick=()=>{cur.setMonth(cur.getMonth()-1);roomDay=null;renderAll();};
-document.getElementById("nextM").onclick=()=>{cur.setMonth(cur.getMonth()+1);roomDay=null;renderAll();};
-
-function renderAll(){document.getElementById("monthLabel").textContent=cur.getFullYear()+"年"+(cur.getMonth()+1)+"月";
-  renderStats();renderRooms();renderRoomsList();renderCalendar();renderManage();}
+function renderAll() {
+  $("monthLabel").textContent = cur.getFullYear() + "年" + (cur.getMonth() + 1) + "月";
+  renderStats(); renderRooms(); renderRoomsList(); renderCalendar(); renderManage();
+}
 // 月間利用表のセル編集後：表だけ差し替えてスクロール位置を保持
-function renderAfterEdit(){
-  const sy=window.scrollY;
-  renderStats();renderRooms();renderRoomsList();renderManage();
-  if(document.getElementById("calTableWrap")){renderCalendarTable();}else{renderCalendar();}
-  window.scrollTo(0,sy);}
-window.openDlg=openDlg;window.changeRoomDay=changeRoomDay;window.openMove=openMove;window.assignRoom=assignRoom;window.openStat=openStat;window.openEvent=openEvent;
-window.setAvail=setAvail;window.cycleAsk=cycleAsk;window.openLend=openLend;window.removeLend=removeLend;window.jumpToDay=jumpToDay;window.editAskLabel=editAskLabel;window.optimizeRooms=optimizeRooms;
+function renderAfterEdit() {
+  scrollPreserve(() => {
+    renderStats(); renderRooms(); renderRoomsList(); renderManage();
+    refreshCalendar();
+  });
+}
+
+// onclick属性から呼ばれる関数をグローバルへ公開
+window.openDlg = openDlg; window.changeRoomDay = changeRoomDay; window.openMove = openMove;
+window.assignRoom = assignRoom; window.openStat = openStat; window.openEvent = openEvent;
+window.setAvail = setAvail; window.cycleAsk = cycleAsk; window.openLend = openLend; window.cycleSoukei = cycleSoukei;
+window.removeLend = removeLend; window.jumpToDay = jumpToDay; window.jumpToListDay = jumpToListDay; window.jumpToListDate = jumpToListDate; window.searchCastInCalendar = searchCastInCalendar; window.editAskLabel = editAskLabel;
+window.optimizeRooms = optimizeRooms; window.openCastDlg = openCastDlg;
+window.openNewcomerEdit = openNewcomerEdit; window.delNewcomer = delNewcomer;
+
 renderAll();
 
-// ===== クラウド同期：GASコード文字列とダイアログ操作・起動 =====
-const GAS_CODE=`// ロイヤル利用表・リスピラ管理 クラウド同期用 GAS（フィールド単位マージ対応）
+/* ===== 15. クラウド同期：GASコード文字列とUI初期化・起動 ============= */
+const GAS_CODE = `// ロイヤル利用表・リスピラ管理 クラウド同期用 GAS（合言葉つき・フィールド単位マージ対応）
 // スプレッドシートに貼り付けて「ウェブアプリ」としてデプロイしてください。
+// 合言葉は store シートの C1 に保存されます。
+//   ・最初は空欄。最初に接続したときの合言葉が自動で C1 に登録されます。
+//   ・スタッフが辞めたら C1 の合言葉を書き換え、残るスタッフのアプリも同じ合言葉に変更してください。
+//     （古い合言葉では読み書きできなくなります）
 function _sheet(){
   var ss=SpreadsheetApp.getActiveSpreadsheet();
   var sh=ss.getSheetByName('store');
-  if(!sh){sh=ss.insertSheet('store');sh.getRange('A1').setValue(0);sh.getRange('B1').setValue('');}
+  if(!sh){sh=ss.insertSheet('store');sh.getRange('A1').setValue(0);sh.getRange('B1').setValue('');sh.getRange('C1').setValue('');}
   return sh;
+}
+// 合言葉チェック。OKなら true。サーバー側が未設定なら最初の合言葉を登録。
+function _auth(sh, pass){
+  var stored=String(sh.getRange('C1').getValue()||'');
+  pass=String(pass||'');
+  if(stored===''){ // 初回：この合言葉を登録（空の合言葉での初期化は不可）
+    if(pass===''){ return false; }
+    sh.getRange('C1').setValue(pass); return true;
+  }
+  return stored===pass;
+}
+function _deny(){
+  return ContentService.createTextOutput(JSON.stringify({ok:false,error:'auth'})).setMimeType(ContentService.MimeType.JSON);
 }
 function doGet(e){
   var sh=_sheet();
+  if(!_auth(sh, e.parameter.pass)) return _deny();
   var rev=Number(sh.getRange('A1').getValue())||0;
   var clientRev=Number((e.parameter.rev)||0);
   var out={ok:true,rev:rev,changed:false};
@@ -1268,6 +2302,7 @@ function doPost(e){
   try{
     var sh=_sheet();
     var body=JSON.parse(e.postData.contents);
+    if(!_auth(sh, body.pass)) return _deny();
     var serverRevNow=Number(sh.getRange('A1').getValue())||0;
     var serverRaw=sh.getRange('B1').getValue();
     var server=serverRaw?JSON.parse(serverRaw):null;
@@ -1290,7 +2325,7 @@ function _merge(server,client){
   // casts はクライアント優先（追加・削除を反映）
   out.casts = client.casts || server.casts || [];
   // 各マップはキー単位で統合。クライアント側の値を優先しつつ、サーバーにしか無いキーも残す。
-  ['records','assign','lends','borrows','memos','events'].forEach(function(f){
+  ['records','assign','lends','borrows','memos','events','newcomers','locks','soukeiStatus'].forEach(function(f){
     var s=server[f]||{}, c=client[f]||{}, m={};
     for(var k in s){m[k]=s[k];}
     for(var k in c){m[k]=c[k];}
@@ -1299,14 +2334,18 @@ function _merge(server,client){
   out.askLabels = client.askLabels || server.askLabels || {l1:'',l2:''};
   return out;
 }`;
-(function initCloudUI(){
-  const ta=document.getElementById("gasCode");if(ta)ta.value=GAS_CODE;
-  const cx=document.getElementById("cloudHelpX");if(cx)cx.onclick=()=>document.getElementById("cloudHelpDlg").close();
-  const cc=document.getElementById("cloudHelpClose");if(cc)cc.onclick=()=>document.getElementById("cloudHelpDlg").close();
-  const cg=document.getElementById("copyGas");if(cg)cg.onclick=()=>{const t=document.getElementById("gasCode");t.select();try{document.execCommand("copy");cg.textContent="コピーしました ✓";setTimeout(()=>cg.textContent="コードをコピー",1500);}catch(e){}};
+(function initCloudUI() {
+  const ta = $("gasCode"); if (ta) ta.value = GAS_CODE;
+  const cx = $("cloudHelpX"); if (cx) cx.onclick = () => dlgClose("cloudHelpDlg");
+  const cc = $("cloudHelpClose"); if (cc) cc.onclick = () => dlgClose("cloudHelpDlg");
+  const cg = $("copyGas");
+  if (cg) cg.onclick = () => {
+    const t = $("gasCode"); t.select();
+    try { document.execCommand("copy"); cg.textContent = "コピーしました ✓"; setTimeout(() => cg.textContent = "コードをコピー", 1500); } catch (e) {}
+  };
 })();
 // 起動時、保存済みURLがあれば同期開始
-if(cloudUrl){lastSyncedRev=0;cloudPull();startCloudSync();}
+if (cloudUrl) { lastSyncedRev = 0; cloudPull(); startCloudSync(); }
 </script>
 </body>
 </html>
