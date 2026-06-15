@@ -151,6 +151,12 @@
   .cal th.sat{background:#dcecff}.cal th.sun{background:#ffe0e0}
   .cal .cell{cursor:pointer;height:34px;width:46px;min-width:46px;max-width:46px;font-weight:700;position:relative;overflow:hidden}
   .cal .cell:hover{outline:2px solid var(--pink);outline-offset:-2px}
+  /* クロスハイライト：マウス位置の行と列を強調 */
+  .cal td.xh-col{background:#fff0f6 !important;box-shadow:inset 2px 0 0 #f6b8d4,inset -2px 0 0 #f6b8d4}
+  .cal th.xh-col{background:var(--pink) !important;color:#fff !important;box-shadow:0 1px 0 var(--pink)}
+  .cal tr.xh-row td{background:#fff6fa}
+  .cal tr.xh-row td.name-col{background:var(--pink-soft) !important;box-shadow:inset 0 -2px 0 var(--pink),inset 0 2px 0 var(--pink)}
+  .cal tr.xh-row td.xh-col{background:#ffe3ef !important;box-shadow:inset 0 0 0 2px var(--pink)}
   .cal .total-col{background:var(--pink-soft);font-weight:800;color:var(--pink)}
   /* 今日の列ハイライト */
   .cal th.todaycol{background:var(--pink);color:#fff;box-shadow:0 1px 0 var(--pink)}
@@ -1771,7 +1777,7 @@ function calTable(group) {
     const evlabel = ev ? `<span class="evname">${ev}</span>` : "";
     const bookmk = (isBookCol && !isTodayCol) ? '<span class="bookmk">予約開始</span><br>' : '';
     const todaymk = isTodayCol ? '<span class="todaymk">今日</span><br>' : '';
-    head += `<th class='${cls}' onclick="openEvent(${d})">${todaymk}${bookmk}${evlabel}<span class="daynum">${d}</span><br><small>${WK[w]}</small></th>`;
+    head += `<th class='${cls}' data-d="${d}" onclick="openEvent(${d})">${todaymk}${bookmk}${evlabel}<span class="daynum">${d}</span><br><small>${WK[w]}</small></th>`;
   }
   head += "<th class='total-col'>利用<br>合計</th>";
 
@@ -1795,7 +1801,7 @@ function calTable(group) {
       if (d === bookD && !isTodayCol) cls += " bookcell";
       const rc = rec(c.id, d), ci = cellInner(rc);
       if (rc && isUse(rc.status) && (rc.status === "work" || rc.status === "furikae" || rc.start)) tot++;
-      r += `<td class='cell ${cls} ${ci.cls}' onclick="openDlg('${c.id}',${d})">${ci.inner}</td>`;
+      r += `<td class='cell ${cls} ${ci.cls}' data-d="${d}" onclick="openDlg('${c.id}',${d})">${ci.inner}</td>`;
     }
     r += `<td class='total-col'>${tot}</td>`;
     rows += `<tr>${r}</tr>`;
@@ -1860,6 +1866,25 @@ function renderCalendar() {
   const wrap0 = $("calTableWrap");
   if (wrap0 && calScrollLeft != null) wrap0.scrollLeft = calScrollLeft;
   if (wrap0) wrap0.addEventListener("scroll", () => { calScrollLeft = wrap0.scrollLeft; });
+  if (wrap0 && !wrap0.dataset.xhBound) {
+    wrap0.dataset.xhBound = "1";
+    const clearXH = () => {
+      wrap0.querySelectorAll(".xh-col").forEach(el => el.classList.remove("xh-col"));
+      wrap0.querySelectorAll(".xh-row").forEach(el => el.classList.remove("xh-row"));
+    };
+    wrap0.addEventListener("mouseover", e => {
+      const cell = e.target.closest("td.cell");
+      if (!cell) return;
+      const d = cell.dataset.d;
+      if (!d) return;
+      clearXH();
+      const tbl = wrap0.querySelector("table.cal");
+      if (tbl) tbl.querySelectorAll(`[data-d="${d}"]`).forEach(el => el.classList.add("xh-col"));
+      const tr = cell.closest("tr");
+      if (tr) tr.classList.add("xh-row");
+    });
+    wrap0.addEventListener("mouseleave", clearXH);
+  }
 
   document.querySelectorAll(".subtab").forEach(b => b.onclick = () => {
     calGroup = b.dataset.g;
