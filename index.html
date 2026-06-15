@@ -100,8 +100,8 @@
   .lf-row.over .lf-bar{height:19px;top:1px}
   .lf-rno{font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;background:#faf3f7;border-right:1px solid var(--line);color:var(--ink-soft)}
   .lf-track{position:relative;height:25px;background:repeating-linear-gradient(90deg,#eceef1,#eceef1 calc(100%/16 - 1px),var(--line) calc(100%/16 - 1px),var(--line) calc(100%/16))}
-  .lf-track::after{content:"";position:absolute;top:0;bottom:0;left:56.25%;width:1.5px;background:#b06;opacity:.45;z-index:0;pointer-events:none}
-  .lf-axis span.border17{border-left:1.5px solid #b06}
+  .lf-track::after{content:"";position:absolute;top:0;bottom:0;left:56.25%;width:3px;background:#9aa3ad;opacity:.7;z-index:0;pointer-events:none}
+  .lf-axis span.border17{border-left:3px solid #9aa3ad}
   .lf-dn{display:grid;grid-template-columns:24px 9fr 7fr;margin:3px 0}
   .lf-dn .lf-dn-h,.lf-dn .lf-dn-y{font-size:12px;font-weight:800;text-align:center;border-radius:5px;padding:2px 0}
   .lf-dn .lf-dn-h{background:#fff1d6;color:#d98a00;margin:0 2px 0 0}
@@ -118,7 +118,7 @@
   .lf-freerow{display:grid;grid-template-columns:24px 1fr;border-top:2px solid var(--line)}
   .lf-freebar{display:grid;grid-template-columns:repeat(16,1fr);height:27px}
   .lf-cell{display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;border-left:1px solid rgba(255,255,255,.6)}
-  .lf-overline{background:var(--over);color:#fff;font-size:13px;font-weight:800;padding:3px 8px;text-align:center}
+  .lf-overline{background:var(--over);height:3px;padding:0;margin:1px 0}
   .lf-memo{font-size:13px;color:#5a3b2e;background:#fff8e6;border-top:1px solid var(--line);padding:6px 9px;white-space:pre-wrap;word-break:break-word;line-height:1.4}
   .lf-event{font-size:13px;font-weight:800;color:#b5532a;background:#fff1e6;border-bottom:1px solid var(--line);padding:5px 9px;white-space:pre-wrap;word-break:break-word;line-height:1.3}
   .rt-event{display:inline-flex;align-items:center;background:#fff1e6;color:#b5532a;border:1.5px solid #f0c4a3;border-radius:20px;padding:3px 12px;font-size:12px;font-weight:800}
@@ -205,7 +205,7 @@
   .rt-axis{display:grid;grid-template-columns:54px 1fr;margin-bottom:2px}
   .rt-axis .ax{display:grid;grid-template-columns:repeat(16,1fr);font-size:14px;font-weight:700;color:var(--ink-soft)}
   .rt-axis .ax span{border-left:1px solid var(--line);padding-left:3px;height:20px}
-  .rt-axis .ax span.border17{border-left:2px solid #b06}
+  .rt-axis .ax span.border17{border-left:3px solid #9aa3ad}
   .dn-band{display:grid;grid-template-columns:repeat(16,1fr);gap:0;margin-bottom:2px}
   .dn-hiru,.dn-yoru{font-size:11px;font-weight:800;text-align:center;border-radius:6px;padding:2px 0;white-space:nowrap;overflow:hidden}
   .dn-hiru{background:#fff1d6;color:#d98a00;margin-right:2px}
@@ -216,7 +216,7 @@
   .rt-row.over .rt-track{background:var(--over-bg)}
   .rt-row.firstover{border-top:3px solid var(--over)}
   .rt-track{position:relative;min-height:38px;background:repeating-linear-gradient(90deg,#eceef1,#eceef1 calc(100%/16 - 1px),var(--line) calc(100%/16 - 1px),var(--line) calc(100%/16))}
-  .rt-track::after{content:"";position:absolute;top:0;bottom:0;left:56.25%;width:2px;background:#b06; opacity:.5; z-index:0; pointer-events:none}
+  .rt-track::after{content:"";position:absolute;top:0;bottom:0;left:56.25%;width:3px;background:#9aa3ad; opacity:.7; z-index:0; pointer-events:none}
   .rt-bar{position:absolute;height:34px;border-radius:7px;border:2px solid #e0463c;color:#222;font-size:15px;font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;white-space:nowrap;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.2);padding:0 5px;top:2px;line-height:1.1;background:#fff}
   .rt-bar.rank-premier{border-color:#2f6fd0}
   .rt-bar.rank-vip{border-color:#caa233}
@@ -247,13 +247,15 @@
   .rt-track.dropok{background:#e9f8ef !important;outline:2px dashed var(--bar);outline-offset:-2px}
   .rt-row.over .rt-track.dropok{background:#fdeceb !important;outline-color:var(--over)}
   .redline-label{display:grid;grid-template-columns:54px 1fr}
-  .redline-label .rl{grid-column:2;color:var(--over);font-weight:800;font-size:11px;padding:3px 0 1px;border-top:3px solid var(--over)}
+  .redline-label .rl{grid-column:2;border-top:3px solid var(--over);padding:0;height:0;margin:2px 0}
 
   .over-banner{margin:10px 0;border:2px solid var(--over);border-radius:12px;background:var(--over-bg);padding:10px;color:var(--over);font-weight:800;font-size:14px}
   .lock-banner{margin:10px 0;border:2px solid #2d7a4a;border-radius:12px;background:#eaf7ee;padding:10px;color:#2d7a4a;font-weight:800;font-size:14px}
   .rt-wrap.locked{position:relative;outline:3px solid #2d7a4a;outline-offset:2px;border-radius:8px}
   .rt-wrap.locked::before{content:"🔒 確定済み";position:absolute;top:-12px;right:8px;background:#2d7a4a;color:#fff;font-size:11px;font-weight:800;padding:2px 10px;border-radius:10px;z-index:10}
   .rt-wrap.locked .rt-bar{cursor:not-allowed}
+  .lend-row{display:flex;gap:12px;margin-top:14px;align-items:stretch}
+  .lend-row .lend-zone{flex:1;margin-top:0}
   .lend-zone{margin-top:14px;border:2px solid var(--lend);border-radius:12px;background:#f6effb;padding:10px}
   .lend-zone.borrow{border-color:var(--borrow);background:#eef6fc}
   .lend-zone .lz-title{font-weight:800;font-size:13px;margin-bottom:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -334,6 +336,8 @@
   .store-grid.bw button.sel{background:var(--borrow);color:#fff}
   /* ===== スマホ最適化 ===== */
   @media (max-width:640px){
+    .lend-row{flex-direction:column;gap:0}
+    .lend-row .lend-zone{margin-top:14px}
     .reg-card{padding:13px 14px}
     .reg-total-num{font-size:30px}
     .reg-stats{gap:8px}
@@ -968,7 +972,7 @@ function clashOverlayHtml(w, arr) {
   return ov;
 }
 // 空き部屋数に応じた背景色（緑＝空き多い）と文字色
-function freeBg(ratio) { return `hsl(${ratio * 130},60%,${60 + ratio * 28}%)`; }
+function freeBg(ratio) { const sat = Math.round(8 + ratio * 64), light = Math.round(80 - ratio * 38); return `hsl(2,${sat}%,${light}%)`; }
 // 指定日の各時間の使用部屋数 → 空き部屋数の配列（借りは部屋を使わないので数えない）
 function freePerHour(rooms) {
   const out = [];
@@ -1178,7 +1182,7 @@ function renderRooms() {
   let roomRows = "";
   for (let ri = 0; ri < ROOMS; ri++)
     roomRows += `<div class="rt-row"><div class="rt-room">${roomLabel(ri)}</div><div class="rt-track" data-ri="${ri}">${barsHtml(rooms[ri])}</div></div>`;
-  roomRows += `<div class="redline-label"><div class="rl">▼ ここから下は溢れ</div></div>`;
+  roomRows += `<div class="redline-label"><div class="rl"></div></div>`;
   // 溢れ行：デフォルト2行。使用中の行が埋まったら常に空き行を1つ追加で確保
   const overRowCount = Math.max(2, overRooms.length + 1);
   let rtOvNo = 0;
@@ -1200,7 +1204,7 @@ function renderRooms() {
   let freeCells = "";
   free.forEach(f => {
     const ratio = f / ROOMS;
-    freeCells += `<div class="fc" style="background:${freeBg(ratio)};color:${ratio < .4 ? '#fff' : '#3a2630'}">${f}</div>`;
+    freeCells += `<div class="fc" style="background:${freeBg(ratio)};color:${ratio > .55 ? '#fff' : '#3a2630'}">${f}</div>`;
   });
 
   const memo = state.memos[dkey(roomDay)] || "";
@@ -1285,8 +1289,7 @@ function renderRooms() {
       ${lockBanner}
       ${overBanner}
       ${absentHtml}
-      ${lendHtml}
-      ${borrowHtml}
+      <div class="lend-row">${lendHtml}${borrowHtml}</div>
       <div class="rt-wrap ${locked ? 'locked' : ''}"><div class="rt">
         <div class="rt-axis"><div></div>${dnLabel}</div>
         <div class="rt-axis"><div></div><div class="ax">${axis}</div></div>
@@ -1676,7 +1679,7 @@ function renderRoomsList() {
     let freeCells = "";
     free.forEach(f => {
       const ratio = f / ROOMS;
-      freeCells += `<div class="lf-cell" style="background:${freeBg(ratio)};color:${ratio < .4 ? '#fff' : '#2d4a36'}">${f}</div>`;
+      freeCells += `<div class="lf-cell" style="background:${freeBg(ratio)};color:${ratio > .55 ? '#fff' : '#3a2630'}">${f}</div>`;
     });
 
     function barsHtml(arr) {
@@ -1691,7 +1694,7 @@ function renderRoomsList() {
     let roomRows = "";
     for (let ri = 0; ri < ROOMS; ri++)
       roomRows += `<div class="lf-row"><div class="lf-rno">${roomLabel(ri)}</div><div class="lf-track">${barsHtml(rooms[ri])}</div></div>`;
-    if (overRooms && overRooms.length) roomRows += `<div class="lf-overline">▼ 溢れ</div>`;
+    if (overRooms && overRooms.length) roomRows += `<div class="lf-overline"></div>`;
     let ovNo = 0;
     (overRooms || []).forEach((arr) => {
       const bars = arr.map(w => {
@@ -1729,11 +1732,6 @@ function renderRoomsList() {
   $("view-roomslist").innerHTML =
     `<div class="panel">
       <div class="sec-title">リスピラ一覧</div>
-      <div class="legend">
-        <span><i class="dot b1" style="background:var(--bar)"></i>利用</span>
-        <span><i class="dot ov" style="background:var(--over)"></i>溢れ</span>
-        <span><i class="dot bw" style="background:var(--borrow)"></i>掛け持ち</span>
-        </div>
       <div class="lf-scroll">${dayBlocks}</div>
     </div>`;
   // 横スクロール位置：指定日（チップからのジャンプ）優先、なければ当日へ
