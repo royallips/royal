@@ -38,6 +38,9 @@
   .btn.borrow{background:var(--borrow)}
   .month-nav{display:flex;align-items:center;gap:4px;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:3px}
   .month-nav span{font-weight:800;min-width:104px;text-align:center;font-size:15px}
+  .month-nav .ml-year{font-size:12px;color:var(--ink-soft);margin-right:3px}
+  .month-nav .ml-month{font-size:24px;font-weight:900;color:var(--pink);line-height:1;vertical-align:-2px}
+  .month-nav .ml-suffix{font-size:13px;color:var(--ink-soft);margin-left:1px}
   .month-nav button{background:none;border:none;font-size:18px;cursor:pointer;color:var(--pink);padding:2px 10px;border-radius:8px}
   .month-nav button:hover{background:var(--pink-soft)}
   select,input[type=date]{padding:8px 10px;border:1.5px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
@@ -96,7 +99,7 @@
   .lf-row.over .lf-track{height:21px}
   .lf-row.over .lf-bar{height:19px;top:1px}
   .lf-rno{font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;background:#faf3f7;border-right:1px solid var(--line);color:var(--ink-soft)}
-  .lf-track{position:relative;height:25px;background:repeating-linear-gradient(90deg,transparent,transparent calc(100%/16 - 1px),#f0e2ea calc(100%/16 - 1px),#f0e2ea calc(100%/16))}
+  .lf-track{position:relative;height:25px;background:repeating-linear-gradient(90deg,#eceef1,#eceef1 calc(100%/16 - 1px),var(--line) calc(100%/16 - 1px),var(--line) calc(100%/16))}
   .lf-track::after{content:"";position:absolute;top:0;bottom:0;left:56.25%;width:1.5px;background:#b06;opacity:.45;z-index:0;pointer-events:none}
   .lf-axis span.border17{border-left:1.5px solid #b06}
   .lf-dn{display:grid;grid-template-columns:24px 9fr 7fr;margin:3px 0}
@@ -153,6 +156,9 @@
   .cal .askbtn{cursor:pointer;font-size:16px;font-weight:800}
   .cal td.sat{background:#eef6ff}.cal td.sun{background:#fff0f0}
   .cal th.sat{background:#dcecff}.cal th.sun{background:#ffe0e0}
+  .cal th.holiday{background:#ffd1d9;color:#b3123a}
+  .cal td.holcell{background:#fff2f5}
+  .cal th .holmk{display:inline-block;font-size:8px;background:#d11149;color:#fff;border-radius:6px;padding:0 4px;font-weight:800;margin-bottom:1px}
   .cal .cell{cursor:pointer;height:34px;width:46px;min-width:46px;max-width:46px;font-weight:700;position:relative;overflow:hidden}
   .cal .cell:hover{outline:2px solid var(--pink);outline-offset:-2px}
   /* クロスハイライト：マウス位置の行と列を強調 */
@@ -197,8 +203,8 @@
   .rt-wrap{overflow-x:auto;padding-bottom:4px}
   .rt{min-width:820px}
   .rt-axis{display:grid;grid-template-columns:54px 1fr;margin-bottom:2px}
-  .rt-axis .ax{display:grid;grid-template-columns:repeat(16,1fr);font-size:10px;color:var(--ink-soft)}
-  .rt-axis .ax span{border-left:1px solid var(--line);padding-left:2px;height:16px}
+  .rt-axis .ax{display:grid;grid-template-columns:repeat(16,1fr);font-size:14px;font-weight:700;color:var(--ink-soft)}
+  .rt-axis .ax span{border-left:1px solid var(--line);padding-left:3px;height:20px}
   .rt-axis .ax span.border17{border-left:2px solid #b06}
   .dn-band{display:grid;grid-template-columns:repeat(16,1fr);gap:0;margin-bottom:2px}
   .dn-hiru,.dn-yoru{font-size:11px;font-weight:800;text-align:center;border-radius:6px;padding:2px 0;white-space:nowrap;overflow:hidden}
@@ -215,6 +221,12 @@
   .rt-bar.rank-premier{border-color:#2f6fd0}
   .rt-bar.rank-vip{border-color:#caa233}
   .rt-bar .rt-barlabel.furyo-name{color:#e0463c}
+  .rt-bar.store-M,.lf-bar.store-M{border-color:#e8457a}
+  .rt-bar.store-T,.lf-bar.store-T{border-color:#9b59b6}
+  .rt-bar.store-E,.lf-bar.store-E{border-color:#2e9e5b}
+  .rt-bar.store-L,.lf-bar.store-L{border-color:#56c0e0}
+  .rt-bar.store-MR,.lf-bar.store-MR{border-color:#e0463c}
+  .rt-bar.store-F,.lf-bar.store-F{border-color:#8ac926}
   .rt-bar:hover{filter:brightness(1.07);outline:2px solid #fff;outline-offset:-2px}
   .rt-bar.b1{background:#fff}.rt-bar.b2{background:#fff}
   .rt-bar.gh{background:#fff}.rt-bar.gy{background:#fff}
@@ -249,6 +261,12 @@
   .lend-item.borrow{border-color:var(--borrow)}
   .lend-item .store{background:var(--lend);color:#fff;border-radius:50%;min-width:22px;height:22px;padding:0 4px;display:inline-flex;align-items:center;justify-content:center;font-size:11px}
   .lend-item.borrow .store{background:var(--borrow)}
+  .lend-item .store.store-M{background:#e8457a}
+  .lend-item .store.store-T{background:#9b59b6}
+  .lend-item .store.store-E{background:#2e9e5b}
+  .lend-item .store.store-L{background:#56c0e0}
+  .lend-item .store.store-MR{background:#e0463c}
+  .lend-item .store.store-F{background:#8ac926}
   .lend-item .del{cursor:pointer;color:#fff;background:var(--over);width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px}
   .memo-box{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:8px;font-size:13px;font-family:inherit;resize:vertical;margin-top:12px}
   .freebar{display:grid;grid-template-columns:54px 1fr;align-items:center;margin-top:8px}
@@ -343,7 +361,7 @@
     .freebar{grid-template-columns:30px 1fr}
     .rt-room{font-size:14px}
     .rt-bar{font-size:13px;padding:0 3px;border-radius:6px;height:26px;line-height:1.05}
-    .rt-axis .ax{font-size:6.5px}
+    .rt-axis .ax{font-size:10px;font-weight:700}
     .rt-axis .ax span{padding-left:0;overflow:visible}
     .freebar .fl{font-size:8px}
     .freebar .fc{font-size:8px}
@@ -835,6 +853,38 @@ async function connectCloud() {
 
 /* ===== 4. 汎用ヘルパー =============================================== */
 function id() { return Math.random().toString(36).slice(2, 9); }
+// 日本の祝日判定（年/月0始まり/日）→ 祝日なら名称、なければ null
+function jpHolidayName(y, m0, d) {
+  const m = m0 + 1;
+  const nthMon = (week) => { const first = new Date(y, m0, 1).getDay(); return 1 + ((1 - first + 7) % 7) + (week - 1) * 7; };
+  // 春分・秋分（近似式）
+  const shunbun = Math.floor(20.8431 + 0.242194 * (y - 1980) - Math.floor((y - 1980) / 4));
+  const shubun = Math.floor(23.2488 + 0.242194 * (y - 1980) - Math.floor((y - 1980) / 4));
+  let name = null;
+  if (m === 1 && d === 1) name = "元日";
+  else if (m === 1 && d === nthMon(2)) name = "成人の日";
+  else if (m === 2 && d === 11) name = "建国記念の日";
+  else if (m === 2 && d === 23) name = "天皇誕生日";
+  else if (m === 3 && d === shunbun) name = "春分の日";
+  else if (m === 4 && d === 29) name = "昭和の日";
+  else if (m === 5 && d === 3) name = "憲法記念日";
+  else if (m === 5 && d === 4) name = "みどりの日";
+  else if (m === 5 && d === 5) name = "こどもの日";
+  else if (m === 7 && d === nthMon(3)) name = "海の日";
+  else if (m === 8 && d === 11) name = "山の日";
+  else if (m === 9 && d === nthMon(3)) name = "敬老の日";
+  else if (m === 9 && d === shubun) name = "秋分の日";
+  else if (m === 10 && d === nthMon(2)) name = "スポーツの日";
+  else if (m === 11 && d === 3) name = "文化の日";
+  else if (m === 11 && d === 23) name = "勤労感謝の日";
+  if (name) return name;
+  // 振替休日：前日が日曜の祝日なら月曜は振替
+  if (new Date(y, m0, d).getDay() === 1) {
+    const prev = new Date(y, m0, d - 1);
+    if (prev.getDay() === 0 && jpHolidayName(prev.getFullYear(), prev.getMonth(), prev.getDate())) return "振替休日";
+  }
+  return null;
+}
 function ym(d) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0"); }
 function daysIn(d) { return new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate(); }
 function dkey(day) { return ym(cur) + "-" + String(day).padStart(2, "0"); }
@@ -845,11 +895,14 @@ function rec(cid, day) { return state.records[recKey(cid, day)]; }
 function num(v) { const n = parseFloat(v); return isNaN(n) ? null : n; }
 function fmtTime(r) {
   if (!r) return "";
-  const s = r.start || "", e = r.end || "";
+  const cv = v => (String(v) === "24" || String(v) === "24:00") ? "L" : v;
+  const s = cv(r.start || ""), e = cv(r.end || "");
   if (!s && !e) return "";
   return s + "-" + e;
 }
 function isUse(st) { return st === "work" || st === "furikae" || st === "shukuhaku" || st === "tenpaku" || st === "seiri"; }
+// 24時(24:00)を L 表記へ
+function tL(v) { return (String(v) === "24" || String(v) === "24:00") ? "L" : v; }
 // 利用記録 → 占有時間帯 [start,end]（範囲外は丸め、終了未指定はCLOSE）
 function span(r) {
   if (!r || !isUse(r.status)) return null;
@@ -952,7 +1005,7 @@ function computeAssignmentByKey(dk) {
   ((state.borrows && state.borrows[dk]) || []).forEach((b, bi) => {
     const sp = spanRaw(b.start, b.end);
     const label = b.name ? (b.store + " " + b.name) : b.store;
-    if (sp) borrowWorkers.push({ cid: "bw:" + bi, name: label, sp, r: null, borrow: true });
+    if (sp) borrowWorkers.push({ cid: "bw:" + bi, name: label, sp, r: null, borrow: true, store: b.store });
   });
   workers.sort((a, b) => a.sp[0] - b.sp[0] || a.sp[1] - b.sp[1]);
 
@@ -1010,8 +1063,9 @@ function renderStats() {
   state.casts.forEach(c => {
     for (let d = 1; d <= dim; d++) { const r = rec(c.id, d); if (r && isUse(r.status)) { usedSet.add(c.id); break; } }
   });
-  const noUseHiru = state.casts.filter(c => c.group === "hiru" && !usedSet.has(c.id));
-  const noUseYoru = state.casts.filter(c => c.group === "yoru" && !usedSet.has(c.id));
+  const byName = (a, b) => a.name.localeCompare(b.name, "ja");
+  const noUseHiru = state.casts.filter(c => c.group === "hiru" && !usedSet.has(c.id)).sort(byName);
+  const noUseYoru = state.casts.filter(c => c.group === "yoru" && !usedSet.has(c.id)).sort(byName);
   const noUseAll = new Set([...noUseHiru, ...noUseYoru].map(c => c.id));
 
   // 明日以降の利用予定が1つもない人（今月利用なしは除外）
@@ -1020,7 +1074,7 @@ function renderStats() {
     for (let d = Math.max(1, tomorrow); d <= dim; d++) { const r = rec(cid, d); if (r && isUse(r.status)) return true; }
     return false;
   };
-  const futureNone = state.casts.filter(c => !noUseAll.has(c.id) && !hasFuture(c.id));
+  const futureNone = state.casts.filter(c => !noUseAll.has(c.id) && !hasFuture(c.id)).sort(byName);
 
   const nameSpan = (c, extra = "") => `<span class="nm ${c.group}${extra}" style="cursor:pointer" onclick="searchCastInCalendar('${c.name.replace(/'/g, "\\'")}')">${c.name}</span>`;
   const listOrNone = (arr, extra) => arr.length ? arr.map(c => nameSpan(c, extra)).join("") : '<span class="none">なし</span>';
@@ -1048,7 +1102,7 @@ function renderStats() {
     : '<span class="none">対象日なし</span>';
 
   // 本日利用を確認（確認日=今日に設定されたキャスト・当月のみ）
-  const askToday = isCur ? state.casts.filter(c => String(c.availDates) === String(today.getDate())) : [];
+  const askToday = isCur ? state.casts.filter(c => String(c.availDates) === String(today.getDate())).sort(byName) : [];
   const askHtml = askToday.length ? askToday.map(c => nameSpan(c, "")).join("") : '<span class="none">なし</span>';
 
   const todayCards = isCur ?
@@ -1094,9 +1148,9 @@ function renderRooms() {
       const tip = `${w.name} ${fmtSp(w.sp)}${w.r && w.r.hideNet ? ' 非掲載' : ''}`;
       const cobj = state.casts.find(x => x.id === w.cid);
       const rankCls = cobj && cobj.rank === "premier" ? " rank-premier" : cobj && cobj.rank === "vip" ? " rank-vip" : "";
-      const nameCls = cobj && cobj.furyo ? " furyo-name" : "";
+      const nameCls = cobj && (cobj.furyo || cobj.autoOver) ? " furyo-name" : "";
       if (w.borrow)
-        return `<div class="rt-bar bw${rankCls} ${w.clash ? 'clash' : ''} ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${left}%;width:${width}%" title="${w.name} ${fmtSp(w.sp)}（掛け持ち）" onclick="openMove('${w.cid}',event)">${ov}<span class="rt-barlabel${nameCls}">${w.name}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
+        return `<div class="rt-bar bw${rankCls} store-${w.store||''} ${w.clash ? 'clash' : ''} ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${left}%;width:${width}%" title="${w.name} ${fmtSp(w.sp)}（掛け持ち）" onclick="openMove('${w.cid}',event)">${ov}<span class="rt-barlabel${nameCls}">${w.name}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
       if (w.newcomer)
         return `<div class="rt-bar newcomer${rankCls} ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${left}%;width:${width}%" title="入店予定 ${fmtSp(w.sp)}" onclick="openMove('${w.cid}',event)"><span class="rt-barlabel">入店予定</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
       return `<div class="rt-bar ${k % 2 ? 'b2' : 'b1'}${rankCls} ${w.clash ? 'clash' : ''} ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${left}%;width:${width}%" title="${tip}" onclick="openMove('${w.cid}',event)">${ov}<span class="rt-barlabel${nameCls}">${w.name}${w.r && w.r.hideNet ? '<span class="hidenet-bar">非掲載</span>' : ''}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
@@ -1114,7 +1168,7 @@ function renderRooms() {
     const arr = overRooms[i] || [];
     const bars = arr.map(w => {
       if (w.borrow)
-        return `<div class="rt-bar bw ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name} ${fmtSp(w.sp)}（ロイヤルに掛け持ち）" onclick="openMove('${w.cid}',event)"><span class="rt-barlabel">${w.name}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
+        return `<div class="rt-bar bw store-${w.store||''} ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name} ${fmtSp(w.sp)}（ロイヤルに掛け持ち）" onclick="openMove('${w.cid}',event)"><span class="rt-barlabel">${w.name}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
       return `<div class="rt-bar ov ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name} ${fmtSp(w.sp)}" onclick="openMove('${w.cid}',event)"><span class="rt-barlabel">${w.name}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
     }).join("");
     const hasCast = arr.some(w => !w.borrow);
@@ -1186,7 +1240,7 @@ function renderRooms() {
       <button class="btn lend sm" onclick="openLend('lend')">＋ 追加</button></div>` +
     (lends.length
       ? lends.map((l, i) => { const c = state.casts.find(x => x.id === l.cid); const nm = c ? c.name : "(削除)";
-          return `<span class="lend-item"><span class="store">${l.store}</span>${nm} ${l.start}-${l.end}<span class="del" onclick="removeLend('lends',${i})">×</span></span>`; }).join("")
+          return `<span class="lend-item"><span class="store store-${l.store}">${l.store}</span>${nm} ${tL(l.start)}-${tL(l.end)}<span class="del" onclick="removeLend('lends',${i})">×</span></span>`; }).join("")
       : `<div class="hint"></div>`) + `</div>`;
 
   // ロイヤルに掛け持ち（加盟店から部屋を借りる）
@@ -1195,7 +1249,7 @@ function renderRooms() {
       <button class="btn borrow sm" onclick="openLend('borrow')">＋ 追加</button></div>` +
     (borrows.length
       ? borrows.map((l, i) =>
-          `<span class="lend-item borrow"><span class="store">${l.store}</span>${l.name ? esc(l.name) + " " : ""}${l.start}-${l.end}<span class="del" onclick="removeLend('borrows',${i})">×</span></span>`).join("")
+          `<span class="lend-item borrow"><span class="store store-${l.store}">${l.store}</span>${l.name ? esc(l.name) + " " : ""}${tL(l.start)}-${tL(l.end)}<span class="del" onclick="removeLend('borrows',${i})">×</span></span>`).join("")
       : `<div class="hint"></div>`) + `</div>`;
 
   $("view-rooms").innerHTML =
@@ -1615,7 +1669,7 @@ function renderRoomsList() {
         const ov = clashOverlayHtml(w, arr);
         const cobj = state.casts.find(x => x.id === w.cid);
         const rankCls = cobj && cobj.rank === "premier" ? " rank-premier" : cobj && cobj.rank === "vip" ? " rank-vip" : "";
-        const nameCls = cobj && cobj.furyo ? " furyo-name" : "";
+        const nameCls = cobj && (cobj.furyo || cobj.autoOver) ? " furyo-name" : "";
         return `<div class="lf-bar ${k % 2 ? 'b2' : 'b1'}${rankCls} ${w.clash ? 'clash' : ''}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name} ${fmtSp(w.sp)}${w.r && w.r.hideNet ? ' 非掲載' : ''}">${ov}<span class="lf-barlabel${nameCls}">${w.name}${w.r && w.r.hideNet ? '<span class="hidenet-bar">非掲載</span>' : ''}</span></div>`;
       }).join("");
     }
@@ -1628,9 +1682,9 @@ function renderRoomsList() {
       const bars = arr.map(w => {
         const cobj = state.casts.find(x => x.id === w.cid);
         const rankCls = cobj && cobj.rank === "premier" ? " rank-premier" : cobj && cobj.rank === "vip" ? " rank-vip" : "";
-        const nameCls = cobj && cobj.furyo ? " furyo-name" : "";
+        const nameCls = cobj && (cobj.furyo || cobj.autoOver) ? " furyo-name" : "";
         if (w.borrow)
-          return `<div class="lf-bar bw${rankCls}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name} ${fmtSp(w.sp)}（掛け持ち）"><span class="lf-barlabel${nameCls}">${w.name}</span></div>`;
+          return `<div class="lf-bar bw${rankCls} store-${w.store||''}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name} ${fmtSp(w.sp)}（掛け持ち）"><span class="lf-barlabel${nameCls}">${w.name}</span></div>`;
         return `<div class="lf-bar ov${rankCls}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name} ${fmtSp(w.sp)}"><span class="lf-barlabel${nameCls}">${w.name}</span></div>`;
       }).join("");
       const allBorrow = arr.length && arr.every(x => x.borrow);
@@ -1790,15 +1844,17 @@ function calTable(group) {
     const w = new Date(y, m, d).getDay();
     const isTodayCol = (d === todayD);
     const isBookCol = (d === bookD);
-    let cls = w === 0 ? "sun" : w === 6 ? "sat" : "";
+    const holName = jpHolidayName(y, m, d);
+    let cls = holName ? "holiday" : w === 0 ? "sun" : w === 6 ? "sat" : "";
     if (isTodayCol) cls += " todaycol";
     const ev = state.events[dkey(d)];
     if (ev && !isTodayCol) cls += " eventcol"; // 今日はイベント色より今日の色を優先
     if (isBookCol && !isTodayCol) cls += " bookcol";
     const evlabel = ev ? `<span class="evname">${ev}</span>` : "";
+    const holmk = (holName && !isTodayCol) ? `<span class="holmk" title="${holName}">祝</span>` : "";
     const bookmk = (isBookCol && !isTodayCol) ? '<span class="bookmk">予約開始</span><br>' : '';
     const todaymk = isTodayCol ? '<span class="todaymk">今日</span><br>' : '';
-    head += `<th class='${cls}' data-d="${d}" onclick="openEvent(${d})">${todaymk}${bookmk}${evlabel}<span class="daynum">${d}</span><br><small>${WK[w]}</small></th>`;
+    head += `<th class='${cls}' data-d="${d}" onclick="openEvent(${d})">${todaymk}${bookmk}${holmk}${evlabel}<span class="daynum">${d}</span><br><small>${WK[w]}</small></th>`;
   }
   head += "<th class='total-col'>利用<br>合計</th>";
 
@@ -1815,7 +1871,7 @@ function calTable(group) {
     for (let d = 1; d <= dim; d++) {
       const w = new Date(y, m, d).getDay();
       const isTodayCol = (d === todayD);
-      let cls = w === 0 ? "sun" : w === 6 ? "sat" : "";
+      let cls = jpHolidayName(y, m, d) ? "holcell" : w === 0 ? "sun" : w === 6 ? "sat" : "";
       if (isTodayCol) cls += " todaycol";
       const hasEv = !!state.events[dkey(d)];
       if (hasEv && !isTodayCol) cls += " eventcell"; // 今日はイベント色より優先
@@ -2207,7 +2263,7 @@ function openDlg(cid, day) {
 function refreshPick() {
   document.querySelectorAll("#statusGrid button").forEach(b => b.classList.toggle("sel", b.dataset.s === pickStatus));
   const isStay = (pickStatus === "shukuhaku" || pickStatus === "tenpaku");
-  const isRange = (pickStatus === "shukuhaku" || pickStatus === "tenpaku" || pickStatus === "yotei");
+  const isRange = (pickStatus === "shukuhaku" || pickStatus === "tenpaku" || pickStatus === "yotei" || pickStatus === "seiri");
   const showTime = (pickStatus === "work" || pickStatus === "furikae" || pickStatus === "absent" || pickStatus === "off" || pickStatus === "seiri" || isStay);
   $("timeFields").style.display = showTime ? "block" : "none";
   $("absentNote").style.display = (pickStatus === "absent" || pickStatus === "off") ? "block" : "none";
@@ -2258,16 +2314,26 @@ $("dlgSave").onclick = () => {
       delete state.assign[dkey(day)][cid];
     }
   } else if (pickStatus === "seiri") {
-    // 生理：色のみ。時間があれば利用として扱い部屋に配置
-    const rec0 = { status: "seiri", note };
-    if (s) { if (!e) e = "L"; rec0.start = s; rec0.end = e; }
-    state.records[k] = rec0;
+    // 生理：開始日〜終了日を連続登録。色のみ、開始日に時間があればその日だけ利用扱い
+    const endD = parseInt($("stayEndDay").value) || day;
+    const lo = Math.min(day, endD), hi = Math.max(day, endD);
     const cobj = state.casts.find(x => x.id === cid);
-    if (s && cobj && cobj.autoOver) {
-      if (!state.assign[dkey(day)]) state.assign[dkey(day)] = {};
-      state.assign[dkey(day)][cid] = "OVER";
-    } else if (state.assign[dkey(day)]) {
-      delete state.assign[dkey(day)][cid];
+    for (let d = lo; d <= hi; d++) {
+      const ex = state.records[recKey(cid, d)];
+      if (d === day && s) {
+        if (!e) e = "L";
+        state.records[recKey(cid, d)] = { status: "seiri", start: s, end: e, note };
+        if (cobj && cobj.autoOver) {
+          if (!state.assign[dkey(d)]) state.assign[dkey(d)] = {};
+          state.assign[dkey(d)][cid] = "OVER";
+        } else if (state.assign[dkey(d)]) {
+          delete state.assign[dkey(d)][cid];
+        }
+      } else {
+        if (ex && ex.status === "seiri" && ex.start) continue; // 既存の時間付き生理日は維持
+        state.records[recKey(cid, d)] = { status: "seiri", note: (d === day ? note : (ex && ex.note ? ex.note : "")) };
+        if (state.assign[dkey(d)]) delete state.assign[dkey(d)][cid];
+      }
     }
   } else if (pickStatus === "yotei") {
     // 開始日〜終了日を一括登録（時間なし・色のみ）
@@ -2335,7 +2401,7 @@ $("prevM").onclick = () => { cur.setMonth(cur.getMonth() - 1); roomDay = null; r
 $("nextM").onclick = () => { cur.setMonth(cur.getMonth() + 1); roomDay = null; renderAll(); };
 
 function renderAll() {
-  $("monthLabel").textContent = cur.getFullYear() + "年" + (cur.getMonth() + 1) + "月";
+  $("monthLabel").innerHTML = `<span class="ml-year">${cur.getFullYear()}年</span><span class="ml-month">${cur.getMonth() + 1}</span><span class="ml-suffix">月</span>`;
   renderStats(); renderRooms(); renderRoomsList(); renderCalendar(); renderManage();
 }
 // 月間利用表のセル編集後：表だけ差し替えてスクロール位置を保持
