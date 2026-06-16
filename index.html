@@ -213,6 +213,11 @@
   .dn-yoru{background:#e4e8ff;color:#4a55c0;margin-left:2px}
   .rt-row{display:grid;grid-template-columns:54px 1fr;align-items:stretch;border-bottom:1px solid var(--line)}
   .rt-room{font-weight:800;font-size:16px;display:flex;align-items:center;justify-content:center;background:var(--pink-soft);border-right:2px solid var(--line)}
+  .rt-room[data-ri]{cursor:pointer;user-select:none}
+  .rt-room[data-ri]:hover{filter:brightness(.93)}
+  .rt-room.room-locked{background:#ffe0dd;color:#c0392b;border-right-color:#e0463c;flex-direction:column;gap:1px}
+  .rt-room .room-lock-icon{font-size:9px;line-height:1}
+  .rt-track.room-locked-track .rt-bar{cursor:not-allowed;opacity:.8}
   .rt-row.over .rt-room{background:var(--over-bg);color:var(--over);border-right-color:var(--over)}
   .rt-row.over .rt-track{background:var(--over-bg)}
   .rt-row.firstover{border-top:3px solid var(--over)}
@@ -730,6 +735,7 @@ function normalize(d) {
   d.askLabels = d.askLabels || { l1: "", l2: "" };
   d.newcomers = d.newcomers || {};
   d.locks = d.locks || {};
+  d.roomLocks = d.roomLocks || {};
   d.soukeiStatus = d.soukeiStatus || {};
   d.casts.forEach(c => {
     if (c.availDates == null) c.availDates = "";
@@ -1187,8 +1193,10 @@ function renderRooms() {
   }
 
   let roomRows = "";
-  for (let ri = 0; ri < ROOMS; ri++)
-    roomRows += `<div class="rt-row"><div class="rt-room">${roomLabel(ri)}</div><div class="rt-track" data-ri="${ri}">${barsHtml(rooms[ri])}</div></div>`;
+  for (let ri = 0; ri < ROOMS; ri++) {
+    const rLocked = isRoomLocked(roomDay, ri);
+    roomRows += `<div class="rt-row"><div class="rt-room${rLocked ? ' room-locked' : ''}" data-ri="${ri}" onclick="toggleRoomLock(${ri})">${roomLabel(ri)}${rLocked ? '<span class="room-lock-icon">🔒</span>' : ''}</div><div class="rt-track${rLocked ? ' room-locked-track' : ''}" data-ri="${ri}">${barsHtml(rooms[ri])}</div></div>`;
+  }
   // 溢れ行：デフォルト2行。使用中の行が埋まったら常に空き行を1つ追加で確保
   const overRowCount = Math.max(2, overRooms.length + 1);
   let rtOvNo = 0;
@@ -1337,6 +1345,15 @@ function adjustBarFontSizes() {
 
 // --- 部屋割り確定（ロック） ---
 function isLocked(day) { return !!(state.locks && state.locks[dkey(day)]); }
+function isRoomLocked(day, ri) { return !!(state.roomLocks && state.roomLocks[dkey(day)] && state.roomLocks[dkey(day)][String(ri)]); }
+function toggleRoomLock(ri) {
+  if (isLocked(roomDay)) return; // 日全体ロック中は部屋ロック操作不可
+  const k = dkey(roomDay);
+  if (!state.roomLocks[k]) state.roomLocks[k] = {};
+  if (state.roomLocks[k][String(ri)]) delete state.roomLocks[k][String(ri)];
+  else state.roomLocks[k][String(ri)] = true;
+  save(); scrollPreserve(renderRooms);
+}
 function toggleLock(day) {
   if (!state.locks) state.locks = {};
   if (state.locks[dkey(day)]) delete state.locks[dkey(day)];
@@ -1422,38 +1439,60 @@ function doUndo() {
   scrollPreserve(renderAll);
 }
 
-// 使う部屋数が最少になるよう詰め直す（空き部屋を最大化）。掛け持ち(掛け先)・借りは対象外。
+// 使う部屋数が最少になるよう詰め直す（空き部屋を最大化）。掛け持ち(掛け先)・借りは対象外。ロック部屋は除外。
 function optimizeRooms() {
   const day = roomDay;
   pushUndo(day);
-  const prevForce = state.assign[dkey(day)] || {};
-  const keepOver = new Set(Object.keys(prevForce).filter(cid => prevForce[cid] === "OVER"));
-  const autoOverSet = new Set(state.casts.filter(c => c.autoOver).map(c => c.id)); // 自動溢れも溢れ維持
+  const autoOverSet = new Set(state.casts.filter(c => c.autoOver).map(c => c.id));
+
+  // ロックされた部屋のキャストを現在の配置から取得して固定
+  const { rooms: curRooms } = computeAssignment(day);
+  const newForce = {};
+  const lockedCids = new Set();
+  for (let ri = 0; ri < ROOMS; ri++) {
+    if (isRoomLocked(day, ri)) {
+      curRooms[ri].forEach(w => {
+        const cid = w.cid;
+        if (!String(cid).startsWith("nc:") && !String(cid).startsWith("bw:")) {
+          lockedCids.add(cid);
+          newForce[cid] = ri;
+        }
+      });
+    }
+  }
+
+  // ロックされていない部屋に入れるキャストを収集
+  const availRooms = [];
+  for (let ri = 0; ri < ROOMS; ri++) { if (!isRoomLocked(day, ri)) availRooms.push(ri); }
 
   const items = [];
   state.casts.forEach(c => {
+    if (lockedCids.has(c.id) || autoOverSet.has(c.id)) return;
     const sp = span(rec(c.id, day));
-    if (sp && !autoOverSet.has(c.id)) items.push({ cid: c.id, sp });
+    if (sp) items.push({ cid: c.id, sp });
   });
   items.sort((a, b) => a.sp[0] - b.sp[0] || a.sp[1] - b.sp[1]);
 
-  // 隙間最小の貪欲法：前の退室時刻との隙間が最小の部屋に入れる。
-  const roomEnd = [], roomItems = [];
+  // 隙間最小の貪欲法（利用可能な部屋スロットの範囲で）
+  const roomEnd = [], roomBuckets = [];
   items.forEach(it => {
     let best = -1, bestGap = Infinity;
-    for (let ri = 0; ri < roomEnd.length; ri++) {
-      if (roomEnd[ri] <= it.sp[0]) { const gap = it.sp[0] - roomEnd[ri]; if (gap < bestGap) { bestGap = gap; best = ri; } }
+    for (let i = 0; i < roomEnd.length; i++) {
+      if (roomEnd[i] <= it.sp[0]) { const gap = it.sp[0] - roomEnd[i]; if (gap < bestGap) { bestGap = gap; best = i; } }
     }
-    if (best === -1) { best = roomEnd.length; roomEnd.push(it.sp[1]); roomItems.push([]); }
-    else roomEnd[best] = it.sp[1];
-    roomItems[best].push(it);
+    if (best === -1) {
+      if (roomBuckets.length < availRooms.length) { best = roomEnd.length; roomEnd.push(it.sp[1]); roomBuckets.push([]); }
+      else { newForce[it.cid] = "OVER"; return; }
+    } else roomEnd[best] = it.sp[1];
+    roomBuckets[best].push(it);
   });
-  // 利用時間合計が多い順に部屋番号を割り当て
-  const order = roomItems.map((arr, ri) => ({ ri, used: arr.reduce((s, it) => s + (it.sp[1] - it.sp[0]), 0), arr }));
+
+  // 利用時間合計が多い順に利用可能な部屋番号を割り当て
+  const order = roomBuckets.map((arr, i) => ({ i, used: arr.reduce((s, it) => s + (it.sp[1] - it.sp[0]), 0), arr }));
   order.sort((a, b) => b.used - a.used);
-  const newForce = {};
-  order.forEach((o, newRi) => o.arr.forEach(it => { newForce[it.cid] = (newRi < ROOMS) ? newRi : "OVER"; }));
+  order.forEach((o, newIdx) => o.arr.forEach(it => { newForce[it.cid] = availRooms[newIdx]; }));
   autoOverSet.forEach(cid => { newForce[cid] = "OVER"; });
+
   state.assign[dkey(day)] = newForce; save(); selBar = null;
   scrollPreserve(renderAll);
 }
@@ -1536,6 +1575,7 @@ function openMove(cid, ev) {
   $("moveInfo").innerHTML = `時間：<b>${isSpecial ? fmtSp(sp) : fmtTime(r)}</b>　部屋を選んで移動／溢れ送りができます。`;
   let curRoom = -1;
   rooms.forEach((rm, ri) => { if (rm.some(w => w.cid === cid)) curRoom = ri; });
+  if (curRoom >= 0 && isRoomLocked(roomDay, curRoom)) return; // ロック中の部屋は移動不可
   let btns = "";
   for (let ri = 0; ri < ROOMS; ri++) {
     const others = rooms[ri].filter(w => w.cid !== cid);
@@ -1586,7 +1626,10 @@ let dragCid = null, dragMoved = false;
 document.addEventListener("dragstart", e => {
   const bar = e.target.closest(".rt-bar[draggable=true]");
   if (!bar || !bar.dataset.cid) return;
-  if (isLocked(roomDay)) { e.preventDefault(); return; } // 確定中は移動不可
+  if (isLocked(roomDay)) { e.preventDefault(); return; }
+  const srcTrack = bar.closest(".rt-track[data-ri]");
+  const srcRi = srcTrack?.dataset.ri;
+  if (srcRi && srcRi !== "OVER" && isRoomLocked(roomDay, srcRi)) { e.preventDefault(); return; }
   dragCid = bar.dataset.cid; dragMoved = true;
   bar.classList.add("dragging");
   if (e.dataTransfer) { e.dataTransfer.effectAllowed = "move"; try { e.dataTransfer.setData("text/plain", dragCid); } catch (_) {} }
@@ -1601,6 +1644,8 @@ document.addEventListener("dragend", e => {
 document.addEventListener("dragover", e => {
   const track = e.target.closest(".rt-track[data-ri]");
   if (!track || !dragCid) return;
+  const dri = track.dataset.ri;
+  if (dri && dri !== "OVER" && isRoomLocked(roomDay, dri)) return;
   e.preventDefault();
   if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
   if (!track.classList.contains("dropok")) {
@@ -1616,6 +1661,7 @@ document.addEventListener("drop", e => {
   const cid = dragCid;
   document.querySelectorAll(".rt-track.dropok").forEach(t => t.classList.remove("dropok"));
   dragCid = null;
+  if (ri && ri !== "OVER" && isRoomLocked(roomDay, ri)) return;
   moveCidToRoom(cid, ri);
 });
 $("moveForceOver").onclick = () => {
@@ -2520,6 +2566,7 @@ function renderAfterEdit() {
 // onclick属性から呼ばれる関数をグローバルへ公開
 window.openDlg = openDlg; window.changeRoomDay = changeRoomDay; window.openMove = openMove;
 window.assignRoom = assignRoom; window.openStat = openStat; window.openEvent = openEvent;
+window.toggleRoomLock = toggleRoomLock;
 window.setAvail = setAvail; window.cycleAsk = cycleAsk; window.openLend = openLend; window.cycleSoukei = cycleSoukei;
 window.removeLend = removeLend; window.jumpToDay = jumpToDay; window.jumpToListDay = jumpToListDay; window.jumpToListDate = jumpToListDate; window.searchCastInCalendar = searchCastInCalendar; window.editAskLabel = editAskLabel;
 window.optimizeRooms = optimizeRooms; window.openCastDlg = openCastDlg;
