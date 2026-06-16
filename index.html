@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ロイヤル利用表・リスピラ管理</title>
+<title>ロイヤル利用管理</title>
 <style>
   :root{
     --pink:#e8457a; --pink-soft:#fff0f5; --pink-mid:#ffe0ee;
@@ -59,22 +59,23 @@
   .card .num{font-size:24px;font-weight:800;color:var(--pink);margin-top:2px}
   .card .num.warn{color:var(--over)}
   .card .sub{font-size:11px;color:var(--ink-soft)}
-  .card.list .cnt{font-size:24px;font-weight:800;color:var(--pink)}
-  .card.list .grp{font-size:11px;font-weight:800;color:var(--ink-soft);margin-top:6px}
-  .card.list .names{font-size:12px;font-weight:700;color:var(--ink);line-height:1.6;max-height:120px;overflow:auto}
-  .card.list .names .nm{display:inline-block;background:var(--over-bg);color:var(--over);border-radius:10px;padding:1px 8px;margin:2px 3px 0 0}
+  .card.list{padding:8px 10px}
+  .card.list .cnt{font-size:18px;font-weight:800;color:var(--pink)}
+  .card.list .grp{font-size:10px;font-weight:800;color:var(--ink-soft);margin-top:3px}
+  .card.list .names{font-size:11px;font-weight:700;color:var(--ink);line-height:1.4;max-height:80px;overflow:auto}
+  .card.list .names .nm{display:inline-block;background:var(--over-bg);color:var(--over);border-radius:8px;padding:0 5px;margin:1px 2px 0 0}
   .card.list .names .nm.hiru{background:var(--hiru);color:#b07b10}
   .card.list .names .nm.yoru{background:var(--yoru);color:#2f6a9e}
   .card.list .names .nm.blue{background:#e0effa;color:#2a6f9e}
   .card.list .names .nm.ask{background:#e9e0fa;color:#6b3fb0}
   .card.list .none{color:var(--ink-soft);font-weight:400}
-  .lowdays{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
-  .lowday{display:inline-flex;align-items:baseline;gap:3px;background:#eef7ef;border:1px solid #cfe6d4;border-radius:10px;padding:3px 9px;font-size:13px;font-weight:700;color:#2d7a4a}
-  .lowday b{font-size:14px}
-  .lowday small{font-size:10px;color:#5a9a6e;font-weight:700}
-  .highday{display:inline-flex;align-items:baseline;gap:3px;background:#fdeef0;border:1px solid #f3cdd4;border-radius:10px;padding:3px 9px;font-size:13px;font-weight:700;color:#c23b58}
-  .highday b{font-size:14px}
-  .highday small{font-size:10px;color:#d0738a;font-weight:700}
+  .lowdays{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+  .lowday{display:inline-flex;align-items:baseline;gap:2px;background:#eef7ef;border:1px solid #cfe6d4;border-radius:8px;padding:2px 6px;font-size:11px;font-weight:700;color:#2d7a4a}
+  .lowday b{font-size:12px}
+  .lowday small{font-size:9px;color:#5a9a6e;font-weight:700}
+  .highday{display:inline-flex;align-items:baseline;gap:2px;background:#fdeef0;border:1px solid #f3cdd4;border-radius:8px;padding:2px 6px;font-size:11px;font-weight:700;color:#c23b58}
+  .highday b{font-size:12px}
+  .highday small{font-size:9px;color:#d0738a;font-weight:700}
 
   /* リスピラ一覧 */
   .lf-scroll{display:flex;align-items:flex-start;gap:14px;overflow-x:auto;padding-bottom:10px}
@@ -425,7 +426,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h1>ロイヤル利用表・リスピラ管理</h1>
+  <h1>ロイヤル利用管理</h1>
   <div class="bar">
     <div class="month-nav"><button id="prevM">‹</button><span id="monthLabel"></span><button id="nextM">›</button></div>
   </div>
@@ -675,7 +676,7 @@
 
 <script>
 /* =========================================================================
-   ロイヤル利用表・リスピラ管理
+   ロイヤル利用管理
    -------------------------------------------------------------------------
    構成（このスクリプトの目次）
      1.  定数・状態
@@ -1132,11 +1133,11 @@ function renderStats() {
 
   const todayCards = isCur ?
     `<div class="card list"><div class="lbl">本日利用 明日以降未定</div>
-       <div class="cnt">${futureNone.length}<span style="font-size:12px;color:var(--ink-soft)"> 名</span></div>
-       <div class="names" style="margin-top:4px">${fn}</div></div>
+       <div class="cnt">${futureNone.length}<span style="font-size:11px;color:var(--ink-soft)"> 名</span></div>
+       <div class="names" style="margin-top:2px">${fn}</div></div>
      <div class="card list"><div class="lbl">本日利用を確認</div>
-       <div class="cnt">${askToday.length}<span style="font-size:12px;color:var(--ink-soft)"> 名</span></div>
-       <div class="names" style="margin-top:4px">${askHtml}</div></div>` : "";
+       <div class="cnt">${askToday.length}<span style="font-size:11px;color:var(--ink-soft)"> 名</span></div>
+       <div class="names" style="margin-top:2px">${askHtml}</div></div>` : "";
 
   const manageActive = document.querySelector('.tab[data-tab="manage"]')?.classList.contains("active");
   $("statCards").style.display = manageActive ? "" : "none";
@@ -2454,7 +2455,7 @@ window.openNewcomerEdit = openNewcomerEdit; window.delNewcomer = delNewcomer;
 renderAll();
 
 /* ===== 15. クラウド同期：GASコード文字列とUI初期化・起動 ============= */
-const GAS_CODE = `// ロイヤル利用表・リスピラ管理 クラウド同期用 GAS（合言葉つき・フィールド単位マージ対応）
+const GAS_CODE = `// ロイヤル利用管理 クラウド同期用 GAS（合言葉つき・フィールド単位マージ対応）
 // スプレッドシートに貼り付けて「ウェブアプリ」としてデプロイしてください。
 // 合言葉は store シートの C1 に保存されます。
 //   ・最初は空欄。最初に接続したときの合言葉が自動で C1 に登録されます。
