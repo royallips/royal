@@ -1203,9 +1203,11 @@ function renderRooms() {
   for (let i = 0; i < overRowCount; i++) {
     const arr = overRooms[i] || [];
     const bars = arr.map(w => {
+      const cobj = state.casts.find(x => x.id === w.cid);
+      const nameCls = cobj && (cobj.furyo || cobj.autoOver) ? " furyo-name" : "";
       if (w.borrow)
-        return `<div class="rt-bar bw store-${w.store||''} ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name} ${fmtSp(w.sp)}（ロイヤルに掛け持ち）" onclick="openMove('${w.cid}',event)"><span class="rt-barlabel">${w.name}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
-      return `<div class="rt-bar ov ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name} ${fmtSp(w.sp)}" onclick="openMove('${w.cid}',event)"><span class="rt-barlabel">${w.name}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
+        return `<div class="rt-bar bw store-${w.store||''} ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name} ${fmtSp(w.sp)}（ロイヤルに掛け持ち）" onclick="openMove('${w.cid}',event)"><span class="rt-barlabel${nameCls}">${w.name}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
+      return `<div class="rt-bar ov ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name} ${fmtSp(w.sp)}" onclick="openMove('${w.cid}',event)"><span class="rt-barlabel${nameCls}">${w.name}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
     }).join("");
     const hasCast = arr.some(w => !w.borrow);
     const allBorrow = arr.length && arr.every(w => w.borrow);
