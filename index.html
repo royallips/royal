@@ -95,6 +95,7 @@
   .lf-axis{display:grid;grid-template-columns:24px repeat(16,1fr);font-size:10px;color:var(--ink-soft);border-bottom:1px solid var(--line)}
   .lf-axis span{border-left:1px solid var(--line);height:17px;padding-left:2px}
   .lf-row{display:grid;grid-template-columns:24px 1fr;align-items:stretch;border-bottom:1px solid #f3e6ee;min-height:25px}
+  .lf-overline{background:var(--over);height:3px;padding:0;margin:1px 0}
   .lf-row.over{background:var(--over-bg);min-height:21px}
   .lf-row.over .lf-track{height:21px}
   .lf-row.over .lf-bar{height:19px;top:1px}
@@ -118,7 +119,6 @@
   .lf-freerow{display:grid;grid-template-columns:24px 1fr;border-top:2px solid var(--line)}
   .lf-freebar{display:grid;grid-template-columns:repeat(16,1fr);height:27px}
   .lf-cell{display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;border-left:1px solid rgba(255,255,255,.6)}
-  .lf-overline{background:var(--over);height:3px;padding:0;margin:1px 0}
   .lf-memo{font-size:13px;color:#5a3b2e;background:#fff8e6;border-top:1px solid var(--line);padding:6px 9px;white-space:pre-wrap;word-break:break-word;line-height:1.4}
   .lf-event{font-size:13px;font-weight:800;color:#b5532a;background:#fff1e6;border-bottom:1px solid var(--line);padding:5px 9px;white-space:pre-wrap;word-break:break-word;line-height:1.3}
   .rt-event{display:inline-flex;align-items:center;background:#fff1e6;color:#b5532a;border:1.5px solid #f0c4a3;border-radius:20px;padding:3px 12px;font-size:12px;font-weight:800}
@@ -246,15 +246,15 @@
   .rt-bar[draggable=true]:active{cursor:grabbing}
   .rt-track.dropok{background:#e9f8ef !important;outline:2px dashed var(--bar);outline-offset:-2px}
   .rt-row.over .rt-track.dropok{background:#fdeceb !important;outline-color:var(--over)}
+
   .redline-label{display:grid;grid-template-columns:54px 1fr}
   .redline-label .rl{grid-column:2;border-top:3px solid var(--over);padding:0;height:0;margin:2px 0}
-
   .over-banner{margin:10px 0;border:2px solid var(--over);border-radius:12px;background:var(--over-bg);padding:10px;color:var(--over);font-weight:800;font-size:14px}
   .lock-banner{margin:10px 0;border:2px solid #2d7a4a;border-radius:12px;background:#eaf7ee;padding:10px;color:#2d7a4a;font-weight:800;font-size:14px}
-  .rt-wrap.locked{position:relative;outline:3px solid #2d7a4a;outline-offset:2px;border-radius:8px}
-  .rt-wrap.locked::before{content:"🔒 確定済み";position:absolute;top:-12px;right:8px;background:#2d7a4a;color:#fff;font-size:11px;font-weight:800;padding:2px 10px;border-radius:10px;z-index:10}
+  .rt-wrap.locked{position:relative;outline:3px solid #2d7a4a;outline-offset:-1px;border-radius:8px;margin-top:14px;padding-top:24px}
+  .rt-wrap.locked::before{content:"🔒 確定済み";position:absolute;top:3px;right:8px;background:#2d7a4a;color:#fff;font-size:11px;font-weight:800;padding:3px 10px;border-radius:10px;z-index:10;white-space:nowrap}
   .rt-wrap.locked .rt-bar{cursor:not-allowed}
-  .lend-row{display:flex;gap:12px;margin-top:14px;align-items:stretch}
+  .lend-row{display:flex;gap:12px;margin-top:14px;margin-bottom:16px;align-items:stretch}
   .lend-row .lend-zone{flex:1;margin-top:0}
   .lend-zone{margin-top:14px;border:2px solid var(--lend);border-radius:12px;background:#f6effb;padding:10px}
   .lend-zone.borrow{border-color:var(--borrow);background:#eef6fc}
@@ -433,15 +433,17 @@
   <div class="cards" id="statCards"></div>
 
   <div class="tabs" id="tabsBar">
-    <button class="tab active" data-tab="rooms">リスピラ</button>
-    <button class="tab" data-tab="roomslist">リスピラ一覧</button>
-    <button class="tab" data-tab="calendar">月間利用表</button>
+    <button class="tab active" data-tab="rooms">部屋割り</button>
+    <button class="tab" data-tab="roomslist">リスピラ</button>
+    <button class="tab" data-tab="calendar">利用表</button>
     <button class="tab" data-tab="manage">キャスト管理</button>
+    <button class="tab" data-tab="settings">設定</button>
   </div>
   <div id="view-rooms"></div>
   <div id="view-roomslist" style="display:none"></div>
   <div id="view-calendar" style="display:none"></div>
   <div id="view-manage" style="display:none"></div>
+  <div id="view-settings" style="display:none"></div>
 </div>
 
 <dialog id="dlg">
@@ -1182,7 +1184,6 @@ function renderRooms() {
   let roomRows = "";
   for (let ri = 0; ri < ROOMS; ri++)
     roomRows += `<div class="rt-row"><div class="rt-room">${roomLabel(ri)}</div><div class="rt-track" data-ri="${ri}">${barsHtml(rooms[ri])}</div></div>`;
-  roomRows += `<div class="redline-label"><div class="rl"></div></div>`;
   // 溢れ行：デフォルト2行。使用中の行が埋まったら常に空き行を1つ追加で確保
   const overRowCount = Math.max(2, overRooms.length + 1);
   let rtOvNo = 0;
@@ -1392,12 +1393,11 @@ function optimizeRooms() {
   const prevForce = state.assign[dkey(day)] || {};
   const keepOver = new Set(Object.keys(prevForce).filter(cid => prevForce[cid] === "OVER"));
   const autoOverSet = new Set(state.casts.filter(c => c.autoOver).map(c => c.id)); // 自動溢れも溢れ維持
-  const lentSet = new Set((state.lends[dkey(day)] || []).map(l => l.cid)); // 掛け持ちは溢れ扱い
 
   const items = [];
   state.casts.forEach(c => {
     const sp = span(rec(c.id, day));
-    if (sp && !lentSet.has(c.id) && !keepOver.has(c.id) && !autoOverSet.has(c.id)) items.push({ cid: c.id, sp });
+    if (sp && !autoOverSet.has(c.id)) items.push({ cid: c.id, sp });
   });
   items.sort((a, b) => a.sp[0] - b.sp[0] || a.sp[1] - b.sp[1]);
 
@@ -1417,8 +1417,6 @@ function optimizeRooms() {
   order.sort((a, b) => b.used - a.used);
   const newForce = {};
   order.forEach((o, newRi) => o.arr.forEach(it => { newForce[it.cid] = (newRi < ROOMS) ? newRi : "OVER"; }));
-  lentSet.forEach(cid => { newForce[cid] = "OVER"; });
-  keepOver.forEach(cid => { newForce[cid] = "OVER"; });
   autoOverSet.forEach(cid => { newForce[cid] = "OVER"; });
   state.assign[dkey(day)] = newForce; save(); selBar = null;
   scrollPreserve(renderAll);
@@ -1639,15 +1637,20 @@ function openLend(mode) {
 }
 $("lendSave").onclick = () => {
   if (!lendStore) { alert("加盟店を選んでください"); return; }
-  const s = val("lendStart"); if (!s) { alert("開始時間を入力してください"); return; }
-  const e = val("lendEnd") || "L";
   if (lendMode === "lend") {
     const cid = $("lendCast").value;
     if (!cid) { alert("キャストを選んでください"); return; }
+    const r = rec(cid, roomDay);
+    const castStart = r ? String(r.start ?? "") : "";
+    const castEnd = r ? String(r.end ?? "") : "";
+    const s = val("lendStart") || castStart;
+    const e = val("lendEnd") || castEnd || "L";
+    if (!s) { alert("開始時間を入力してください"); return; }
     addLend("lends", { cid, store: lendStore, start: s, end: e });
-    if (!state.assign[dkey(roomDay)]) state.assign[dkey(roomDay)] = {};
-    state.assign[dkey(roomDay)][cid] = "OVER"; save();
+    save();
   } else {
+    const s = val("lendStart"); if (!s) { alert("開始時間を入力してください"); return; }
+    const e = val("lendEnd") || "L";
     const nm = val("lendName");
     addLend("borrows", { store: lendStore, start: s, end: e, name: nm });
   }
@@ -2080,7 +2083,13 @@ function renderManage() {
       <div class="sec-title"><span class="tag hiru">昼の部</span></div><div>${chips("hiru")}</div>
       <div class="sec-title" style="margin-top:14px"><span class="tag yoru">夜の部</span></div><div>${chips("yoru")}</div>
       <div style="margin-top:16px"><button class="btn" id="addCast2">＋ キャストを追加</button></div>
-      <div class="sec-title" style="margin-top:22px">☁ クラウド同期</div>
+    </div>`;
+  $("addCast2").onclick = () => openCastDlg();
+}
+function renderSettings() {
+  $("view-settings").innerHTML =
+    `<div class="panel">
+      <div class="sec-title">☁ クラウド同期</div>
       <div class="field"><label>GAS WebアプリURL</label>
         <input id="cloudUrlInput" placeholder="https://script.google.com/macros/s/.../exec" value="${(cloudUrl || '').replace(/"/g, '&quot;')}"></div>
       <div class="field"><label>パスワード</label>
@@ -2092,7 +2101,6 @@ function renderManage() {
       </div>
       <div id="cloudStatus" style="margin-top:8px;font-size:12px;font-weight:700">${cloudUrl ? "接続済み" : "未接続（この端末のみ保存）"}</div>
     </div>`;
-  $("addCast2").onclick = () => openCastDlg();
   const cs = $("cloudSaveBtn");
   if (cs) cs.onclick = () => {
     setCloudUrl(val("cloudUrlInput"));
@@ -2415,7 +2423,7 @@ $("dlgX").onclick = () => dlgClose("dlg");
 document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
   document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
   t.classList.add("active");
-  ["rooms", "roomslist", "calendar", "manage"].forEach(v =>
+  ["rooms", "roomslist", "calendar", "manage", "settings"].forEach(v =>
     $("view-" + v).style.display = v === t.dataset.tab ? "block" : "none");
   renderAll();
 });
@@ -2424,12 +2432,12 @@ $("nextM").onclick = () => { cur.setMonth(cur.getMonth() + 1); roomDay = null; r
 
 function renderAll() {
   $("monthLabel").innerHTML = `<span class="ml-year">${cur.getFullYear()}年</span><span class="ml-month">${cur.getMonth() + 1}</span><span class="ml-suffix">月</span>`;
-  renderStats(); renderRooms(); renderRoomsList(); renderCalendar(); renderManage();
+  renderStats(); renderRooms(); renderRoomsList(); renderCalendar(); renderManage(); renderSettings();
 }
 // 月間利用表のセル編集後：表だけ差し替えてスクロール位置を保持
 function renderAfterEdit() {
   scrollPreserve(() => {
-    renderStats(); renderRooms(); renderRoomsList(); renderManage();
+    renderStats(); renderRooms(); renderRoomsList(); renderManage(); renderSettings();
     refreshCalendar();
   });
 }
