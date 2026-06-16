@@ -510,7 +510,7 @@
     </div>
     <div id="noteRow" class="field" style="margin-top:6px"><label>備考</label><input id="noteText" placeholder=""></div>
   </div>
-  <div class="dlg-foot"><button class="btn ghost" id="dlgClear">消す</button><button class="btn" id="dlgSave">保存</button></div>
+  <div class="dlg-foot"><button class="btn ghost" id="dlgClearAll" style="display:none">まとめて消す</button><button class="btn ghost" id="dlgClear">消す</button><button class="btn" id="dlgSave">保存</button></div>
 </dialog>
 
 <dialog id="castDlg">
@@ -714,6 +714,7 @@ let selBar = null, moveTarget = null, delTarget = null, statTarget = null, delCo
 let lendStore = null, lendMode = "lend";   // lend=加盟店へ掛け持ち / borrow=ロイヤルに掛け持ち
 let eventDay = null, askLabelCol = null, editCastId = null;
 let undoStack = [];                          // [{day, assign, lends, borrows(JSON)}…] 末尾が最新（上限50段）
+let calUndoStack = [];                       // [JSON string of state.records] 末尾が最新（上限20段）
 let roomsListScrollTarget = null;            // リスピラ一覧で次回スクロールする対象日（チップからのジャンプ用）
 
 /* ===== 2. 永続化と正規化 ============================================ */
@@ -1286,7 +1287,7 @@ function renderRooms() {
         <span style="font-size:12px;font-weight:700"><span class="tag hiru">昼 ${hiruN}名</span> <span class="tag yoru">夜 ${yoruN}名</span></span>
         <button class="lock-toggle ${locked ? 'on' : 'off'}" id="lockBtn" style="margin-left:auto">${locked ? '🔒 確定済み' : '🔓 未確定'}</button>
         <button class="btn sm" id="optimizeBtn" ${locked ? "disabled" : ""}>最適に並べ替え</button>
-        <button class="btn ghost sm" id="undoBtn" ${(canUndo() && !locked) ? "" : "disabled"}>一つ前に戻す</button>
+        <button class="btn ghost sm" id="undoBtn" ${(canUndo() && !locked) ? "" : "disabled"}>前に戻す</button>
         <button class="btn ghost sm" id="addNewcomerBtn" ${locked ? "disabled" : ""}>＋入店予定</button>
       </div>
       ${lockBanner}
@@ -1362,6 +1363,22 @@ function buildSoukeiRequest() {
   $("soukeiReqText").value = lines.join("\n");
   $("soukeiReqCount").textContent = targets.length + "名";
   dlgOpen("soukeiReqDlg");
+}
+
+// --- カレンダー編集 undo ---
+function pushCalUndo() {
+  calUndoStack.push(JSON.stringify(state.records));
+  if (calUndoStack.length > 20) calUndoStack.shift();
+  const btn = $("calUndoBtn");
+  if (btn) btn.disabled = false;
+}
+function doCalUndo() {
+  if (!calUndoStack.length) return;
+  state.records = JSON.parse(calUndoStack.pop());
+  save();
+  const btn = $("calUndoBtn");
+  if (btn) btn.disabled = calUndoStack.length === 0;
+  renderAfterEdit();
 }
 
 // --- undo（配置変更の直前状態を1日分だけ保存） ---
@@ -1940,6 +1957,7 @@ function renderCalendar() {
       <div class="bar" style="margin:0 0 10px;gap:8px">
         <input id="calSearchBox" placeholder="🔍 キャスト名で検索" value="${calSearch.replace(/"/g, '&quot;')}" style="flex:1;min-width:160px;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px">
         <button class="btn ghost sm" id="calSearchClear">クリア</button>
+        <button class="btn ghost sm" id="calUndoBtn" ${calUndoStack.length ? "" : "disabled"}>前に戻す</button>
       </div>
       <div class="subtabs" id="calSubtabs">
         <button class="subtab ${calGroup === 'hiru' ? 'active hiru' : ''}" data-g="hiru">昼の部</button>
@@ -1957,6 +1975,8 @@ function renderCalendar() {
         </div>
       <div id="calTableWrap" style="overflow:auto;max-height:70vh"></div></div>`;
   renderCalendarTable();
+  const cub = $("calUndoBtn");
+  if (cub) cub.onclick = () => doCalUndo();
 
   const wrap0 = $("calTableWrap");
   if (wrap0 && calScrollLeft != null) wrap0.scrollLeft = calScrollLeft;
@@ -2310,12 +2330,28 @@ function refreshPick() {
       opts += `<option value="${d}" ${d === editing.day ? "selected" : ""}>${cur.getMonth() + 1}/${d}</option>`;
     $("stayEndDay").innerHTML = opts;
   }
+  const clearAllBtn = $("dlgClearAll");
+  if (clearAllBtn) {
+    let hasNeighbor = false;
+    if (editing) {
+      const { cid, day } = editing;
+      const savedSt = (state.records[recKey(cid, day)] || {}).status;
+      if (savedSt && ["seiri", "yotei", "shukuhaku", "tenpaku"].includes(savedSt)) {
+        const dim = daysIn(cur);
+        const prevR = day > 1 ? state.records[recKey(cid, day - 1)] : null;
+        const nextR = day < dim ? state.records[recKey(cid, day + 1)] : null;
+        hasNeighbor = (prevR && prevR.status === savedSt) || (nextR && nextR.status === savedSt);
+      }
+    }
+    clearAllBtn.style.display = hasNeighbor ? "" : "none";
+  }
 }
 $("statusGrid").onclick = e => { if (e.target.dataset.s) { pickStatus = e.target.dataset.s; refreshPick(); } };
 $("nakanukeChk").onchange = () => {
   $("nakanukeFields").style.display = $("nakanukeChk").checked ? "flex" : "none";
 };
 $("dlgSave").onclick = () => {
+  pushCalUndo();
   const { cid, day } = editing, k = recKey(cid, day);
   const s = val("startTime"); let e = val("endTime");
   const note = val("noteText");
@@ -2404,6 +2440,7 @@ $("dlgSave").onclick = () => {
     }
   } else if (pickStatus === "absent" || pickStatus === "off") {
     const ex = state.records[k], sb = ex && ex.stayBg ? ex.stayBg : undefined;
+    if (s && !e) e = "L";
     state.records[k] = { status: pickStatus, start: s, end: e, note };
     if (sb) state.records[k].stayBg = sb;
     if (state.assign[dkey(day)]) delete state.assign[dkey(day)][cid];
@@ -2414,9 +2451,28 @@ $("dlgSave").onclick = () => {
   save(); dlgClose("dlg"); renderAfterEdit();
 };
 $("dlgClear").onclick = () => {
-  const k = recKey(editing.cid, editing.day);
-  delete state.records[k];
-  if (state.assign[dkey(editing.day)]) delete state.assign[dkey(editing.day)][editing.cid];
+  pushCalUndo();
+  const { cid, day } = editing;
+  delete state.records[recKey(cid, day)];
+  if (state.assign[dkey(day)]) delete state.assign[dkey(day)][cid];
+  save(); dlgClose("dlg"); renderAfterEdit();
+};
+$("dlgClearAll").onclick = () => {
+  pushCalUndo();
+  const { cid, day } = editing;
+  const r = state.records[recKey(cid, day)];
+  const rangeStatus = r ? r.status : null;
+  if (rangeStatus) {
+    const dim = daysIn(cur);
+    let lo = day;
+    while (lo > 1 && (state.records[recKey(cid, lo - 1)] || {}).status === rangeStatus) lo--;
+    let hi = day;
+    while (hi < dim && (state.records[recKey(cid, hi + 1)] || {}).status === rangeStatus) hi++;
+    for (let d = lo; d <= hi; d++) {
+      delete state.records[recKey(cid, d)];
+      if (state.assign[dkey(d)]) delete state.assign[dkey(d)][cid];
+    }
+  }
   save(); dlgClose("dlg"); renderAfterEdit();
 };
 $("dlgX").onclick = () => dlgClose("dlg");
@@ -2429,8 +2485,8 @@ document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
     $("view-" + v).style.display = v === t.dataset.tab ? "block" : "none");
   renderAll();
 });
-$("prevM").onclick = () => { cur.setMonth(cur.getMonth() - 1); roomDay = null; renderAll(); };
-$("nextM").onclick = () => { cur.setMonth(cur.getMonth() + 1); roomDay = null; renderAll(); };
+$("prevM").onclick = () => { cur.setMonth(cur.getMonth() - 1); roomDay = null; calUndoStack = []; renderAll(); };
+$("nextM").onclick = () => { cur.setMonth(cur.getMonth() + 1); roomDay = null; calUndoStack = []; renderAll(); };
 
 function renderAll() {
   $("monthLabel").innerHTML = `<span class="ml-year">${cur.getFullYear()}年</span><span class="ml-month">${cur.getMonth() + 1}</span><span class="ml-suffix">月</span>`;
