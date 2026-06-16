@@ -237,9 +237,11 @@
   .rt-bar[class*="store-"] .rt-barlabel,.rt-bar[class*="store-"] .rt-bartime,.lf-bar[class*="store-"] .lf-barlabel{color:#fff}
   .rt-bar.newcomer{background:repeating-linear-gradient(45deg,#fff,#fff 6px,#f3e3f7 6px,#f3e3f7 12px)}
   .hidenet-bar{display:inline-block;background:#ffe3e0;color:#d12;font-weight:800;border-radius:4px;padding:0 3px;margin-left:3px;font-size:9px}
+  .rt-bar.has-hidenet.bar-compact::after,.lf-bar.has-hidenet::after{content:"非";position:absolute;top:0;right:0;background:#ffe3e0;color:#d12;font-weight:900;font-size:8px;line-height:1.3;padding:0 2px;border-radius:0 5px 0 4px;z-index:3;pointer-events:none}
+  .rt-bar.bar-compact .hidenet-bar{display:none}
   .rt-bar.clash{box-shadow:0 1px 3px rgba(0,0,0,.15), inset 0 0 0 1.5px rgba(224,70,60,.9)}
   .rt-bar .rt-barlabel{position:relative;z-index:2;overflow:hidden;text-overflow:ellipsis;max-width:100%}
-  .rt-bar .rt-bartime{position:relative;z-index:2;font-size:12px;font-weight:700;opacity:.95;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  .rt-bar .rt-bartime{position:relative;z-index:2;font-size:.8em;font-weight:700;opacity:.95;overflow:hidden;text-overflow:ellipsis;max-width:100%}
   .rt-bar .clash-ov{position:absolute;top:0;bottom:0;background:rgba(224,70,60,.28);border-left:1.5px solid rgba(224,70,60,.7);border-right:1.5px solid rgba(224,70,60,.7);z-index:1}
   .rt-bar.sel{outline:3px solid var(--pink);outline-offset:-1px;z-index:5}
   .rt-bar.dragging{opacity:.45}
@@ -1180,7 +1182,7 @@ function renderRooms() {
         return `<div class="rt-bar bw${rankCls} store-${w.store||''} ${w.clash ? 'clash' : ''} ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${left}%;width:${width}%" title="${w.name} ${fmtSp(w.sp)}（掛け持ち）" onclick="openMove('${w.cid}',event)">${ov}<span class="rt-barlabel${nameCls}">${w.name}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
       if (w.newcomer)
         return `<div class="rt-bar newcomer${rankCls} ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${left}%;width:${width}%" title="入店予定 ${fmtSp(w.sp)}" onclick="openMove('${w.cid}',event)"><span class="rt-barlabel">入店予定</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
-      return `<div class="rt-bar ${k % 2 ? 'b2' : 'b1'}${rankCls} ${w.clash ? 'clash' : ''} ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${left}%;width:${width}%" title="${tip}" onclick="openMove('${w.cid}',event)">${ov}<span class="rt-barlabel${nameCls}">${w.name}${w.r && w.r.hideNet ? '<span class="hidenet-bar">非掲載</span>' : ''}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
+      return `<div class="rt-bar ${k % 2 ? 'b2' : 'b1'}${rankCls}${w.r && w.r.hideNet ? ' has-hidenet' : ''} ${w.clash ? 'clash' : ''} ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${left}%;width:${width}%" title="${tip}" onclick="openMove('${w.cid}',event)">${ov}<span class="rt-barlabel${nameCls}">${w.name}${w.r && w.r.hideNet ? '<span class="hidenet-bar">非掲載</span>' : ''}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
     }).join("");
   }
 
@@ -1316,6 +1318,21 @@ function renderRooms() {
   const ub = $("undoBtn"); if (ub) ub.onclick = () => { if (!isLocked(roomDay)) doUndo(); };
   const lb = $("lockBtn"); if (lb) lb.onclick = () => toggleLock(roomDay);
   const srb = $("soukeiReqBtn"); if (srb) srb.onclick = () => buildSoukeiRequest();
+  adjustBarFontSizes();
+}
+function adjustBarFontSizes() {
+  document.querySelectorAll(".rt-track .rt-bar").forEach(bar => {
+    const label = bar.querySelector(".rt-barlabel");
+    if (!label) return;
+    bar.style.fontSize = "";
+    bar.classList.remove("bar-compact");
+    if (label.scrollWidth > label.clientWidth + 1) {
+      bar.style.fontSize = "10px";
+      if (label.scrollWidth > label.clientWidth + 1) {
+        bar.classList.add("bar-compact");
+      }
+    }
+  });
 }
 
 // --- 部屋割り確定（ロック） ---
@@ -1710,7 +1727,7 @@ function renderRoomsList() {
         const cobj = state.casts.find(x => x.id === w.cid);
         const rankCls = cobj && cobj.rank === "premier" ? " rank-premier" : cobj && cobj.rank === "vip" ? " rank-vip" : "";
         const nameCls = cobj && (cobj.furyo || cobj.autoOver) ? " furyo-name" : "";
-        return `<div class="lf-bar ${k % 2 ? 'b2' : 'b1'}${rankCls} ${w.clash ? 'clash' : ''}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name} ${fmtSp(w.sp)}${w.r && w.r.hideNet ? ' 非掲載' : ''}">${ov}<span class="lf-barlabel${nameCls}">${w.name}${w.r && w.r.hideNet ? '<span class="hidenet-bar">非掲載</span>' : ''}</span></div>`;
+        return `<div class="lf-bar ${k % 2 ? 'b2' : 'b1'}${rankCls}${w.r && w.r.hideNet ? ' has-hidenet' : ''} ${w.clash ? 'clash' : ''}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name} ${fmtSp(w.sp)}${w.r && w.r.hideNet ? ' 非掲載' : ''}">${ov}<span class="lf-barlabel${nameCls}">${w.name}</span></div>`;
       }).join("");
     }
     let roomRows = "";
