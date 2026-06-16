@@ -1098,7 +1098,8 @@ function renderStats() {
     for (let d = Math.max(1, tomorrow); d <= dim; d++) { const r = rec(cid, d); if (r && isUse(r.status)) return true; }
     return false;
   };
-  const futureNone = state.casts.filter(c => !noUseAll.has(c.id) && !hasFuture(c.id)).sort(byName);
+  const isUsingToday = cid => { const r = isCur ? rec(cid, today.getDate()) : null; return r && isUse(r.status); };
+  const futureNone = state.casts.filter(c => !noUseAll.has(c.id) && !hasFuture(c.id) && isUsingToday(c.id)).sort(byName);
 
   const nameSpan = (c, extra = "") => `<span class="nm ${c.group}${extra}" style="cursor:pointer" onclick="searchCastInCalendar('${c.name.replace(/'/g, "\\'")}')">${c.name}</span>`;
   const listOrNone = (arr, extra) => arr.length ? arr.map(c => nameSpan(c, extra)).join("") : '<span class="none">なし</span>';
