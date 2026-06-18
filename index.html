@@ -197,6 +197,12 @@
   .cell .xmark.red{color:#e8253c;font-size:26px;text-shadow:0 0 1px #e8253c}
   .cell .xmark.black{color:rgba(40,40,40,.35)}
   .cell .omark{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;pointer-events:none;color:var(--over)}
+  .cell.sel-cell{outline:2.5px solid var(--pink);outline-offset:-2px;background:#ffe8f3 !important}
+  .btn.selmode-on{background:var(--pink)!important;color:#fff!important;border-color:var(--pink)!important}
+  #calSelBar{display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:var(--pink);color:#fff;padding:10px 16px;align-items:center;gap:8px;box-shadow:0 -3px 16px rgba(0,0,0,.18);flex-wrap:wrap}
+  #calSelBar .sel-count{flex:1;font-weight:700;font-size:14px}
+  #repeatRow label.rpt-lbl{font-size:11px;font-weight:700;color:var(--ink-soft);display:block}
+  #repeatRow select{width:100%;margin-top:3px}
 
   .roomday-nav{display:flex;align-items:center;gap:4px;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:3px}
   .roomday-nav button{background:none;border:none;font-size:18px;cursor:pointer;color:var(--pink);padding:2px 10px}
@@ -516,6 +522,16 @@
       <div class="hint"></div>
     </div>
     <div id="noteRow" class="field" style="margin-top:6px"><label>備考</label><input id="noteText" placeholder=""></div>
+    <div id="repeatRow" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--line)">
+      <label class="rpt-lbl">繰り返し適用</label>
+      <select id="repeatMode">
+        <option value="once">この日だけ</option>
+        <option value="weekday">今月の同じ曜日すべて</option>
+        <option value="remaining">今日以降の残り全日</option>
+        <option value="range">指定範囲（終了日まで）</option>
+      </select>
+      <select id="repeatEndDay" style="display:none;margin-top:5px"></select>
+    </div>
   </div>
   <div class="dlg-foot"><button class="btn ghost" id="dlgClearAll" style="display:none">まとめて消す</button><button class="btn ghost" id="dlgClear">消す</button><button class="btn" id="dlgSave">保存</button></div>
 </dialog>
@@ -681,6 +697,12 @@
   <div class="dlg-foot"><button class="btn" id="cloudHelpClose" style="flex:1">閉じる</button></div>
 </dialog>
 
+<div id="calSelBar">
+  <span class="sel-count" id="calSelCount">セルをタップして選択</span>
+  <button class="btn" id="calSelInputBtn" style="background:#fff;color:var(--pink);flex-shrink:0" disabled>まとめて入力</button>
+  <button class="btn ghost" id="calSelExitBtn" style="background:transparent;border-color:rgba(255,255,255,.6);color:#fff;flex-shrink:0">キャンセル</button>
+</div>
+
 <script>
 /* =========================================================================
    ロイヤル利用管理
@@ -722,6 +744,7 @@ let lendStore = null, lendMode = "lend";   // lend=加盟店へ掛け持ち / bo
 let eventDay = null, askLabelCol = null, editCastId = null;
 let undoStack = [];                          // [{day, assign, lends, borrows(JSON)}…] 末尾が最新（上限50段）
 let calUndoStack = [];                       // [JSON string of state.records] 末尾が最新（上限20段）
+let calSelMode = false, calSelCells = new Set(), calSelApply = false;
 let roomsListScrollTarget = null;            // リスピラ一覧で次回スクロールする対象日（チップからのジャンプ用）
 
 /* ===== 2. 永続化と正規化 ============================================ */
@@ -1978,7 +2001,8 @@ function calTable(group) {
       if (d === bookD && !isTodayCol) cls += " bookcell";
       const rc = rec(c.id, d), ci = cellInner(rc);
       if (rc && isUse(rc.status) && (rc.status === "work" || rc.status === "furikae" || rc.start)) tot++;
-      r += `<td class='cell ${cls} ${ci.cls}' data-d="${d}" onclick="openDlg('${c.id}',${d})">${ci.inner}</td>`;
+      const selCls = calSelCells.has(`${c.id}@@${d}`) ? " sel-cell" : "";
+      r += `<td class='cell ${cls} ${ci.cls}${selCls}' data-cid="${c.id}" data-d="${d}" onclick="openDlg('${c.id}',${d})">${ci.inner}</td>`;
     }
     r += `<td class='total-col'>${tot}</td>`;
     rows += `<tr>${r}</tr>`;
@@ -2023,6 +2047,7 @@ function renderCalendar() {
         <input id="calSearchBox" placeholder="🔍 キャスト名で検索" value="${calSearch.replace(/"/g, '&quot;')}" style="flex:1;min-width:160px;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px">
         <button class="btn ghost sm" id="calSearchClear">クリア</button>
         <button class="btn ghost sm" id="calUndoBtn" ${calUndoStack.length ? "" : "disabled"}>前に戻す</button>
+        <button class="btn ghost sm${calSelMode ? ' selmode-on' : ''}" id="calSelModeBtn">まとめて入力</button>
       </div>
       <div class="subtabs" id="calSubtabs">
         <button class="subtab ${calGroup === 'hiru' ? 'active hiru' : ''}" data-g="hiru">昼の部</button>
@@ -2081,6 +2106,8 @@ function renderCalendar() {
   }
   const cc = $("calSearchClear");
   if (cc) cc.onclick = () => { calSearch = ""; const b = $("calSearchBox"); if (b) b.value = ""; renderCalendarTable(); };
+  const smb = $("calSelModeBtn");
+  if (smb) smb.onclick = () => { if (calSelMode) exitCalSelMode(); else enterCalSelMode(); };
 }
 
 // --- 個人の月間集計 ---
@@ -2360,7 +2387,86 @@ makeTimeSelect("lendEnd", "end");       // 掛け持ち：終了
 // 値設定の共通ショートカット
 function setTime(prefix, v) { if (timeSelects[prefix]) timeSelects[prefix].set(v); }
 
+/* ===== 案1: 繰り返し適用ヘルパー ============================================ */
+function getRepeatTargets(cid, day, mode) {
+  if (mode === "once") return [];
+  const dim = daysIn(cur), y = cur.getFullYear(), m = cur.getMonth();
+  const result = [];
+  if (mode === "weekday") {
+    const wd = new Date(y, m, day).getDay();
+    for (let d = 1; d <= dim; d++)
+      if (d !== day && new Date(y, m, d).getDay() === wd) result.push({ cid, day: d });
+  } else if (mode === "remaining") {
+    for (let d = day + 1; d <= dim; d++) result.push({ cid, day: d });
+  } else if (mode === "range") {
+    const endEl = $("repeatEndDay");
+    const endD = endEl ? (parseInt(endEl.value) || day) : day;
+    for (let d = day + 1; d <= Math.min(endD, dim); d++) result.push({ cid, day: d });
+  }
+  return result;
+}
+function applyRecordToDay(cid, d, rec) {
+  const k = recKey(cid, d);
+  if (!rec) {
+    delete state.records[k];
+    if (state.assign[dkey(d)]) delete state.assign[dkey(d)][cid];
+    return;
+  }
+  state.records[k] = Object.assign({}, rec);
+  const cobj = state.casts.find(x => x.id === cid);
+  if ((rec.status === "work" || rec.status === "furikae") && cobj && cobj.autoOver) {
+    if (!state.assign[dkey(d)]) state.assign[dkey(d)] = {};
+    state.assign[dkey(d)][cid] = "OVER";
+  } else {
+    if (state.assign[dkey(d)]) delete state.assign[dkey(d)][cid];
+  }
+}
+
+/* ===== 案2: セル複数選択モード ============================================ */
+function toggleCalSel(cid, day) {
+  const k = `${cid}@@${day}`;
+  const was = calSelCells.has(k);
+  if (was) calSelCells.delete(k); else calSelCells.add(k);
+  const wrap = $("calTableWrap");
+  if (wrap) {
+    const cell = wrap.querySelector(`td.cell[data-cid="${cid}"][data-d="${day}"]`);
+    if (cell) cell.classList.toggle("sel-cell", !was);
+  }
+  updateCalSelUI();
+}
+function updateCalSelUI() {
+  const bar = $("calSelBar"); if (!bar) return;
+  if (calSelMode) {
+    bar.style.display = "flex";
+    const n = calSelCells.size;
+    $("calSelCount").textContent = n > 0 ? `${n}セル選択中` : "セルをタップして選択";
+    const inBtn = $("calSelInputBtn"); if (inBtn) inBtn.disabled = n === 0;
+  } else {
+    bar.style.display = "none";
+  }
+}
+function enterCalSelMode() {
+  calSelMode = true; calSelCells.clear(); calSelApply = false;
+  const btn = $("calSelModeBtn"); if (btn) btn.classList.add("selmode-on");
+  updateCalSelUI();
+}
+function exitCalSelMode() {
+  calSelMode = false; calSelCells.clear(); calSelApply = false;
+  const btn = $("calSelModeBtn"); if (btn) btn.classList.remove("selmode-on");
+  document.querySelectorAll("td.cell.sel-cell").forEach(el => el.classList.remove("sel-cell"));
+  updateCalSelUI();
+}
+function openCalSelDlg() {
+  if (calSelCells.size === 0) return;
+  const first = calSelCells.values().next().value;
+  const [scid, sday] = first.split("@@");
+  calSelApply = true;
+  openDlg(scid, parseInt(sday));
+  const title = $("dlgTitle"); if (title) title.textContent = `${calSelCells.size}セル まとめて入力`;
+}
+
 function openDlg(cid, day) {
+  if (calSelMode && !calSelApply) { toggleCalSel(cid, day); return; }
   editing = { cid, day };
   const c = state.casts.find(x => x.id === cid);
   $("dlgTitle").textContent = `${c.name}　${cur.getMonth() + 1}/${day}`;
@@ -2373,6 +2479,8 @@ function openDlg(cid, day) {
   $("nakanukeChk").checked = !!(r && r.start2);
   $("hideNetChk").checked = !!(r && r.hideNet);
   $("noteText").value = r && r.note ? r.note : "";
+  const rm0 = $("repeatMode"); if (rm0) { rm0.value = "once"; }
+  const red0 = $("repeatEndDay"); if (red0) red0.style.display = "none";
   refreshPick();
   dlgOpen("dlg");
 }
@@ -2410,6 +2518,22 @@ function refreshPick() {
     }
     clearAllBtn.style.display = hasNeighbor ? "" : "none";
   }
+  // 繰り返し行の表示制御
+  const rr = $("repeatRow"); if (rr) rr.style.display = calSelApply ? "none" : "";
+  const rm = $("repeatMode");
+  if (rm) {
+    rm.onchange = () => {
+      const red = $("repeatEndDay"); if (red) red.style.display = rm.value === "range" ? "block" : "none";
+    };
+    const red = $("repeatEndDay");
+    if (red && editing) {
+      const dim = daysIn(cur);
+      let opts = "";
+      for (let d = editing.day + 1; d <= dim; d++)
+        opts += `<option value="${d}">${cur.getMonth() + 1}/${d}</option>`;
+      red.innerHTML = opts || `<option value="${editing.day}">${cur.getMonth() + 1}/${editing.day}</option>`;
+    }
+  }
 }
 $("statusGrid").onclick = e => { if (e.target.dataset.s) { pickStatus = e.target.dataset.s; refreshPick(); } };
 $("nakanukeChk").onchange = () => {
@@ -2421,10 +2545,19 @@ $("dlgSave").onclick = () => {
   const s = val("startTime"); let e = val("endTime");
   const note = val("noteText");
 
+  // 繰り返し/まとめて入力の対象を先に決定
+  const rMode = ($("repeatMode") || {}).value || "once";
+  const hadSelApply = calSelApply;
+  const extraTargets = hadSelApply
+    ? [...calSelCells].filter(x => x !== `${cid}@@${day}`).map(x => { const [c, d] = x.split("@@"); return { cid: c, day: parseInt(d) }; })
+    : getRepeatTargets(cid, day, rMode);
+
   // 「休み」で時間・備考・宿泊背景が無ければ記録ごと削除
   if (pickStatus === "off" && !s && !note && !(state.records[k] && state.records[k].stayBg)) {
     delete state.records[k];
     if (state.assign[dkey(day)]) delete state.assign[dkey(day)][cid];
+    extraTargets.forEach(({ cid: tc, day: td }) => applyRecordToDay(tc, td, null));
+    if (hadSelApply) { calSelApply = false; exitCalSelMode(); }
     save(); dlgClose("dlg"); renderAfterEdit(); return;
   }
 
@@ -2513,6 +2646,10 @@ $("dlgSave").onclick = () => {
     state.records[k] = { status: pickStatus, note };
     if (state.assign[dkey(day)]) delete state.assign[dkey(day)][cid];
   }
+  // 繰り返し/まとめて入力を適用
+  const primaryRec = state.records[k] || null;
+  extraTargets.forEach(({ cid: tc, day: td }) => applyRecordToDay(tc, td, primaryRec));
+  if (hadSelApply) { calSelApply = false; exitCalSelMode(); }
   save(); dlgClose("dlg"); renderAfterEdit();
 };
 $("dlgClear").onclick = () => {
@@ -2540,7 +2677,9 @@ $("dlgClearAll").onclick = () => {
   }
   save(); dlgClose("dlg"); renderAfterEdit();
 };
-$("dlgX").onclick = () => dlgClose("dlg");
+$("dlgX").onclick = () => { dlgClose("dlg"); if (calSelApply) calSelApply = false; };
+$("calSelInputBtn").onclick = () => openCalSelDlg();
+$("calSelExitBtn").onclick = () => exitCalSelMode();
 
 /* ===== 14. タブ・月送り・全体描画 ================================== */
 document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
@@ -2550,8 +2689,8 @@ document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
     $("view-" + v).style.display = v === t.dataset.tab ? "block" : "none");
   renderAll();
 });
-$("prevM").onclick = () => { cur.setMonth(cur.getMonth() - 1); roomDay = null; calUndoStack = []; renderAll(); };
-$("nextM").onclick = () => { cur.setMonth(cur.getMonth() + 1); roomDay = null; calUndoStack = []; renderAll(); };
+$("prevM").onclick = () => { cur.setMonth(cur.getMonth() - 1); roomDay = null; calUndoStack = []; exitCalSelMode(); renderAll(); };
+$("nextM").onclick = () => { cur.setMonth(cur.getMonth() + 1); roomDay = null; calUndoStack = []; exitCalSelMode(); renderAll(); };
 
 function renderAll() {
   $("monthLabel").innerHTML = `<span class="ml-year">${cur.getFullYear()}年</span><span class="ml-month">${cur.getMonth() + 1}</span><span class="ml-suffix">月</span>`;
