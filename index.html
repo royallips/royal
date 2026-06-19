@@ -45,7 +45,7 @@
   .month-nav button:hover{background:var(--pink-soft)}
   select,input[type=date]{padding:8px 10px;border:1.5px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
 
-  .tabs{display:flex;gap:4px;border-bottom:2px solid var(--line);margin-bottom:14px;flex-wrap:wrap}
+.tabs{display:flex;gap:4px;border-bottom:2px solid var(--line);margin-bottom:14px;flex-wrap:wrap;position:sticky;top:0;z-index:100;background:#fff}
   .tab{padding:10px 16px;cursor:pointer;font-weight:700;color:var(--ink-soft);border:none;background:none;border-bottom:3px solid transparent;margin-bottom:-2px}
   .tab.active{color:var(--pink);border-bottom-color:var(--pink)}
   .subtabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
@@ -445,8 +445,6 @@
     <div class="month-nav"><button id="prevM">‹</button><span id="monthLabel"></span><button id="nextM">›</button></div>
   </div>
 
-  <div class="cards" id="statCards"></div>
-
   <div class="tabs" id="tabsBar">
     <button class="tab active" data-tab="rooms">部屋割り</button>
     <button class="tab" data-tab="roomslist">リスピラ</button>
@@ -454,6 +452,8 @@
     <button class="tab" data-tab="manage">キャスト管理</button>
     <button class="tab" data-tab="settings">設定</button>
   </div>
+
+  <div class="cards" id="statCards"></div>
   <div id="view-rooms"></div>
   <div id="view-roomslist" style="display:none"></div>
   <div id="view-calendar" style="display:none"></div>
