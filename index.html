@@ -198,11 +198,12 @@
   .cell .xmark.black{color:rgba(40,40,40,.35)}
   .cell .omark{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;pointer-events:none;color:var(--over)}
   .cell.sel-cell{outline:2.5px solid var(--pink);outline-offset:-2px;background:#ffe8f3 !important}
+  .mday-btn{min-width:26px;padding:3px 2px;font-size:11px;line-height:1.2}
+  .mday-btn.mday-sel{background:var(--pink)!important;color:#fff!important;border-color:var(--pink)!important}
   .btn.selmode-on{background:var(--pink)!important;color:#fff!important;border-color:var(--pink)!important}
   #calSelBar{display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:var(--pink);color:#fff;padding:10px 16px;align-items:center;gap:8px;box-shadow:0 -3px 16px rgba(0,0,0,.18);flex-wrap:wrap}
   #calSelBar .sel-count{flex:1;font-weight:700;font-size:14px}
-  #repeatRow label.rpt-lbl{font-size:11px;font-weight:700;color:var(--ink-soft);display:block}
-  #repeatRow select{width:100%;margin-top:3px}
+
 
   .roomday-nav{display:flex;align-items:center;gap:4px;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:3px}
   .roomday-nav button{background:none;border:none;font-size:18px;cursor:pointer;color:var(--pink);padding:2px 10px}
@@ -521,17 +522,12 @@
         <select id="stayEndDay"></select></div>
       <div class="hint"></div>
     </div>
-    <div id="noteRow" class="field" style="margin-top:6px"><label>備考</label><input id="noteText" placeholder=""></div>
-    <div id="repeatRow" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--line)">
-      <label class="rpt-lbl">繰り返し適用</label>
-      <select id="repeatMode">
-        <option value="once">この日だけ</option>
-        <option value="weekday">今月の同じ曜日すべて</option>
-        <option value="remaining">今日以降の残り全日</option>
-        <option value="range">指定範囲（終了日まで）</option>
-      </select>
-      <select id="repeatEndDay" style="display:none;margin-top:5px"></select>
+    <div id="multiDayRow" style="display:none;margin-top:10px">
+      <label style="font-size:11px;font-weight:700;color:var(--ink-soft);display:block;margin-bottom:4px">日にちを選択</label>
+      <div id="multiDayGrid" style="display:flex;flex-wrap:wrap;gap:4px"></div>
     </div>
+    <div id="noteRow" class="field" style="margin-top:6px"><label>備考</label><input id="noteText" placeholder=""></div>
+
   </div>
   <div class="dlg-foot"><button class="btn ghost" id="dlgClearAll" style="display:none">まとめて消す</button><button class="btn ghost" id="dlgClear">消す</button><button class="btn" id="dlgSave">保存</button></div>
 </dialog>
@@ -2387,24 +2383,6 @@ makeTimeSelect("lendEnd", "end");       // 掛け持ち：終了
 // 値設定の共通ショートカット
 function setTime(prefix, v) { if (timeSelects[prefix]) timeSelects[prefix].set(v); }
 
-/* ===== 案1: 繰り返し適用ヘルパー ============================================ */
-function getRepeatTargets(cid, day, mode) {
-  if (mode === "once") return [];
-  const dim = daysIn(cur), y = cur.getFullYear(), m = cur.getMonth();
-  const result = [];
-  if (mode === "weekday") {
-    const wd = new Date(y, m, day).getDay();
-    for (let d = 1; d <= dim; d++)
-      if (d !== day && new Date(y, m, d).getDay() === wd) result.push({ cid, day: d });
-  } else if (mode === "remaining") {
-    for (let d = day + 1; d <= dim; d++) result.push({ cid, day: d });
-  } else if (mode === "range") {
-    const endEl = $("repeatEndDay");
-    const endD = endEl ? (parseInt(endEl.value) || day) : day;
-    for (let d = day + 1; d <= Math.min(endD, dim); d++) result.push({ cid, day: d });
-  }
-  return result;
-}
 function applyRecordToDay(cid, d, rec) {
   const k = recKey(cid, d);
   if (!rec) {
@@ -2420,6 +2398,12 @@ function applyRecordToDay(cid, d, rec) {
   } else {
     if (state.assign[dkey(d)]) delete state.assign[dkey(d)][cid];
   }
+}
+
+/* ===== 日にちを選択（予定・未定）============================================ */
+function toggleMDay(d) {
+  const btn = document.querySelector(`#multiDayGrid [data-d="${d}"]`);
+  if (btn) btn.classList.toggle("mday-sel");
 }
 
 /* ===== 案2: セル複数選択モード ============================================ */
@@ -2479,8 +2463,7 @@ function openDlg(cid, day) {
   $("nakanukeChk").checked = !!(r && r.start2);
   $("hideNetChk").checked = !!(r && r.hideNet);
   $("noteText").value = r && r.note ? r.note : "";
-  const rm0 = $("repeatMode"); if (rm0) { rm0.value = "once"; }
-  const red0 = $("repeatEndDay"); if (red0) red0.style.display = "none";
+  const mdg = $("multiDayGrid"); if (mdg) mdg.innerHTML = "";
   refreshPick();
   dlgOpen("dlg");
 }
@@ -2488,7 +2471,7 @@ function openDlg(cid, day) {
 function refreshPick() {
   document.querySelectorAll("#statusGrid button").forEach(b => b.classList.toggle("sel", b.dataset.s === pickStatus));
   const isStay = (pickStatus === "shukuhaku" || pickStatus === "tenpaku");
-  const isRange = (pickStatus === "shukuhaku" || pickStatus === "tenpaku" || pickStatus === "yotei" || pickStatus === "seiri");
+  const isRange = (pickStatus === "shukuhaku" || pickStatus === "tenpaku" || pickStatus === "yotei" || pickStatus === "seiri" || pickStatus === "mitei");
   const showTime = (pickStatus === "work" || pickStatus === "furikae" || pickStatus === "absent" || pickStatus === "off" || pickStatus === "seiri" || isStay);
   $("timeFields").style.display = showTime ? "block" : "none";
   $("absentNote").style.display = (pickStatus === "absent" || pickStatus === "off") ? "block" : "none";
@@ -2518,20 +2501,17 @@ function refreshPick() {
     }
     clearAllBtn.style.display = hasNeighbor ? "" : "none";
   }
-  // 繰り返し行の表示制御
-  const rr = $("repeatRow"); if (rr) rr.style.display = calSelApply ? "none" : "";
-  const rm = $("repeatMode");
-  if (rm) {
-    rm.onchange = () => {
-      const red = $("repeatEndDay"); if (red) red.style.display = rm.value === "range" ? "block" : "none";
-    };
-    const red = $("repeatEndDay");
-    if (red && editing) {
+  // 日にちを選択（予定・未定）
+  const mdRow = $("multiDayRow"), mdGrid = $("multiDayGrid");
+  if (mdRow) {
+    const showMd = pickStatus === "yotei" || pickStatus === "mitei";
+    mdRow.style.display = showMd ? "" : "none";
+    if (showMd && mdGrid && editing && !mdGrid.hasChildNodes()) {
       const dim = daysIn(cur);
-      let opts = "";
-      for (let d = editing.day + 1; d <= dim; d++)
-        opts += `<option value="${d}">${cur.getMonth() + 1}/${d}</option>`;
-      red.innerHTML = opts || `<option value="${editing.day}">${cur.getMonth() + 1}/${editing.day}</option>`;
+      let html = "";
+      for (let d = 1; d <= dim; d++)
+        html += `<button type="button" class="btn ghost sm mday-btn" data-d="${d}" onclick="toggleMDay(${d})">${d}</button>`;
+      mdGrid.innerHTML = html;
     }
   }
 }
@@ -2545,12 +2525,11 @@ $("dlgSave").onclick = () => {
   const s = val("startTime"); let e = val("endTime");
   const note = val("noteText");
 
-  // 繰り返し/まとめて入力の対象を先に決定
-  const rMode = ($("repeatMode") || {}).value || "once";
+  // まとめて入力の対象を先に決定
   const hadSelApply = calSelApply;
   const extraTargets = hadSelApply
     ? [...calSelCells].filter(x => x !== `${cid}@@${day}`).map(x => { const [c, d] = x.split("@@"); return { cid: c, day: parseInt(d) }; })
-    : getRepeatTargets(cid, day, rMode);
+    : [];
 
   // 「休み」で時間・備考・宿泊背景が無ければ記録ごと削除
   if (pickStatus === "off" && !s && !note && !(state.records[k] && state.records[k].stayBg)) {
@@ -2596,18 +2575,31 @@ $("dlgSave").onclick = () => {
           delete state.assign[dkey(d)][cid];
         }
       } else {
-        if (ex && ex.status === "seiri" && ex.start) continue; // 既存の時間付き生理日は維持
+        if (ex && ex.start && (ex.status === "seiri" || ex.status === "work" || ex.status === "furikae")) continue; // 既存の時間付き生理・利用日は維持
         state.records[recKey(cid, d)] = { status: "seiri", note: (d === day ? note : (ex && ex.note ? ex.note : "")) };
         if (state.assign[dkey(d)]) delete state.assign[dkey(d)][cid];
       }
     }
   } else if (pickStatus === "yotei") {
-    // 開始日〜終了日を一括登録（時間なし・色のみ）
-    const endD = parseInt($("stayEndDay").value) || day;
-    const lo = Math.min(day, endD), hi = Math.max(day, endD);
-    for (let d = lo; d <= hi; d++) {
-      state.records[recKey(cid, d)] = { status: pickStatus, note: (d === day ? note : "") };
-      if (state.assign[dkey(d)]) delete state.assign[dkey(d)][cid];
+    const selDays = [...($("multiDayGrid") || document.createElement("div")).querySelectorAll(".mday-btn.mday-sel")].map(b => parseInt(b.dataset.d));
+    if (selDays.length > 0) {
+      const conflicts = selDays.filter(d => { const r = state.records[recKey(cid, d)]; return r && (r.status === "work" || r.status === "furikae"); });
+      if (conflicts.length > 0) {
+        const msg = `${conflicts.map(d => `${cur.getMonth()+1}/${d}`).join("、")} に利用の入力があります。上書きしますか？`;
+        if (!confirm(msg)) return;
+      }
+      selDays.forEach(d => {
+        state.records[recKey(cid, d)] = { status: "yotei", note: (d === day ? note : "") };
+        if (state.assign[dkey(d)]) delete state.assign[dkey(d)][cid];
+      });
+    } else {
+      // 連続する終了日を使った範囲登録
+      const endD = parseInt($("stayEndDay").value) || day;
+      const lo = Math.min(day, endD), hi = Math.max(day, endD);
+      for (let d = lo; d <= hi; d++) {
+        state.records[recKey(cid, d)] = { status: "yotei", note: (d === day ? note : "") };
+        if (state.assign[dkey(d)]) delete state.assign[dkey(d)][cid];
+      }
     }
   } else if (pickStatus === "shukuhaku" || pickStatus === "tenpaku") {
     const endD = parseInt($("stayEndDay").value) || day;
@@ -2642,6 +2634,26 @@ $("dlgSave").onclick = () => {
     state.records[k] = { status: pickStatus, start: s, end: e, note };
     if (sb) state.records[k].stayBg = sb;
     if (state.assign[dkey(day)]) delete state.assign[dkey(day)][cid];
+  } else if (pickStatus === "mitei") {
+    const selDays = [...($("multiDayGrid") || document.createElement("div")).querySelectorAll(".mday-btn.mday-sel")].map(b => parseInt(b.dataset.d));
+    if (selDays.length > 0) {
+      const conflicts = selDays.filter(d => { const r = state.records[recKey(cid, d)]; return r && (r.status === "work" || r.status === "furikae"); });
+      if (conflicts.length > 0) {
+        const msg = `${conflicts.map(d => `${cur.getMonth()+1}/${d}`).join("、")} に利用の入力があります。上書きしますか？`;
+        if (!confirm(msg)) return;
+      }
+      selDays.forEach(d => {
+        state.records[recKey(cid, d)] = { status: "mitei", note: (d === day ? note : "") };
+        if (state.assign[dkey(d)]) delete state.assign[dkey(d)][cid];
+      });
+    } else {
+      const endD = parseInt($("stayEndDay").value) || day;
+      const lo = Math.min(day, endD), hi = Math.max(day, endD);
+      for (let d = lo; d <= hi; d++) {
+        state.records[recKey(cid, d)] = { status: "mitei", note: (d === day ? note : "") };
+        if (state.assign[dkey(d)]) delete state.assign[dkey(d)][cid];
+      }
+    }
   } else {
     state.records[k] = { status: pickStatus, note };
     if (state.assign[dkey(day)]) delete state.assign[dkey(day)][cid];
@@ -2711,6 +2723,7 @@ window.toggleRoomLock = toggleRoomLock;
 window.setAvail = setAvail; window.cycleAsk = cycleAsk; window.openLend = openLend; window.cycleSoukei = cycleSoukei;
 window.removeLend = removeLend; window.jumpToDay = jumpToDay; window.jumpToListDay = jumpToListDay; window.jumpToListDate = jumpToListDate; window.searchCastInCalendar = searchCastInCalendar; window.editAskLabel = editAskLabel;
 window.optimizeRooms = optimizeRooms; window.openCastDlg = openCastDlg;
+window.toggleMDay = toggleMDay;
 window.openNewcomerEdit = openNewcomerEdit; window.delNewcomer = delNewcomer;
 
 renderAll();
