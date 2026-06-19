@@ -2575,7 +2575,8 @@ $("dlgSave").onclick = () => {
           delete state.assign[dkey(d)][cid];
         }
       } else {
-        if (ex && ex.start && (ex.status === "seiri" || ex.status === "work" || ex.status === "furikae")) continue; // 既存の時間付き生理・利用日は維持
+        if (ex && (ex.status === "work" || ex.status === "furikae")) continue; // 既存の利用日は維持
+        if (ex && ex.status === "seiri" && ex.start) continue; // 既存の時間付き生理日は維持
         state.records[recKey(cid, d)] = { status: "seiri", note: (d === day ? note : (ex && ex.note ? ex.note : "")) };
         if (state.assign[dkey(d)]) delete state.assign[dkey(d)][cid];
       }
@@ -2614,6 +2615,7 @@ $("dlgSave").onclick = () => {
           if (state.assign[dkey(d)]) delete state.assign[dkey(d)][cid];
         } else {
           if (ex && ex.status === pickStatus && ex.start) { ex.stayBg = pickStatus; continue; } // 既存の出勤日は維持
+          if (ex && (ex.status === "work" || ex.status === "furikae")) continue; // 既存の利用日は維持
           state.records[recKey(cid, d)] = { status: pickStatus, start: "", end: "", note: (d === day ? note : (ex && ex.note ? ex.note : "")), stayBg: pickStatus };
           if (state.assign[dkey(d)]) delete state.assign[dkey(d)][cid];
         }
