@@ -823,6 +823,8 @@ async function doCloudPush() {
   if (!cloudUrl || cloudBusy) return;
   cloudBusy = true; cloudStatus("保存中…", "#c77");
   try {
+    // undefined値のレコードを送信前に除去
+    for (const k in state.records) { if (state.records[k] === undefined) delete state.records[k]; }
     const body = { action: "save", rev: lastSyncedRev, data: state, ts: Date.now(), pass: cloudPass };
     const res = await fetch(cloudUrl, {
       method: "POST",
@@ -2813,9 +2815,7 @@ function doPost(e){
     var newRev=serverRevNow+1;
     sh.getRange('A1').setValue(newRev);
     sh.getRange('B1').setValue(JSON.stringify(merged));
-    SpreadsheetApp.flush();
-    var writtenCount=merged&&merged.records?Object.keys(merged.records).length:0;
-    return ContentService.createTextOutput(JSON.stringify({ok:true,rev:newRev,merged:didMerge,writtenCount:writtenCount,data:didMerge?merged:null})).setMimeType(ContentService.MimeType.JSON);
+    return ContentService.createTextOutput(JSON.stringify({ok:true,rev:newRev,merged:didMerge,data:didMerge?merged:null})).setMimeType(ContentService.MimeType.JSON);
   } finally { lock.releaseLock(); }
 }
 // サーバーとクライアントをフィールド単位で統合（両者の入力を極力残す）
