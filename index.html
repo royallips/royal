@@ -2818,6 +2818,7 @@ function doPost(e){
     var newRev=serverRevNow+1;
     sh.getRange('A1').setValue(newRev);
     sh.getRange('B1').setValue(JSON.stringify(merged));
+    SpreadsheetApp.flush();
     return ContentService.createTextOutput(JSON.stringify({ok:true,rev:newRev,merged:didMerge,data:didMerge?merged:null})).setMimeType(ContentService.MimeType.JSON);
   } finally { lock.releaseLock(); }
 }
