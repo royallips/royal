@@ -802,9 +802,11 @@ function setCloudPass(p) {
   cloudPass = (p || "").trim();
   localStorage.setItem(CLOUD_PASS_KEY, cloudPass);
 }
+let _cloudStatusMsg = ""; let _cloudStatusColor = "";
 function cloudStatus(msg, color) {
+  _cloudStatusMsg = msg; _cloudStatusColor = color || "var(--ink-soft)";
   const el = document.getElementById("cloudStatus");
-  if (el) { el.textContent = msg; el.style.color = color || "var(--ink-soft)"; }
+  if (el) { el.textContent = msg; el.style.color = _cloudStatusColor; }
 }
 function cloudGetUrl(params) {
   const p = cloudPass ? "&pass=" + encodeURIComponent(cloudPass) : "";
@@ -840,7 +842,7 @@ async function doCloudPush() {
       cloudStatus("保存失敗", "#d12");
     }
   } catch (e) {
-    cloudStatus("オフライン（後で再送）", "#c77");
+    cloudStatus("送信エラー：" + (e && e.message ? e.message : String(e)), "#d12");
   }
   cloudBusy = false;
 }
@@ -2210,7 +2212,7 @@ function renderSettings() {
         <button class="btn ghost" id="cloudPullBtn">今すぐ最新を取得</button>
         <button class="btn ghost" id="cloudHelpBtn">使い方</button>
       </div>
-      <div id="cloudStatus" style="margin-top:8px;font-size:12px;font-weight:700">${cloudUrl ? "接続済み" : "未接続（この端末のみ保存）"}</div>
+      <div id="cloudStatus" style="margin-top:8px;font-size:12px;font-weight:700;color:${_cloudStatusColor || ""}">${_cloudStatusMsg || (cloudUrl ? "接続済み" : "未接続（この端末のみ保存）")}</div>
     </div>`;
   const cs = $("cloudSaveBtn");
   if (cs) cs.onclick = () => {
