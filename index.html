@@ -786,9 +786,10 @@ function persistLocal() { localStorage.setItem(KEY, JSON.stringify(state)); }
 /* ===== 3. クラウド同期（Googleスプレッドシート + GAS） ================ */
 const CLOUD_URL_KEY = "cast_mgmt_cloud_url";
 const CLOUD_PASS_KEY = "cast_mgmt_cloud_pass";
+const CLOUD_REV_KEY = "cast_mgmt_cloud_rev";
 let cloudUrl = localStorage.getItem(CLOUD_URL_KEY) || "";
 let cloudPass = localStorage.getItem(CLOUD_PASS_KEY) || "";
-let lastSyncedRev = 0;     // 最後にサーバーから取り込んだリビジョン
+let lastSyncedRev = parseInt(localStorage.getItem(CLOUD_REV_KEY) || "0"); // 最後にサーバーから取り込んだリビジョン（永続化）
 let cloudPushTimer = null; // 送信デバウンス
 let cloudBusy = false;     // 送信中フラグ
 let suppressPush = false;  // サーバー取り込み中はpushを抑制
@@ -832,7 +833,7 @@ async function doCloudPush() {
         suppressPush = true; applyCloudData(j.data); suppressPush = false;
         persistLocal();
       }
-      lastSyncedRev = j.rev; cloudStatus("同期済み ✓", "#2d8a4a");
+      lastSyncedRev = j.rev; localStorage.setItem(CLOUD_REV_KEY, lastSyncedRev); cloudStatus("同期済み ✓", "#2d8a4a");
     } else if (j && j.error === "auth") {
       cloudStatus("合言葉が違います（保存できません）", "#d12");
     } else {
@@ -858,7 +859,7 @@ async function cloudPull() {
       if (editingOpen) return;
       suppressPush = true; applyCloudData(j.data); suppressPush = false;
       persistLocal();
-      lastSyncedRev = j.rev;
+      lastSyncedRev = j.rev; localStorage.setItem(CLOUD_REV_KEY, lastSyncedRev);
       scrollPreserve(renderAll);
       cloudStatus("最新を反映 ✓", "#2d8a4a");
     }
@@ -887,11 +888,11 @@ async function connectCloud() {
       if (j.changed && j.data && j.data.casts) {
         suppressPush = true; applyCloudData(j.data); suppressPush = false;
         persistLocal();
-        lastSyncedRev = j.rev;
+        lastSyncedRev = j.rev; localStorage.setItem(CLOUD_REV_KEY, lastSyncedRev);
         scrollPreserve(renderAll);
         cloudStatus("サーバーのデータを取り込みました ✓", "#2d8a4a");
       } else {
-        lastSyncedRev = j.rev || 0;
+        lastSyncedRev = j.rev || 0; localStorage.setItem(CLOUD_REV_KEY, lastSyncedRev);
         await doCloudPush();
         cloudStatus("この端末のデータを初期登録しました ✓", "#2d8a4a");
       }
@@ -2826,7 +2827,7 @@ function _merge(server,client){
   };
 })();
 // 起動時、保存済みURLがあれば同期開始
-if (cloudUrl) { lastSyncedRev = 0; cloudPull(); startCloudSync(); }
+if (cloudUrl) { cloudPull(); startCloudSync(); }
 </script>
 </body>
 </html>
