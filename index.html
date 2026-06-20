@@ -851,7 +851,7 @@ async function doCloudPush() {
 async function cloudPull() {
   if (!cloudUrl || cloudBusy) return;
   try {
-    const res = await fetch(cloudGetUrl("action=get&rev=" + lastSyncedRev), { method: "GET" });
+    const res = await fetch(cloudGetUrl("action=get&rev=" + lastSyncedRev + "&_t=" + Date.now()), { method: "GET" });
     const j = await res.json();
     if (j && j.error === "auth") { cloudStatus("合言葉が違います", "#d12"); return; }
     if (j && j.ok && j.changed && j.data) {
@@ -884,7 +884,7 @@ async function connectCloud() {
   if (!cloudUrl) return;
   cloudStatus("接続中…", "#c77");
   try {
-    const res = await fetch(cloudGetUrl("action=get&rev=0"), { method: "GET" });
+    const res = await fetch(cloudGetUrl("action=get&rev=0&_t=" + Date.now()), { method: "GET" });
     const j = await res.json();
     if (j && j.error === "auth") { cloudStatus("合言葉が違います（接続できません）", "#d12"); return; }
     if (j && j.ok) {
