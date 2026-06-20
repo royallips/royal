@@ -837,8 +837,7 @@ async function doCloudPush() {
         suppressPush = true; applyCloudData(j.data); suppressPush = false;
         persistLocal();
       }
-      lastSyncedRev = j.rev; localStorage.setItem(CLOUD_REV_KEY, lastSyncedRev);
-      cloudStatus("同期済み ✓（flush:" + (j.flushed ? "OK" : "NG") + "）", "#2d8a4a");
+      lastSyncedRev = j.rev; localStorage.setItem(CLOUD_REV_KEY, lastSyncedRev); cloudStatus("同期済み ✓", "#2d8a4a");
     } else if (j && j.error === "auth") {
       cloudStatus("合言葉が違います（保存できません）", "#d12");
     } else {
@@ -865,9 +864,8 @@ async function cloudPull() {
       suppressPush = true; applyCloudData(j.data); suppressPush = false;
       persistLocal();
       lastSyncedRev = j.rev; localStorage.setItem(CLOUD_REV_KEY, lastSyncedRev);
-      const _svCount = j.data && j.data.records ? Object.keys(j.data.records).length : 0;
       scrollPreserve(renderAll);
-      cloudStatus("最新を反映 ✓（サーバー:" + _svCount + "→ローカル:" + Object.keys(state.records).length + "）", "#2d8a4a");
+      cloudStatus("最新を反映 ✓", "#2d8a4a");
     }
   } catch (e) { /* オフラインは無視 */ }
 }
@@ -2760,41 +2758,43 @@ window.openNewcomerEdit = openNewcomerEdit; window.delNewcomer = delNewcomer;
 renderAll();
 
 /* ===== 15. クラウド同期：GASコード文字列とUI初期化・起動 ============= */
-const GAS_CODE = `// ロイヤル利用管理 クラウド同期用 GAS（合言葉つき・フィールド単位マージ対応）
+const GAS_CODE = `// ロイヤル利用管理 クラウド同期用 GAS（合言葉つき・PropertiesService版）
 // スプレッドシートに貼り付けて「ウェブアプリ」としてデプロイしてください。
-// 合言葉は store シートの C1 に保存されます。
-//   ・最初は空欄。最初に接続したときの合言葉が自動で C1 に登録されます。
-//   ・スタッフが辞めたら C1 の合言葉を書き換え、残るスタッフのアプリも同じ合言葉に変更してください。
-//     （古い合言葉では読み書きできなくなります）
+// データはPropertiesServiceに同期保存されます（SpreadsheetのC1に合言葉を保存）。
 function _sheet(){
   var ss=SpreadsheetApp.getActiveSpreadsheet();
   var sh=ss.getSheetByName('store');
-  if(!sh){sh=ss.insertSheet('store');sh.getRange('A1').setValue(0);sh.getRange('B1').setValue('');sh.getRange('C1').setValue('');}
+  if(!sh){sh=ss.insertSheet('store');sh.getRange('A1').setValue(0);sh.getRange('C1').setValue('');}
   return sh;
 }
-// 合言葉チェック。OKなら true。サーバー側が未設定なら最初の合言葉を登録。
 function _auth(sh, pass){
   var stored=String(sh.getRange('C1').getValue()||'');
   pass=String(pass||'');
-  if(stored===''){ // 初回：この合言葉を登録（空の合言葉での初期化は不可）
-    if(pass===''){ return false; }
-    sh.getRange('C1').setValue(pass); return true;
-  }
+  if(stored===''){ if(pass===''){ return false; } sh.getRange('C1').setValue(pass); SpreadsheetApp.flush(); return true; }
   return stored===pass;
 }
 function _deny(){
   return ContentService.createTextOutput(JSON.stringify({ok:false,error:'auth'})).setMimeType(ContentService.MimeType.JSON);
 }
+function _props(){ return PropertiesService.getScriptProperties(); }
+function _getRev(){ return Number(_props().getProperty('rev')||0); }
+function _getData(){
+  var d=_props().getProperty('data');
+  if(d){ try{return JSON.parse(d);}catch(e){} }
+  // 旧B1からの移行
+  try{
+    var sh=SpreadsheetApp.getActiveSpreadsheet().getSheetByName('store');
+    if(sh){ var b=sh.getRange('B1').getValue(); if(b){ var p=JSON.parse(b); _props().setProperty('data',b); return p; } }
+  }catch(e){}
+  return null;
+}
 function doGet(e){
   var sh=_sheet();
   if(!_auth(sh, e.parameter.pass)) return _deny();
-  var rev=Number(sh.getRange('A1').getValue())||0;
-  var clientRev=Number((e.parameter.rev)||0);
+  var rev=_getRev();
+  var clientRev=Number(e.parameter.rev||0);
   var out={ok:true,rev:rev,changed:false};
-  if(rev>clientRev){
-    var data=sh.getRange('B1').getValue();
-    out.changed=true; out.data=data?JSON.parse(data):null;
-  }
+  if(rev>clientRev){ out.changed=true; out.data=_getData(); }
   return ContentService.createTextOutput(JSON.stringify(out)).setMimeType(ContentService.MimeType.JSON);
 }
 function doPost(e){
@@ -2803,22 +2803,17 @@ function doPost(e){
     var sh=_sheet();
     var body=JSON.parse(e.postData.contents);
     if(!_auth(sh, body.pass)) return _deny();
-    var serverRevNow=Number(sh.getRange('A1').getValue())||0;
-    var serverRaw=sh.getRange('B1').getValue();
-    var server=serverRaw?JSON.parse(serverRaw):null;
+    var serverRevNow=_getRev();
+    var server=_getData();
     var incoming=body.data;
     var merged=incoming;
     var didMerge=false;
-    // クライアントの基準rev(body.rev)よりサーバーが進んでいたら、他者の変更とマージ
     if(server && Number(body.rev||0) < serverRevNow){
       merged=_merge(server,incoming); didMerge=true;
     }
     var newRev=serverRevNow+1;
-    sh.getRange('A1').setValue(newRev);
-    sh.getRange('B1').setValue(JSON.stringify(merged));
-    var flushed=false; try{SpreadsheetApp.flush();flushed=true;}catch(ef){}
-    sh.getRange('A1').getValue();
-    return ContentService.createTextOutput(JSON.stringify({ok:true,rev:newRev,merged:didMerge,flushed:flushed,data:didMerge?merged:null})).setMimeType(ContentService.MimeType.JSON);
+    _props().setProperties({rev:String(newRev), data:JSON.stringify(merged)});
+    return ContentService.createTextOutput(JSON.stringify({ok:true,rev:newRev,merged:didMerge,data:didMerge?merged:null})).setMimeType(ContentService.MimeType.JSON);
   } finally { lock.releaseLock(); }
 }
 // サーバーとクライアントをフィールド単位で統合（両者の入力を極力残す）
