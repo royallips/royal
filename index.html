@@ -835,7 +835,7 @@ async function doCloudPush() {
         suppressPush = true; applyCloudData(j.data); suppressPush = false;
         persistLocal();
       }
-      lastSyncedRev = j.rev; localStorage.setItem(CLOUD_REV_KEY, lastSyncedRev); cloudStatus("同期済み ✓", "#2d8a4a");
+      lastSyncedRev = j.rev; localStorage.setItem(CLOUD_REV_KEY, lastSyncedRev); cloudStatus("同期済み ✓（記録数:" + Object.keys(state.records).length + "）", "#2d8a4a");
     } else if (j && j.error === "auth") {
       cloudStatus("合言葉が違います（保存できません）", "#d12");
     } else {
@@ -863,7 +863,7 @@ async function cloudPull() {
       persistLocal();
       lastSyncedRev = j.rev; localStorage.setItem(CLOUD_REV_KEY, lastSyncedRev);
       scrollPreserve(renderAll);
-      cloudStatus("最新を反映 ✓", "#2d8a4a");
+      cloudStatus("最新を反映 ✓（記録数:" + Object.keys(state.records).length + "）", "#2d8a4a");
     }
   } catch (e) { /* オフラインは無視 */ }
 }
