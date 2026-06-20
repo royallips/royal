@@ -837,7 +837,10 @@ async function doCloudPush() {
         suppressPush = true; applyCloudData(j.data); suppressPush = false;
         persistLocal();
       }
-      lastSyncedRev = j.rev; localStorage.setItem(CLOUD_REV_KEY, lastSyncedRev); cloudStatus("同期済み ✓（送信:" + Object.keys(state.records).length + " 書込:" + (j.writtenCount != null ? j.writtenCount : "?") + "）", "#2d8a4a");
+      lastSyncedRev = j.rev; localStorage.setItem(CLOUD_REV_KEY, lastSyncedRev);
+      const _bodyStr = JSON.stringify({ data: state });
+      const _jsonCount = Object.keys(JSON.parse(_bodyStr).data.records).length;
+      cloudStatus("同期済み ✓（メモリ:" + Object.keys(state.records).length + " JSON:" + _jsonCount + "）", "#2d8a4a");
     } else if (j && j.error === "auth") {
       cloudStatus("合言葉が違います（保存できません）", "#d12");
     } else {
