@@ -889,11 +889,23 @@ async function connectCloud() {
     if (j && j.error === "auth") { cloudStatus("合言葉が違います（接続できません）", "#d12"); return; }
     if (j && j.ok) {
       if (j.changed && j.data && j.data.casts) {
-        suppressPush = true; applyCloudData(j.data); suppressPush = false;
+        // サーバーとローカルをマージ（どちらのデータも失わない）
+        const sv = normalize(j.data);
+        const lc = state;
+        const mg = {};
+        mg.casts = lc.casts && lc.casts.length > 0 ? lc.casts : sv.casts;
+        ['records','assign','lends','borrows','memos','events','newcomers','locks','soukeiStatus'].forEach(f => {
+          const s = sv[f] || {}, c = lc[f] || {}, m = Object.assign({}, s, c);
+          mg[f] = m;
+        });
+        mg.askLabels = lc.askLabels || sv.askLabels || { l1: "", l2: "" };
+        mg.roomLocks = Object.assign({}, sv.roomLocks || {}, lc.roomLocks || {});
+        suppressPush = true; state = normalize(mg); suppressPush = false;
         persistLocal();
         lastSyncedRev = j.rev; localStorage.setItem(CLOUD_REV_KEY, lastSyncedRev);
+        await doCloudPush();
         scrollPreserve(renderAll);
-        cloudStatus("サーバーのデータを取り込みました ✓", "#2d8a4a");
+        cloudStatus("サーバーとマージしました ✓", "#2d8a4a");
       } else {
         lastSyncedRev = j.rev || 0; localStorage.setItem(CLOUD_REV_KEY, lastSyncedRev);
         await doCloudPush();
