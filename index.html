@@ -862,8 +862,9 @@ async function cloudPull() {
       suppressPush = true; applyCloudData(j.data); suppressPush = false;
       persistLocal();
       lastSyncedRev = j.rev; localStorage.setItem(CLOUD_REV_KEY, lastSyncedRev);
+      const _svCount = j.data && j.data.records ? Object.keys(j.data.records).length : 0;
       scrollPreserve(renderAll);
-      cloudStatus("最新を反映 ✓（記録数:" + Object.keys(state.records).length + "）", "#2d8a4a");
+      cloudStatus("最新を反映 ✓（サーバー:" + _svCount + "→ローカル:" + Object.keys(state.records).length + "）", "#2d8a4a");
     }
   } catch (e) { /* オフラインは無視 */ }
 }
