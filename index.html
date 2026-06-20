@@ -835,7 +835,7 @@ async function doCloudPush() {
         suppressPush = true; applyCloudData(j.data); suppressPush = false;
         persistLocal();
       }
-      lastSyncedRev = j.rev; localStorage.setItem(CLOUD_REV_KEY, lastSyncedRev); cloudStatus("同期済み ✓（記録数:" + Object.keys(state.records).length + "）", "#2d8a4a");
+      lastSyncedRev = j.rev; localStorage.setItem(CLOUD_REV_KEY, lastSyncedRev); cloudStatus("同期済み ✓（送信:" + Object.keys(state.records).length + " 書込:" + (j.writtenCount != null ? j.writtenCount : "?") + "）", "#2d8a4a");
     } else if (j && j.error === "auth") {
       cloudStatus("合言葉が違います（保存できません）", "#d12");
     } else {
@@ -2801,7 +2801,9 @@ function doPost(e){
     var newRev=serverRevNow+1;
     sh.getRange('A1').setValue(newRev);
     sh.getRange('B1').setValue(JSON.stringify(merged));
-    return ContentService.createTextOutput(JSON.stringify({ok:true,rev:newRev,merged:didMerge,data:didMerge?merged:null})).setMimeType(ContentService.MimeType.JSON);
+    SpreadsheetApp.flush();
+    var writtenCount=merged&&merged.records?Object.keys(merged.records).length:0;
+    return ContentService.createTextOutput(JSON.stringify({ok:true,rev:newRev,merged:didMerge,writtenCount:writtenCount,data:didMerge?merged:null})).setMimeType(ContentService.MimeType.JSON);
   } finally { lock.releaseLock(); }
 }
 // サーバーとクライアントをフィールド単位で統合（両者の入力を極力残す）
