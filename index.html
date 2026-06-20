@@ -2595,7 +2595,7 @@ $("dlgSave").onclick = () => {
         if (!confirm(msg)) return;
       }
       selDays.forEach(d => {
-        state.records[recKey(cid, d)] = { status: "yotei", note: (d === day ? note : "") };
+        state.records[recKey(cid, d)] = { status: "yotei", note };
         if (state.assign[dkey(d)]) delete state.assign[dkey(d)][cid];
       });
     } else {
