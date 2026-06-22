@@ -1793,6 +1793,23 @@ function renderRoomsList() {
       freeCells += `<div class="lf-cell" style="background:${freeBg(ratio)};color:${ratio > .55 ? '#fff' : '#3a2630'}">${f}</div>`;
     });
 
+    // 連続2時間以上空いている部屋のセルに赤オーバーレイを生成
+    const roomOverlays = Array.from({ length: ROOMS }, (_, ri) => {
+      let ov = "", spanStart = null;
+      for (let h = OPEN; h <= CLOSE; h++) {
+        const isFree = h < CLOSE && !rooms[ri].some(w => occupies(w.sp, h));
+        if (isFree && spanStart === null) { spanStart = h; }
+        else if (!isFree && spanStart !== null) {
+          if (h - spanStart >= 2) {
+            const lp = (spanStart - OPEN) / HOURS * 100, wp = (h - spanStart) / HOURS * 100;
+            ov += `<div style="position:absolute;left:${lp}%;width:${wp}%;top:0;bottom:0;background:rgba(192,57,43,0.28);pointer-events:none;z-index:0"></div>`;
+          }
+          spanStart = null;
+        }
+      }
+      return ov;
+    });
+
     function barsHtml(arr) {
       return arr.map((w, k) => {
         const ov = clashOverlayHtml(w, arr);
@@ -1804,7 +1821,7 @@ function renderRoomsList() {
     }
     let roomRows = "";
     for (let ri = 0; ri < ROOMS; ri++)
-      roomRows += `<div class="lf-row"><div class="lf-rno">${roomLabel(ri)}</div><div class="lf-track">${barsHtml(rooms[ri])}</div></div>`;
+      roomRows += `<div class="lf-row"><div class="lf-rno">${roomLabel(ri)}</div><div class="lf-track">${roomOverlays[ri]}${barsHtml(rooms[ri])}</div></div>`;
     if (overRooms && overRooms.length) roomRows += `<div class="lf-overline"></div>`;
     let ovNo = 0;
     (overRooms || []).forEach((arr) => {
