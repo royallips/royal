@@ -1978,20 +1978,20 @@ function jumpToDay(d) {
 function cellInner(rc) {
   if (!rc) return { inner: "", cls: "" };
   const note = rc.note ? `<span class="note">${rc.note}</span>` : "";
-  const stayCls = rc.stayBg === "shukuhaku" ? "st-shukuhaku" : rc.stayBg === "tenpaku" ? "st-tenpaku" : rc.stayBg === "seiri" ? "st-seiri" : "";
+  const stayCls = rc.seiriTint ? "st-seiri" : rc.stayBg === "shukuhaku" ? "st-shukuhaku" : rc.stayBg === "tenpaku" ? "st-tenpaku" : rc.stayBg === "seiri" ? "st-seiri" : "";
   switch (rc.status) {
     case "work":
       return { inner: `<span class="timeunder">${fmtTime(rc)}${rc.start2 ? '<br>' + rc.start2 + '-' + (rc.end2 || 'L') : ''}${rc.hideNet ? '<br><span class="hidenet">非掲載</span>' : ''}</span>${note}`, cls: rc.start2 ? "nakanuke" : "" };
     case "furikae":
       return { inner: `<span class="timeunder">${fmtTime(rc)}</span><span class="omark">○</span>${note}`, cls: "" };
     case "mitei":
-      return { inner: "未" + note, cls: "st-mitei" };
+      return { inner: "△" + note, cls: "st-mitei" };
     case "seiri":
       return { inner: `<span class="timeunder">${fmtTime(rc)}</span>${note}`, cls: "st-seiri" };
     case "shukuhaku":
       return { inner: `<span class="timeunder">${fmtTime(rc)}</span>${note}`, cls: "st-shukuhaku" };
     case "yotei":
-      return { inner: "予" + note, cls: "st-yotei" };
+      return { inner: note, cls: "st-yotei" };
     case "tenpaku":
       return { inner: `<span class="timeunder">${fmtTime(rc)}</span>${note}`, cls: "st-tenpaku" };
     case "absent":
@@ -2601,7 +2601,7 @@ $("dlgSave").onclick = () => {
     : [];
 
   // 「休み」で時間・備考・宿泊背景・生理継承が無ければ記録ごと削除
-  const _prevSeiri = state.records[k] && state.records[k].status === "seiri";
+  const _prevSeiri = state.records[k] && (state.records[k].status === "seiri" || state.records[k].seiriTint);
   if (pickStatus === "off" && !s && !note && !_prevSeiri && !(state.records[k] && state.records[k].stayBg)) {
     delete state.records[k];
     if (state.assign[dkey(day)]) delete state.assign[dkey(day)][cid];
@@ -2712,11 +2712,12 @@ $("dlgSave").onclick = () => {
     }
   } else if (pickStatus === "absent" || pickStatus === "off") {
     const ex = state.records[k];
+    const prevWasSeiri = ex && (ex.status === "seiri" || ex.seiriTint);
     let sb = ex && ex.stayBg ? ex.stayBg : undefined;
-    if (!sb && ex && ex.status === "seiri") sb = "seiri";
     if (s && !e) e = "L";
     state.records[k] = { status: pickStatus, start: s, end: e, note };
     if (sb) state.records[k].stayBg = sb;
+    if (prevWasSeiri) state.records[k].seiriTint = true;
     if (state.assign[dkey(day)]) delete state.assign[dkey(day)][cid];
   } else if (pickStatus === "mitei") {
     const selDays = [...($("multiDayGrid") || document.createElement("div")).querySelectorAll(".mday-btn.mday-sel")].map(b => parseInt(b.dataset.d));
