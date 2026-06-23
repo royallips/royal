@@ -1978,7 +1978,7 @@ function jumpToDay(d) {
 function cellInner(rc) {
   if (!rc) return { inner: "", cls: "" };
   const note = rc.note ? `<span class="note">${rc.note}</span>` : "";
-  const stayCls = rc.stayBg === "shukuhaku" ? "st-shukuhaku" : rc.stayBg === "tenpaku" ? "st-tenpaku" : "";
+  const stayCls = rc.stayBg === "shukuhaku" ? "st-shukuhaku" : rc.stayBg === "tenpaku" ? "st-tenpaku" : rc.stayBg === "seiri" ? "st-seiri" : "";
   switch (rc.status) {
     case "work":
       return { inner: `<span class="timeunder">${fmtTime(rc)}${rc.start2 ? '<br>' + rc.start2 + '-' + (rc.end2 || 'L') : ''}${rc.hideNet ? '<br><span class="hidenet">非掲載</span>' : ''}</span>${note}`, cls: rc.start2 ? "nakanuke" : "" };
@@ -2600,8 +2600,9 @@ $("dlgSave").onclick = () => {
     ? [...calSelCells].filter(x => x !== `${cid}@@${day}`).map(x => { const [c, d] = x.split("@@"); return { cid: c, day: parseInt(d) }; })
     : [];
 
-  // 「休み」で時間・備考・宿泊背景が無ければ記録ごと削除
-  if (pickStatus === "off" && !s && !note && !(state.records[k] && state.records[k].stayBg)) {
+  // 「休み」で時間・備考・宿泊背景・生理継承が無ければ記録ごと削除
+  const _prevSeiri = state.records[k] && state.records[k].status === "seiri";
+  if (pickStatus === "off" && !s && !note && !_prevSeiri && !(state.records[k] && state.records[k].stayBg)) {
     delete state.records[k];
     if (state.assign[dkey(day)]) delete state.assign[dkey(day)][cid];
     extraTargets.forEach(({ cid: tc, day: td }) => applyRecordToDay(tc, td, null));
@@ -2710,7 +2711,9 @@ $("dlgSave").onclick = () => {
       if (state.assign[dkey(day)]) delete state.assign[dkey(day)][cid];
     }
   } else if (pickStatus === "absent" || pickStatus === "off") {
-    const ex = state.records[k], sb = ex && ex.stayBg ? ex.stayBg : undefined;
+    const ex = state.records[k];
+    let sb = ex && ex.stayBg ? ex.stayBg : undefined;
+    if (!sb && ex && ex.status === "seiri") sb = "seiri";
     if (s && !e) e = "L";
     state.records[k] = { status: pickStatus, start: s, end: e, note };
     if (sb) state.records[k].stayBg = sb;
