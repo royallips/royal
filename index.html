@@ -1632,8 +1632,23 @@ function openMove(cid, ev) {
   }
   dlgOpen("moveDlg"); renderRooms();
 }
+// 手動移動前に自動配置されているキャストの現在部屋をピン留め（上詰め防止）
+function pinCurrentRooms(day) {
+  const dk = dkey(day);
+  const { rooms } = computeAssignment(day);
+  if (!state.assign[dk]) state.assign[dk] = {};
+  const force = state.assign[dk];
+  rooms.forEach((room, ri) => {
+    room.forEach(w => {
+      if (w.cid.startsWith("bw:") || w.cid.startsWith("nc:") || w.seg2) return;
+      if (typeof force[w.cid] !== "number") force[w.cid] = ri;
+    });
+  });
+}
+
 function assignRoom(cid, ri) {
   pushUndo(roomDay);
+  pinCurrentRooms(roomDay);
   if (!state.assign[dkey(roomDay)]) state.assign[dkey(roomDay)] = {};
   state.assign[dkey(roomDay)][cid] = ri; save();
   dlgClose("moveDlg"); selBar = null; renderAll();
@@ -1644,6 +1659,7 @@ function assignRoom(cid, ri) {
 function moveCidToRoom(cid, ri) {
   if (isLocked(roomDay)) return;
   pushUndo(roomDay);
+  pinCurrentRooms(roomDay);
   if (!state.assign[dkey(roomDay)]) state.assign[dkey(roomDay)] = {};
   state.assign[dkey(roomDay)][cid] = (ri === "OVER") ? "OVER" : Number(ri);
   save(); selBar = null;
@@ -1652,6 +1668,7 @@ function moveCidToRoom(cid, ri) {
 function moveCidToRoomDay(cid, ri, day) {
   if (isLocked(day)) return;
   pushUndo(day);
+  pinCurrentRooms(day);
   if (!state.assign[dkey(day)]) state.assign[dkey(day)] = {};
   state.assign[dkey(day)][cid] = (ri === "OVER") ? "OVER" : Number(ri);
   save();
