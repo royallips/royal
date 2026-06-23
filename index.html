@@ -741,6 +741,7 @@ let eventDay = null, askLabelCol = null, editCastId = null;
 let undoStack = [];                          // [{day, assign, lends, borrows(JSON)}…] 末尾が最新（上限50段）
 let calUndoStack = [];                       // [JSON string of state.records] 末尾が最新（上限20段）
 let calSelMode = false, calSelCells = new Set(), calSelApply = false;
+let calDragSel = false, calDragMoved = false, calDragAnchor = null;
 let roomsListScrollTarget = null;            // リスピラ一覧で次回スクロールする対象日（チップからのジャンプ用）
 
 /* ===== 2. 永続化と正規化 ============================================ */
@@ -1978,14 +1979,15 @@ function jumpToDay(d) {
 function cellInner(rc) {
   if (!rc) return { inner: "", cls: "" };
   const note = rc.note ? `<span class="note">${rc.note}</span>` : "";
-  const stayCls = rc.seiriTint ? "st-seiri" : rc.stayBg === "shukuhaku" ? "st-shukuhaku" : rc.stayBg === "tenpaku" ? "st-tenpaku" : rc.stayBg === "seiri" ? "st-seiri" : "";
+  const stayCls = rc.seiriTint ? "st-seiri" : rc.stayBg === "shukuhaku" ? "st-shukuhaku" : rc.stayBg === "tenpaku" ? "st-tenpaku" : rc.stayBg === "seiri" ? "st-seiri" : rc.stayBg === "yotei" ? "st-yotei" : "";
+  if (!rc.status && rc.stayBg) return { inner: note, cls: stayCls };
   switch (rc.status) {
     case "work":
-      return { inner: `<span class="timeunder">${fmtTime(rc)}${rc.start2 ? '<br>' + rc.start2 + '-' + (rc.end2 || 'L') : ''}${rc.hideNet ? '<br><span class="hidenet">非掲載</span>' : ''}</span>${note}`, cls: rc.start2 ? "nakanuke" : "" };
+      return { inner: `<span class="timeunder">${fmtTime(rc)}${rc.start2 ? '<br>' + rc.start2 + '-' + (rc.end2 || 'L') : ''}${rc.hideNet ? '<br><span class="hidenet">非掲載</span>' : ''}</span>${note}`, cls: rc.start2 ? "nakanuke" : stayCls };
     case "furikae":
-      return { inner: `<span class="timeunder">${fmtTime(rc)}</span><span class="omark">○</span>${note}`, cls: "" };
+      return { inner: `<span class="timeunder">${fmtTime(rc)}</span><span class="omark">○</span>${note}`, cls: stayCls };
     case "mitei":
-      return { inner: "△" + note, cls: "st-mitei" };
+      return { inner: "△" + note, cls: "" };
     case "seiri":
       return { inner: `<span class="timeunder">${fmtTime(rc)}</span>${note}`, cls: "st-seiri" };
     case "shukuhaku":
@@ -1997,7 +1999,7 @@ function cellInner(rc) {
     case "absent":
       return { inner: `<span class="timeunder">${fmtTime(rc)}</span><span class="xmark red">✕</span>${note}`, cls: stayCls };
     case "off":
-      return { inner: `<span class="timeunder">${fmtTime(rc)}</span><span class="xmark black">✕</span>${note}`, cls: stayCls };
+      return { inner: `<span class="timeunder">${fmtTime(rc)}</span><span class="xmark black">ー</span>${note}`, cls: stayCls };
     default:
       return { inner: "", cls: "" };
   }
@@ -2124,7 +2126,7 @@ function renderCalendar() {
         <span><i class="dot" style="background:#fff3e0;border-color:#f0c14b"></i>中抜け</span>
         <span style="color:var(--over);font-weight:700">○=振替</span>
         <span style="font-weight:700;color:var(--over)">✕(赤)=当欠</span>
-        <span style="font-weight:700;color:#222">✕(黒)=休み</span>
+        <span style="font-weight:700;color:#222">ー=休み</span>
         <span><i class="dot st-mitei"></i>未定</span><span><i class="dot st-seiri"></i>生理</span>
         <span><i class="dot st-shukuhaku"></i>宿泊</span><span><i class="dot st-yotei"></i>予定</span><span><i class="dot st-tenpaku"></i>店泊</span>
         </div>
@@ -2295,6 +2297,49 @@ function renderSettings() {
 document.addEventListener("click", e => {
   const t = e.target.closest(".del");
   if (t && t.dataset.del) { e.stopPropagation(); openDelDlg(t.dataset.del); }
+});
+
+// 利用表セル ドラッグ選択
+document.addEventListener("mousedown", ev => {
+  const cell = ev.target.closest("td.cell[data-cid]");
+  if (!cell || ev.button !== 0) return;
+  calDragSel = true; calDragMoved = false;
+  calDragAnchor = { cid: cell.dataset.cid, day: parseInt(cell.dataset.d), el: cell };
+});
+document.addEventListener("mousemove", ev => {
+  if (!calDragSel || !(ev.buttons & 1)) { calDragSel = false; return; }
+  const cell = ev.target.closest("td.cell[data-cid]");
+  if (!cell) return;
+  const cid = cell.dataset.cid, d = parseInt(cell.dataset.d);
+  if (!calDragMoved) {
+    calDragMoved = true;
+    if (!calSelMode) {
+      enterCalSelMode();
+      if (calDragAnchor) {
+        const ak = `${calDragAnchor.cid}@@${calDragAnchor.day}`;
+        calSelCells.add(ak);
+        if (calDragAnchor.el) calDragAnchor.el.classList.add("sel-cell");
+        updateCalSelUI();
+      }
+    }
+  }
+  ev.preventDefault();
+  const k = `${cid}@@${d}`;
+  if (!calSelCells.has(k)) {
+    calSelCells.add(k);
+    cell.classList.add("sel-cell");
+    updateCalSelUI();
+  }
+});
+document.addEventListener("mouseup", ev => {
+  if (!calDragSel) return;
+  calDragSel = false;
+  calDragAnchor = null;
+  if (calDragMoved && calSelMode && calSelCells.size > 0) {
+    setTimeout(() => { calDragMoved = false; openCalSelDlg(); }, 0);
+  } else {
+    calDragMoved = false;
+  }
 });
 function openDelDlg(cid) {
   const c = state.casts.find(x => x.id === cid);
@@ -2519,12 +2564,14 @@ function openCalSelDlg() {
 }
 
 function openDlg(cid, day) {
+  if (calDragMoved) return;
   if (calSelMode && !calSelApply) { toggleCalSel(cid, day); return; }
   editing = { cid, day };
   const c = state.casts.find(x => x.id === cid);
   $("dlgTitle").textContent = `${c.name}　${cur.getMonth() + 1}/${day}`;
   const r = rec(cid, day);
-  pickStatus = r ? r.status : "work";
+  const _overlays = ["seiri","yotei","shukuhaku","tenpaku"];
+  pickStatus = r ? (r.stayBg && _overlays.includes(r.stayBg) ? r.stayBg : (r.status || "work")) : "work";
   setTime("startTime", r && r.start != null ? r.start : "");
   setTime("endTime", r && r.end != null ? r.end : "");
   setTime("startTime2", r && r.start2 != null ? r.start2 : "");
@@ -2541,7 +2588,7 @@ function refreshPick() {
   document.querySelectorAll("#statusGrid button").forEach(b => b.classList.toggle("sel", b.dataset.s === pickStatus));
   const isStay = (pickStatus === "shukuhaku" || pickStatus === "tenpaku");
   const isRange = (pickStatus === "shukuhaku" || pickStatus === "tenpaku" || pickStatus === "yotei" || pickStatus === "seiri" || pickStatus === "mitei");
-  const showTime = (pickStatus === "work" || pickStatus === "furikae" || pickStatus === "absent" || pickStatus === "off" || pickStatus === "seiri" || isStay);
+  const showTime = pickStatus === "work" || pickStatus === "furikae" || pickStatus === "absent" || pickStatus === "off";
   $("timeFields").style.display = showTime ? "block" : "none";
   $("absentNote").style.display = (pickStatus === "absent" || pickStatus === "off") ? "block" : "none";
   $("stayNote").style.display = isRange ? "block" : "none";
@@ -2560,12 +2607,15 @@ function refreshPick() {
     let hasNeighbor = false;
     if (editing) {
       const { cid, day } = editing;
-      const savedSt = (state.records[recKey(cid, day)] || {}).status;
-      if (savedSt && ["seiri", "yotei", "shukuhaku", "tenpaku"].includes(savedSt)) {
+      const rec0 = state.records[recKey(cid, day)] || {};
+      const savedSt = (rec0.stayBg && ["seiri","yotei","shukuhaku","tenpaku"].includes(rec0.stayBg)) ? rec0.stayBg
+        : (rec0.status && ["seiri","yotei","shukuhaku","tenpaku"].includes(rec0.status)) ? rec0.status : null;
+      if (savedSt) {
         const dim = daysIn(cur);
         const prevR = day > 1 ? state.records[recKey(cid, day - 1)] : null;
         const nextR = day < dim ? state.records[recKey(cid, day + 1)] : null;
-        hasNeighbor = (prevR && prevR.status === savedSt) || (nextR && nextR.status === savedSt);
+        const matchOverlay = r => r && (r.stayBg === savedSt || r.status === savedSt);
+        hasNeighbor = matchOverlay(prevR) || matchOverlay(nextR);
       }
     }
     clearAllBtn.style.display = hasNeighbor ? "" : "none";
@@ -2584,7 +2634,20 @@ function refreshPick() {
     }
   }
 }
-$("statusGrid").onclick = e => { if (e.target.dataset.s) { pickStatus = e.target.dataset.s; refreshPick(); } };
+$("statusGrid").onclick = e => {
+  if (!e.target.dataset.s) return;
+  const s = e.target.dataset.s;
+  const _ov = ["seiri","yotei","shukuhaku","tenpaku"];
+  if (_ov.includes(s) && pickStatus === s) {
+    // 再クリックでオーバーレイ解除 → ベースステータスに戻す
+    const r = editing ? state.records[recKey(editing.cid, editing.day)] : null;
+    const base = r && r.status && !_ov.includes(r.status) ? r.status : "work";
+    pickStatus = base;
+  } else {
+    pickStatus = s;
+  }
+  refreshPick();
+};
 $("nakanukeChk").onchange = () => {
   $("nakanukeFields").style.display = $("nakanukeChk").checked ? "flex" : "none";
 };
@@ -2600,14 +2663,17 @@ $("dlgSave").onclick = () => {
     ? [...calSelCells].filter(x => x !== `${cid}@@${day}`).map(x => { const [c, d] = x.split("@@"); return { cid: c, day: parseInt(d) }; })
     : [];
 
-  // 「休み」で時間・備考・宿泊背景・生理継承が無ければ記録ごと削除
+  // 「休み」で時間・備考・宿泊背景・生理継承が無く、既存レコードがあれば削除（空セルは通常保存へ）
   const _prevSeiri = state.records[k] && (state.records[k].status === "seiri" || state.records[k].seiriTint);
   if (pickStatus === "off" && !s && !note && !_prevSeiri && !(state.records[k] && state.records[k].stayBg)) {
-    delete state.records[k];
-    if (state.assign[dkey(day)]) delete state.assign[dkey(day)][cid];
-    extraTargets.forEach(({ cid: tc, day: td }) => applyRecordToDay(tc, td, null));
-    if (hadSelApply) { calSelApply = false; exitCalSelMode(); }
-    save(); dlgClose("dlg"); renderAfterEdit(); return;
+    if (state.records[k]) {
+      delete state.records[k];
+      if (state.assign[dkey(day)]) delete state.assign[dkey(day)][cid];
+      extraTargets.forEach(({ cid: tc, day: td }) => applyRecordToDay(tc, td, null));
+      if (hadSelApply) { calSelApply = false; exitCalSelMode(); }
+      save(); dlgClose("dlg"); renderAfterEdit(); return;
+    }
+    // 空セルの場合はそのまま通常保存フローへ（ーを作成）
   }
 
   if (pickStatus === "work" || pickStatus === "furikae") {
@@ -2619,7 +2685,9 @@ $("dlgSave").onclick = () => {
       if (s2) { if (!e2) e2 = "L"; rec0.start2 = s2; rec0.end2 = e2; }
     }
     if (pickStatus === "work" && $("hideNetChk").checked) rec0.hideNet = true;
+    const _prevStayBg = (state.records[k] || {}).stayBg;
     state.records[k] = rec0;
+    if (_prevStayBg) state.records[k].stayBg = _prevStayBg;
     // 自動溢れキャストは溢れに、それ以外は手動配置を解除して自動配置に
     const cobj = state.casts.find(x => x.id === cid);
     if (cobj && cobj.autoOver) {
@@ -2628,88 +2696,24 @@ $("dlgSave").onclick = () => {
     } else if (state.assign[dkey(day)]) {
       delete state.assign[dkey(day)][cid];
     }
-  } else if (pickStatus === "seiri") {
-    // 生理：開始日〜終了日を連続登録。色のみ、開始日に時間があればその日だけ利用扱い
-    const endD = parseInt($("stayEndDay").value) || day;
-    const lo = Math.min(day, endD), hi = Math.max(day, endD);
-    const cobj = state.casts.find(x => x.id === cid);
-    for (let d = lo; d <= hi; d++) {
-      const ex = state.records[recKey(cid, d)];
-      if (d === day && s) {
-        if (!e) e = "L";
-        state.records[recKey(cid, d)] = { status: "seiri", start: s, end: e, note };
-        if (cobj && cobj.autoOver) {
-          if (!state.assign[dkey(d)]) state.assign[dkey(d)] = {};
-          state.assign[dkey(d)][cid] = "OVER";
-        } else if (state.assign[dkey(d)]) {
-          delete state.assign[dkey(d)][cid];
-        }
-      } else {
-        if (ex && ex.status === "seiri" && ex.start) continue; // 既存の時間付き生理日は維持
-        if (ex && (ex.status === "work" || ex.status === "furikae") && ex.start) {
-          // 既存の利用を生理+時間に変換（生理色＋時間表示）
-          state.records[recKey(cid, d)] = { status: "seiri", start: ex.start, end: ex.end || "L", note: ex.note || "" };
-          if (state.assign[dkey(d)]) delete state.assign[dkey(d)][cid];
-          continue;
-        }
-        state.records[recKey(cid, d)] = { status: "seiri", note: (d === day ? note : (ex && ex.note ? ex.note : "")) };
-        if (state.assign[dkey(d)]) delete state.assign[dkey(d)][cid];
-      }
-    }
-  } else if (pickStatus === "yotei") {
+  } else if (["seiri","yotei","shukuhaku","tenpaku"].includes(pickStatus)) {
+    // 色のみオーバーレイ：既存の利用時間・ステータスを保持し stayBg だけ付与
     const selDays = [...($("multiDayGrid") || document.createElement("div")).querySelectorAll(".mday-btn.mday-sel")].map(b => parseInt(b.dataset.d));
-    if (selDays.length > 0) {
-      const conflicts = selDays.filter(d => { const r = state.records[recKey(cid, d)]; return r && (r.status === "work" || r.status === "furikae"); });
-      if (conflicts.length > 0) {
-        const msg = `${conflicts.map(d => `${cur.getMonth()+1}/${d}`).join("、")} に利用の入力があります。上書きしますか？`;
-        if (!confirm(msg)) return;
-      }
-      selDays.forEach(d => {
-        state.records[recKey(cid, d)] = { status: "yotei", note };
-        if (state.assign[dkey(d)]) delete state.assign[dkey(d)][cid];
-      });
-    } else {
-      // 連続する終了日を使った範囲登録
-      const endD = parseInt($("stayEndDay").value) || day;
-      const lo = Math.min(day, endD), hi = Math.max(day, endD);
-      for (let d = lo; d <= hi; d++) {
-        state.records[recKey(cid, d)] = { status: "yotei", note: (d === day ? note : "") };
-        if (state.assign[dkey(d)]) delete state.assign[dkey(d)][cid];
-      }
-    }
-  } else if (pickStatus === "shukuhaku" || pickStatus === "tenpaku") {
     const endD = parseInt($("stayEndDay").value) || day;
     const lo = Math.min(day, endD), hi = Math.max(day, endD);
-    if (hi > lo) {
-      // 期間あり：全日を色のみ（出勤なし）にし、開始日に時間があればその日だけ出勤
-      for (let d = lo; d <= hi; d++) {
-        const ex = state.records[recKey(cid, d)];
-        if (d === day && s) {
-          if (!e) e = "L";
-          state.records[recKey(cid, d)] = { status: pickStatus, start: s, end: e, note, stayBg: pickStatus };
-          if (state.assign[dkey(d)]) delete state.assign[dkey(d)][cid];
-        } else {
-          if (ex && ex.status === pickStatus && ex.start) { ex.stayBg = pickStatus; continue; } // 既存の出勤日は維持
-          if (ex && (ex.status === "work" || ex.status === "furikae") && ex.start) {
-            // 既存の利用を宿泊/店泊+時間に変換（背景色＋時間表示）
-            state.records[recKey(cid, d)] = { status: pickStatus, start: ex.start, end: ex.end || "L", note: ex.note || "", stayBg: pickStatus };
-            if (state.assign[dkey(d)]) delete state.assign[dkey(d)][cid];
-            continue;
-          }
-          state.records[recKey(cid, d)] = { status: pickStatus, start: "", end: "", note: (d === day ? note : (ex && ex.note ? ex.note : "")), stayBg: pickStatus };
-          if (state.assign[dkey(d)]) delete state.assign[dkey(d)][cid];
-        }
-      }
-    } else {
-      // 単日
-      if (s) {
-        if (!e) e = "L";
-        state.records[k] = { status: pickStatus, start: s, end: e, note, stayBg: pickStatus };
-      } else {
-        state.records[k] = { status: pickStatus, start: "", end: "", note, stayBg: pickStatus };
-      }
-      if (state.assign[dkey(day)]) delete state.assign[dkey(day)][cid];
+    const daysToApply = selDays.length > 0 ? selDays : Array.from({ length: hi - lo + 1 }, (_, i) => lo + i);
+    for (const d of daysToApply) {
+      const ex = state.records[recKey(cid, d)];
+      const n = (d === day ? note : (ex && ex.note ? ex.note : ""));
+      state.records[recKey(cid, d)] = ex ? { ...ex, stayBg: pickStatus, note: n } : { stayBg: pickStatus, note: n };
+      if (state.assign[dkey(d)]) delete state.assign[dkey(d)][cid];
     }
+    extraTargets.forEach(({ cid: tc, day: td }) => {
+      const ex2 = state.records[recKey(tc, td)];
+      state.records[recKey(tc, td)] = ex2 ? { ...ex2, stayBg: pickStatus } : { stayBg: pickStatus };
+    });
+    if (hadSelApply) { calSelApply = false; exitCalSelMode(); }
+    save(); dlgClose("dlg"); renderAfterEdit(); return;
   } else if (pickStatus === "absent" || pickStatus === "off") {
     const ex = state.records[k];
     const prevWasSeiri = ex && (ex.status === "seiri" || ex.seiriTint);
@@ -2759,16 +2763,22 @@ $("dlgClear").onclick = () => {
 $("dlgClearAll").onclick = () => {
   pushCalUndo();
   const { cid, day } = editing;
-  const r = state.records[recKey(cid, day)];
-  const rangeStatus = r ? r.status : null;
-  if (rangeStatus) {
+  const r0 = state.records[recKey(cid, day)];
+  const _ov = ["seiri","yotei","shukuhaku","tenpaku"];
+  const rangeKey = r0 ? (r0.stayBg && _ov.includes(r0.stayBg) ? r0.stayBg : (r0.status && _ov.includes(r0.status) ? r0.status : null)) : null;
+  if (rangeKey) {
     const dim = daysIn(cur);
+    const matchR = r => r && (r.stayBg === rangeKey || r.status === rangeKey);
     let lo = day;
-    while (lo > 1 && (state.records[recKey(cid, lo - 1)] || {}).status === rangeStatus) lo--;
+    while (lo > 1 && matchR(state.records[recKey(cid, lo - 1)])) lo--;
     let hi = day;
-    while (hi < dim && (state.records[recKey(cid, hi + 1)] || {}).status === rangeStatus) hi++;
+    while (hi < dim && matchR(state.records[recKey(cid, hi + 1)])) hi++;
     for (let d = lo; d <= hi; d++) {
-      delete state.records[recKey(cid, d)];
+      const dr = state.records[recKey(cid, d)];
+      if (dr) {
+        delete dr.stayBg;
+        if (!dr.status) delete state.records[recKey(cid, d)];
+      }
       if (state.assign[dkey(d)]) delete state.assign[dkey(d)][cid];
     }
   }
