@@ -1654,8 +1654,11 @@ function moveCidToRoomDay(cid, ri, day) {
   if (!state.assign[dkey(day)]) state.assign[dkey(day)] = {};
   state.assign[dkey(day)][cid] = (ri === "OVER") ? "OVER" : Number(ri);
   save();
-  roomsListScrollTarget = day;
+  const scroller = document.querySelector("#view-roomslist .lf-scroll");
+  const savedLeft = scroller ? scroller.scrollLeft : 0;
   scrollPreserve(renderAll);
+  const newScroller = document.querySelector("#view-roomslist .lf-scroll");
+  if (newScroller) newScroller.scrollLeft = savedLeft;
 }
 let dragCid = null, dragMoved = false, dragDay = null;
 document.addEventListener("dragstart", e => {
@@ -1865,7 +1868,7 @@ function renderRoomsList() {
     let roomRows = "";
     for (let ri = 0; ri < ROOMS; ri++)
       roomRows += `<div class="lf-row"><div class="lf-rno">${roomLabel(ri)}</div><div class="lf-track" data-ri="${ri}" data-day="${d}">${roomOverlays[ri]}${barsHtml(rooms[ri])}</div></div>`;
-    if (overRooms && overRooms.length) roomRows += `<div class="lf-overline"></div>`;
+    roomRows += `<div class="lf-overline"></div>`;
     let ovNo = 0;
     (overRooms || []).forEach((arr) => {
       const bars = arr.map(w => {
@@ -1873,13 +1876,14 @@ function renderRoomsList() {
         const rankCls = cobj && cobj.rank === "premier" ? " rank-premier" : cobj && cobj.rank === "vip" ? " rank-vip" : "";
         const nameCls = cobj && (cobj.furyo || cobj.autoOver) ? " furyo-name" : "";
         if (w.borrow)
-          return `<div class="lf-bar bw${rankCls} store-${w.store||''}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name} ${fmtSp(w.sp)}（掛け持ち）"><span class="lf-barlabel${nameCls}">${w.name}</span></div>`;
-        return `<div class="lf-bar ov${rankCls}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name} ${fmtSp(w.sp)}"><span class="lf-barlabel${nameCls}">${w.name}</span></div>`;
+          return `<div class="lf-bar bw${rankCls} store-${w.store||''}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name} ${fmtSp(w.sp)}（掛け持ち）"><span class="lf-barlabel${nameCls}">${w.name}</span></div>`;
+        return `<div class="lf-bar ov${rankCls}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name} ${fmtSp(w.sp)}"><span class="lf-barlabel${nameCls}">${w.name}</span></div>`;
       }).join("");
       const allBorrow = arr.length && arr.every(x => x.borrow);
       const rno = allBorrow ? "借" : (++ovNo);
-      roomRows += `<div class="lf-row over"><div class="lf-rno" style="background:var(--over-bg);color:var(--over)">${rno}</div><div class="lf-track">${bars}</div></div>`;
+      roomRows += `<div class="lf-row over"><div class="lf-rno" style="background:var(--over-bg);color:var(--over)">${rno}</div><div class="lf-track" data-ri="OVER" data-day="${d}">${bars}</div></div>`;
     });
+    roomRows += `<div class="lf-row over"><div class="lf-rno" style="background:var(--over-bg);color:var(--over)">${ovNo === 0 ? '溢' : ''}</div><div class="lf-track" data-ri="OVER" data-day="${d}"></div></div>`;
 
     const wd = new Date(y, m, d).getDay(), wkcls = wd === 0 ? "sun" : wd === 6 ? "sat" : "";
     const isToday = d === todayD;
