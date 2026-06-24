@@ -2101,8 +2101,11 @@ function calTable(group) {
     }
     let prevTot = 0;
     for (let d = 1; d <= prevDim; d++) {
-      const prc = recByKey(c.id, `${prevY}_${prevM}_${d}`);
-      if (prc && isUse(prc.status) && (prc.status === "work" || prc.status === "furikae" || prc.start)) prevTot++;
+      const prc = recByKey(c.id, dkeyForDate(new Date(prevY, prevM - 1, d)));
+      if (!prc) continue;
+      if (prc.status === "work") prevTot++;
+      else if (prc.status === "furikae") prevTot++;
+      else if ((prc.status === "shukuhaku" || prc.status === "tenpaku") && prc.start) prevTot++;
     }
     r += `<td class='total-col'>${tot}</td><td class='total-col' style='opacity:.7'>${prevTot}</td>`;
     rows += `<tr>${r}</tr>`;
@@ -2239,7 +2242,7 @@ function openStat(cid) {
   const prevY2 = prevD2.getFullYear(), prevM2 = prevD2.getMonth() + 1;
   let prevUse = 0, prevTotalHours = 0;
   for (let d = 1; d <= prevDim2; d++) {
-    const pr = recByKey(cid, `${prevY2}_${prevM2}_${d}`);
+    const pr = recByKey(cid, dkeyForDate(new Date(prevY2, prevM2 - 1, d)));
     if (!pr) continue;
     if (pr.status === "work" || pr.status === "furikae") prevUse++;
     else if ((pr.status === "shukuhaku" || pr.status === "tenpaku") && pr.start) prevUse++;
