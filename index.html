@@ -304,6 +304,13 @@
   .status-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:6px}
   .status-grid button{padding:8px 4px;border-radius:9px;border:1.5px solid var(--line);background:#fff;cursor:pointer;font-weight:700;font-size:12px}
   .status-grid button.sel{background:var(--pink);color:#fff;border-color:var(--pink)}
+  .marker-section{margin-top:10px}
+  .marker-label{font-size:11px;font-weight:700;color:#888;margin-bottom:4px}
+  .marker-grid button[data-m="seiri"]{background:var(--seiri);border-color:#d09090;color:#7a3050}
+  .marker-grid button[data-m="yotei"]{background:var(--yotei);border-color:#d0b060;color:#806020}
+  .marker-grid button[data-m="shukuhaku"]{background:var(--shukuhaku);border-color:#60a060;color:#305030}
+  .marker-grid button[data-m="tenpaku"]{background:var(--tenpaku);border-color:#6090c0;color:#304060}
+  .marker-grid button.marker-sel{border-width:2.5px;border-color:#222;box-shadow:0 0 0 1px #222}
   .seg{display:flex;gap:6px}
   .seg button{flex:1;padding:9px;border-radius:10px;border:1.5px solid var(--line);background:#fff;cursor:pointer;font-weight:700}
   .seg button.sel-hiru{background:var(--hiru);color:var(--ink);border-color:var(--hiru-bar)}
@@ -464,10 +471,14 @@
 <dialog id="dlg">
   <div class="dlg-head"><span id="dlgTitle"></span><span class="x" id="dlgX">×</span></div>
   <div class="dlg-body">
-    <div class="status-grid" id="statusGrid">
-      <button data-s="work">利用</button><button data-s="furikae">振替</button><button data-s="mitei">未定</button><button data-s="absent">当日欠勤</button>
-      <button data-s="seiri">生理</button><button data-s="yotei">予定</button><button data-s="shukuhaku">宿泊</button><button data-s="tenpaku">店泊</button>
-      <button data-s="off">休み</button>
+    <div class="status-grid" id="statusGridInput">
+      <button data-s="work">利用</button><button data-s="furikae">振替</button><button data-s="mitei">未定</button><button data-s="absent">当日欠勤</button><button data-s="off">休み</button>
+    </div>
+    <div class="marker-section">
+      <div class="marker-label">マーカー</div>
+      <div class="status-grid marker-grid" id="statusGridMarker">
+        <button data-m="seiri">生理</button><button data-m="yotei">予定</button><button data-m="shukuhaku">宿泊</button><button data-m="tenpaku">店泊</button>
+      </div>
     </div>
     <div id="timeFields" style="margin-top:10px">
       <div class="time-row">
@@ -517,11 +528,6 @@
       <div class="hint"></div>
     </div>
     <div id="absentNote" style="margin-top:10px;display:none"><div class="hint"></div></div>
-    <div id="stayNote" style="margin-top:10px;display:none">
-      <div class="field"><label>連続する終了日</label>
-        <select id="stayEndDay"></select></div>
-      <div class="hint"></div>
-    </div>
     <div id="multiDayRow" style="display:none;margin-top:10px">
       <label style="font-size:11px;font-weight:700;color:var(--ink-soft);display:block;margin-bottom:4px">日にちを選択</label>
       <div id="multiDayGrid" style="display:flex;flex-wrap:wrap;gap:4px"></div>
@@ -696,6 +702,7 @@
 <div id="calSelBar">
   <span class="sel-count" id="calSelCount">セルをタップして選択</span>
   <button class="btn" id="calSelInputBtn" style="background:#fff;color:var(--pink);flex-shrink:0" disabled>まとめて入力</button>
+  <button class="btn" id="calSelDeleteBtn" style="background:#fff;color:#c00;flex-shrink:0" disabled>まとめて削除</button>
   <button class="btn ghost" id="calSelExitBtn" style="background:transparent;border-color:rgba(255,255,255,.6);color:#fff;flex-shrink:0">キャンセル</button>
 </div>
 
@@ -740,8 +747,9 @@ let lendStore = null, lendMode = "lend";   // lend=加盟店へ掛け持ち / bo
 let eventDay = null, askLabelCol = null, editCastId = null;
 let undoStack = [];                          // [{day, assign, lends, borrows(JSON)}…] 末尾が最新（上限50段）
 let calUndoStack = [];                       // [JSON string of state.records] 末尾が最新（上限20段）
-let calSelMode = false, calSelCells = new Set(), calSelApply = false;
+let calSelMode = false, calSelCells = new Set(), calSelApply = false, calSelViaButton = false;
 let calDragSel = false, calDragMoved = false, calDragAnchor = null;
+let pickOverlay = null;
 let roomsListScrollTarget = null;            // リスピラ一覧で次回スクロールする対象日（チップからのジャンプ用）
 
 /* ===== 2. 永続化と正規化 ============================================ */
@@ -2123,6 +2131,7 @@ function renderCalendarTable() {
   wrap.scrollLeft = (calScrollLeft != null ? calScrollLeft : keep);
   const st = $("calSubtabs"); if (st) st.style.cssText = calSearch ? "opacity:.4;pointer-events:none" : "";
   const note = $("calSearchNote"); if (note) note.textContent = calSearch ? `「${calSearch}」の検索結果` : "";
+  updateCalSelUI();
 }
 function renderCalendar() {
   $("view-calendar").innerHTML =
@@ -2191,7 +2200,8 @@ function renderCalendar() {
   const cc = $("calSearchClear");
   if (cc) cc.onclick = () => { calSearch = ""; const b = $("calSearchBox"); if (b) b.value = ""; renderCalendarTable(); };
   const smb = $("calSelModeBtn");
-  if (smb) smb.onclick = () => { if (calSelMode) exitCalSelMode(); else enterCalSelMode(); };
+  if (smb) smb.onclick = () => { if (calSelMode) exitCalSelMode(); else enterCalSelMode(true); };
+  updateCalSelUI();
 }
 
 // --- 個人の月間集計 ---
@@ -2352,11 +2362,7 @@ document.addEventListener("mouseup", ev => {
   if (!calDragSel) return;
   calDragSel = false;
   calDragAnchor = null;
-  if (calDragMoved && calSelMode && calSelCells.size > 0) {
-    setTimeout(() => { calDragMoved = false; openCalSelDlg(); }, 0);
-  } else {
-    calDragMoved = false;
-  }
+  calDragMoved = false;
 });
 function openDelDlg(cid) {
   const c = state.casts.find(x => x.id === cid);
@@ -2556,27 +2562,34 @@ function updateCalSelUI() {
     const n = calSelCells.size;
     $("calSelCount").textContent = n > 0 ? `${n}セル選択中` : "セルをタップして選択";
     const inBtn = $("calSelInputBtn"); if (inBtn) inBtn.disabled = n === 0;
+    const delBtn = $("calSelDeleteBtn"); if (delBtn) delBtn.disabled = n === 0;
   } else {
     bar.style.display = "none";
   }
 }
-function enterCalSelMode() {
-  calSelMode = true; calSelCells.clear(); calSelApply = false;
+function enterCalSelMode(viaButton = false) {
+  calSelMode = true; calSelCells.clear(); calSelApply = false; calSelViaButton = viaButton;
   const btn = $("calSelModeBtn"); if (btn) btn.classList.add("selmode-on");
   updateCalSelUI();
 }
 function exitCalSelMode() {
-  calSelMode = false; calSelCells.clear(); calSelApply = false;
+  calSelMode = false; calSelCells.clear(); calSelApply = false; calSelViaButton = false;
   const btn = $("calSelModeBtn"); if (btn) btn.classList.remove("selmode-on");
+  document.querySelectorAll("td.cell.sel-cell").forEach(el => el.classList.remove("sel-cell"));
+  updateCalSelUI();
+}
+function clearCalSel() {
+  calSelCells.clear(); calSelApply = false;
   document.querySelectorAll("td.cell.sel-cell").forEach(el => el.classList.remove("sel-cell"));
   updateCalSelUI();
 }
 function openCalSelDlg() {
   if (calSelCells.size === 0) return;
-  const first = calSelCells.values().next().value;
-  const [scid, sday] = first.split("@@");
+  const first = [...calSelCells][0];
+  const parts = first.split("@@");
+  const scid = parts[0], sday = parseInt(parts[1]);
   calSelApply = true;
-  openDlg(scid, parseInt(sday));
+  openDlg(scid, sday);
   const title = $("dlgTitle"); if (title) title.textContent = `${calSelCells.size}セル まとめて入力`;
 }
 
@@ -2588,7 +2601,17 @@ function openDlg(cid, day) {
   $("dlgTitle").textContent = `${c.name}　${cur.getMonth() + 1}/${day}`;
   const r = rec(cid, day);
   const _overlays = ["seiri","yotei","shukuhaku","tenpaku"];
-  pickStatus = r ? (r.stayBg && _overlays.includes(r.stayBg) ? r.stayBg : (r.status || "work")) : "work";
+  {
+    let bs = (r && r.status) ? r.status : "none";
+    if (_overlays.includes(bs)) {
+      // 旧フォーマット（statusがオーバーレイ色）→ベースを推定
+      pickOverlay = bs;
+      bs = r.start ? "work" : "none";
+    } else {
+      pickOverlay = r ? (r.stayBg && _overlays.includes(r.stayBg) ? r.stayBg : (r.seiriTint ? "seiri" : null)) : null;
+    }
+    pickStatus = bs;
+  }
   setTime("startTime", r && r.start != null ? r.start : "");
   setTime("endTime", r && r.end != null ? r.end : "");
   setTime("startTime2", r && r.start2 != null ? r.start2 : "");
@@ -2600,25 +2623,16 @@ function openDlg(cid, day) {
   refreshPick();
   dlgOpen("dlg");
 }
-// 状態に応じて時間欄・中抜け・連休終了日などの表示を切り替え
+// 状態に応じて時間欄・中抜けなどの表示を切り替え
 function refreshPick() {
-  document.querySelectorAll("#statusGrid button").forEach(b => b.classList.toggle("sel", b.dataset.s === pickStatus));
-  const isStay = (pickStatus === "shukuhaku" || pickStatus === "tenpaku");
-  const isRange = (pickStatus === "shukuhaku" || pickStatus === "tenpaku" || pickStatus === "yotei" || pickStatus === "seiri" || pickStatus === "mitei");
-  const showTime = pickStatus === "work" || pickStatus === "furikae" || pickStatus === "absent" || pickStatus === "off";
+  document.querySelectorAll("#statusGridInput button").forEach(b => b.classList.toggle("sel", b.dataset.s === pickStatus));
+  document.querySelectorAll("#statusGridMarker button").forEach(b => b.classList.toggle("marker-sel", b.dataset.m === pickOverlay));
+  const showTime = pickStatus === "work" || pickStatus === "furikae" || pickStatus === "absent" || pickStatus === "off"; // "none" は時間入力なし
   $("timeFields").style.display = showTime ? "block" : "none";
   $("absentNote").style.display = (pickStatus === "absent" || pickStatus === "off") ? "block" : "none";
-  $("stayNote").style.display = isRange ? "block" : "none";
   const nk = $("nakanukeRow"); if (nk) nk.style.display = (pickStatus === "work") ? "block" : "none";
   const nf = $("nakanukeFields"), chk = $("nakanukeChk");
   if (nf && chk) nf.style.display = (pickStatus === "work" && chk.checked) ? "flex" : "none";
-  if (isRange && editing) {
-    const dim = daysIn(cur);
-    let opts = "";
-    for (let d = editing.day; d <= dim; d++)
-      opts += `<option value="${d}" ${d === editing.day ? "selected" : ""}>${cur.getMonth() + 1}/${d}</option>`;
-    $("stayEndDay").innerHTML = opts;
-  }
   const clearAllBtn = $("dlgClearAll");
   if (clearAllBtn) {
     let hasNeighbor = false;
@@ -2637,10 +2651,10 @@ function refreshPick() {
     }
     clearAllBtn.style.display = hasNeighbor ? "" : "none";
   }
-  // 日にちを選択（予定・未定）
+  // 日にちを選択（未定）
   const mdRow = $("multiDayRow"), mdGrid = $("multiDayGrid");
   if (mdRow) {
-    const showMd = pickStatus === "yotei" || pickStatus === "mitei";
+    const showMd = pickStatus === "mitei";
     mdRow.style.display = showMd ? "" : "none";
     if (showMd && mdGrid && editing && !mdGrid.hasChildNodes()) {
       const dim = daysIn(cur);
@@ -2651,18 +2665,16 @@ function refreshPick() {
     }
   }
 }
-$("statusGrid").onclick = e => {
+$("statusGridInput").onclick = e => {
   if (!e.target.dataset.s) return;
   const s = e.target.dataset.s;
-  const _ov = ["seiri","yotei","shukuhaku","tenpaku"];
-  if (_ov.includes(s) && pickStatus === s) {
-    // 再クリックでオーバーレイ解除 → ベースステータスに戻す
-    const r = editing ? state.records[recKey(editing.cid, editing.day)] : null;
-    const base = r && r.status && !_ov.includes(r.status) ? r.status : "work";
-    pickStatus = base;
-  } else {
-    pickStatus = s;
-  }
+  pickStatus = (pickStatus === s) ? "none" : s; // 再クリックで解除
+  refreshPick();
+};
+$("statusGridMarker").onclick = e => {
+  if (!e.target.dataset.m) return;
+  const m = e.target.dataset.m;
+  pickOverlay = (pickOverlay === m) ? null : m; // 再クリックでトグル解除
   refreshPick();
 };
 $("nakanukeChk").onchange = () => {
@@ -2680,17 +2692,37 @@ $("dlgSave").onclick = () => {
     ? [...calSelCells].filter(x => x !== `${cid}@@${day}`).map(x => { const [c, d] = x.split("@@"); return { cid: c, day: parseInt(d) }; })
     : [];
 
-  // 「休み」で時間・備考・宿泊背景・生理継承が無く、既存レコードがあれば削除（空セルは通常保存へ）
+  // 「休み」で時間・備考・マーカー・生理継承が無く、既存レコードがあれば削除（空セルは通常保存へ）
   const _prevSeiri = state.records[k] && (state.records[k].status === "seiri" || state.records[k].seiriTint);
-  if (pickStatus === "off" && !s && !note && !_prevSeiri && !(state.records[k] && state.records[k].stayBg)) {
+  if (pickStatus === "off" && !s && !note && !pickOverlay && !_prevSeiri && !(state.records[k] && state.records[k].stayBg)) {
     if (state.records[k]) {
       delete state.records[k];
       if (state.assign[dkey(day)]) delete state.assign[dkey(day)][cid];
       extraTargets.forEach(({ cid: tc, day: td }) => applyRecordToDay(tc, td, null));
-      if (hadSelApply) { calSelApply = false; exitCalSelMode(); }
+      if (hadSelApply) exitCalSelMode();
       save(); dlgClose("dlg"); renderAfterEdit(); return;
     }
     // 空セルの場合はそのまま通常保存フローへ（ーを作成）
+  }
+
+  // 時間なし＋マーカーあり → 入力選択を無視してマーカーのみ保存
+  if ((pickStatus === "work" || pickStatus === "furikae") && !s && pickOverlay) pickStatus = "none";
+
+  // マーカーのみ（入力ステータス未選択）
+  if (pickStatus === "none") {
+    if (pickOverlay) {
+      state.records[k] = { stayBg: pickOverlay, note };
+    } else if (state.records[k]) {
+      delete state.records[k];
+      if (state.assign[dkey(day)]) delete state.assign[dkey(day)][cid];
+    }
+    extraTargets.forEach(({ cid: tc, day: td }) => {
+      const rk = recKey(tc, td);
+      if (pickOverlay) state.records[rk] = { stayBg: pickOverlay, note };
+      else if (state.records[rk]) delete state.records[rk];
+    });
+    if (hadSelApply) exitCalSelMode();
+    save(); dlgClose("dlg"); renderAfterEdit(); return;
   }
 
   if (pickStatus === "work" || pickStatus === "furikae") {
@@ -2702,9 +2734,7 @@ $("dlgSave").onclick = () => {
       if (s2) { if (!e2) e2 = "L"; rec0.start2 = s2; rec0.end2 = e2; }
     }
     if (pickStatus === "work" && $("hideNetChk").checked) rec0.hideNet = true;
-    const _prevStayBg = (state.records[k] || {}).stayBg;
     state.records[k] = rec0;
-    if (_prevStayBg) state.records[k].stayBg = _prevStayBg;
     // 自動溢れキャストは溢れに、それ以外は手動配置を解除して自動配置に
     const cobj = state.casts.find(x => x.id === cid);
     if (cobj && cobj.autoOver) {
@@ -2713,32 +2743,9 @@ $("dlgSave").onclick = () => {
     } else if (state.assign[dkey(day)]) {
       delete state.assign[dkey(day)][cid];
     }
-  } else if (["seiri","yotei","shukuhaku","tenpaku"].includes(pickStatus)) {
-    // 色のみオーバーレイ：既存の利用時間・ステータスを保持し stayBg だけ付与
-    const selDays = [...($("multiDayGrid") || document.createElement("div")).querySelectorAll(".mday-btn.mday-sel")].map(b => parseInt(b.dataset.d));
-    const endD = parseInt($("stayEndDay").value) || day;
-    const lo = Math.min(day, endD), hi = Math.max(day, endD);
-    const daysToApply = selDays.length > 0 ? selDays : Array.from({ length: hi - lo + 1 }, (_, i) => lo + i);
-    for (const d of daysToApply) {
-      const ex = state.records[recKey(cid, d)];
-      const n = (d === day ? note : (ex && ex.note ? ex.note : ""));
-      state.records[recKey(cid, d)] = ex ? { ...ex, stayBg: pickStatus, note: n } : { stayBg: pickStatus, note: n };
-      if (state.assign[dkey(d)]) delete state.assign[dkey(d)][cid];
-    }
-    extraTargets.forEach(({ cid: tc, day: td }) => {
-      const ex2 = state.records[recKey(tc, td)];
-      state.records[recKey(tc, td)] = ex2 ? { ...ex2, stayBg: pickStatus } : { stayBg: pickStatus };
-    });
-    if (hadSelApply) { calSelApply = false; exitCalSelMode(); }
-    save(); dlgClose("dlg"); renderAfterEdit(); return;
   } else if (pickStatus === "absent" || pickStatus === "off") {
-    const ex = state.records[k];
-    const prevWasSeiri = ex && (ex.status === "seiri" || ex.seiriTint);
-    let sb = ex && ex.stayBg ? ex.stayBg : undefined;
     if (s && !e) e = "L";
     state.records[k] = { status: pickStatus, start: s, end: e, note };
-    if (sb) state.records[k].stayBg = sb;
-    if (prevWasSeiri) state.records[k].seiriTint = true;
     if (state.assign[dkey(day)]) delete state.assign[dkey(day)][cid];
   } else if (pickStatus === "mitei") {
     const selDays = [...($("multiDayGrid") || document.createElement("div")).querySelectorAll(".mday-btn.mday-sel")].map(b => parseInt(b.dataset.d));
@@ -2753,21 +2760,35 @@ $("dlgSave").onclick = () => {
         if (state.assign[dkey(d)]) delete state.assign[dkey(d)][cid];
       });
     } else {
-      const endD = parseInt($("stayEndDay").value) || day;
-      const lo = Math.min(day, endD), hi = Math.max(day, endD);
-      for (let d = lo; d <= hi; d++) {
-        state.records[recKey(cid, d)] = { status: "mitei", note: (d === day ? note : "") };
-        if (state.assign[dkey(d)]) delete state.assign[dkey(d)][cid];
-      }
+      state.records[recKey(cid, day)] = { status: "mitei", note };
+      if (state.assign[dkey(day)]) delete state.assign[dkey(day)][cid];
     }
   } else {
     state.records[k] = { status: pickStatus, note };
     if (state.assign[dkey(day)]) delete state.assign[dkey(day)][cid];
   }
+  // マーカー（pickOverlay）を stayBg として保存対象レコードに適用
+  const applyOverlay = rk => {
+    if (!state.records[rk]) return;
+    if (pickOverlay) state.records[rk].stayBg = pickOverlay;
+    else delete state.records[rk].stayBg;
+  };
+  // mitei の multiDay 複数日にも適用
+  if (pickStatus === "mitei") {
+    const selDays2 = [...($("multiDayGrid") || document.createElement("div")).querySelectorAll(".mday-btn.mday-sel")].map(b => parseInt(b.dataset.d));
+    (selDays2.length > 0 ? selDays2 : [day]).forEach(d => applyOverlay(recKey(cid, d)));
+  } else {
+    applyOverlay(k);
+  }
   // 繰り返し/まとめて入力を適用
   const primaryRec = state.records[k] || null;
-  extraTargets.forEach(({ cid: tc, day: td }) => applyRecordToDay(tc, td, primaryRec));
-  if (hadSelApply) { calSelApply = false; exitCalSelMode(); }
+  extraTargets.forEach(({ cid: tc, day: td }) => {
+    applyRecordToDay(tc, td, primaryRec);
+    const rk2 = recKey(tc, td);
+    if (state.records[rk2]) state.records[rk2].note = note;
+    applyOverlay(rk2);
+  });
+  if (hadSelApply) exitCalSelMode();
   save(); dlgClose("dlg"); renderAfterEdit();
 };
 $("dlgClear").onclick = () => {
@@ -2799,10 +2820,25 @@ $("dlgClearAll").onclick = () => {
       if (state.assign[dkey(d)]) delete state.assign[dkey(d)][cid];
     }
   }
-  save(); dlgClose("dlg"); renderAfterEdit();
+  exitCalSelMode(); save(); dlgClose("dlg"); renderAfterEdit();
 };
 $("dlgX").onclick = () => { dlgClose("dlg"); if (calSelApply) calSelApply = false; };
 $("calSelInputBtn").onclick = () => openCalSelDlg();
+$("calSelDeleteBtn").onclick = () => {
+  if (calSelCells.size === 0) return;
+  if (!confirm(`${calSelCells.size}セルのデータを削除しますか？`)) return;
+  pushCalUndo();
+  calSelCells.forEach(key => {
+    const [cid, dStr] = key.split("@@");
+    const d = parseInt(dStr);
+    const rk = recKey(cid, d);
+    if (state.records[rk]) delete state.records[rk];
+    const dk = dkey(d);
+    if (state.assign[dk] && state.assign[dk][cid] != null) delete state.assign[dk][cid];
+  });
+  exitCalSelMode();
+  save(); renderAfterEdit();
+};
 $("calSelExitBtn").onclick = () => exitCalSelMode();
 
 /* ===== 14. タブ・月送り・全体描画 ================================== */
