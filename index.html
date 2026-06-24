@@ -2070,7 +2070,11 @@ function calTable(group) {
     const todaymk = isTodayCol ? '<span class="todaymk">今日</span><br>' : '';
     head += `<th class='${cls}' data-d="${d}" onclick="openEvent(${d})">${todaymk}${bookmk}${holmk}${evlabel}<span class="daynum">${d}</span><br><small>${WK[w]}</small></th>`;
   }
-  head += "<th class='total-col'>利用<br>合計</th>";
+  head += "<th class='total-col'>今月<br>合計</th><th class='total-col' style='opacity:.7'>先月<br>合計</th>";
+
+  const prevDate = new Date(y, m - 1, 1);
+  const prevDim = daysIn(prevDate);
+  const prevY = prevDate.getFullYear(), prevM = prevDate.getMonth() + 1;
 
   let rows = "";
   casts.forEach(c => {
@@ -2095,7 +2099,12 @@ function calTable(group) {
       const selCls = calSelCells.has(`${c.id}@@${d}`) ? " sel-cell" : "";
       r += `<td class='cell ${cls} ${ci.cls}${selCls}' data-cid="${c.id}" data-d="${d}" onclick="openDlg('${c.id}',${d})">${ci.inner}</td>`;
     }
-    r += `<td class='total-col'>${tot}</td>`;
+    let prevTot = 0;
+    for (let d = 1; d <= prevDim; d++) {
+      const prc = recByKey(c.id, `${prevY}_${prevM}_${d}`);
+      if (prc && isUse(prc.status) && (prc.status === "work" || prc.status === "furikae" || prc.start)) prevTot++;
+    }
+    r += `<td class='total-col'>${tot}</td><td class='total-col' style='opacity:.7'>${prevTot}</td>`;
     rows += `<tr>${r}</tr>`;
   });
   return `<table class="cal"><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table>`;
@@ -2217,7 +2226,6 @@ function openStat(cid) {
     else if (r.status === "shukuhaku" || r.status === "tenpaku") { if (r.start) use++; }
     else if (r.status === "furikae") { use++; furikae++; }
     else if (r.status === "absent") absent++;
-    // 合計利用時間（出勤系のみ。中抜け2回目も加算）
     const sp = span(r);
     if (sp) totalHours += (sp[1] - sp[0]);
     if (r && isUse(r.status) && r.start2) {
@@ -2225,6 +2233,26 @@ function openStat(cid) {
       if (sp2) totalHours += (sp2[1] - sp2[0]);
     }
   }
+  // 先月の利用日数
+  const prevD2 = new Date(cur.getFullYear(), cur.getMonth() - 1, 1);
+  const prevDim2 = daysIn(prevD2);
+  const prevY2 = prevD2.getFullYear(), prevM2 = prevD2.getMonth() + 1;
+  let prevUse = 0, prevTotalHours = 0;
+  for (let d = 1; d <= prevDim2; d++) {
+    const pr = recByKey(cid, `${prevY2}_${prevM2}_${d}`);
+    if (!pr) continue;
+    if (pr.status === "work" || pr.status === "furikae") prevUse++;
+    else if ((pr.status === "shukuhaku" || pr.status === "tenpaku") && pr.start) prevUse++;
+    const psp = span(pr);
+    if (psp) prevTotalHours += (psp[1] - psp[0]);
+    if (isUse(pr.status) && pr.start2) {
+      const psp2 = spanRaw(pr.start2, pr.end2);
+      if (psp2) prevTotalHours += (psp2[1] - psp2[0]);
+    }
+  }
+  const phWhole = Math.floor(prevTotalHours);
+  const phMin = Math.round((prevTotalHours - phWhole) * 60);
+  const prevHoursLabel = phMin ? `${phWhole}時間${phMin}分` : `${phWhole}時間`;
   // 時間表記（小数は0.5刻みで「○時間△分」に）
   const hWhole = Math.floor(totalHours);
   const hMin = Math.round((totalHours - hWhole) * 60);
@@ -2232,7 +2260,9 @@ function openStat(cid) {
   $("statTitle").textContent = `${c.name}　${cur.getMonth() + 1}月の集計`;
   $("statBody").innerHTML =
     `<div class="stat-row"><span>利用日数</span><b>${use}日</b></div>
+     <div class="stat-row"><span>先月利用日数</span><b style="opacity:.7">${prevUse}日</b></div>
      <div class="stat-row"><span>合計利用時間</span><b>${hoursLabel}</b></div>
+     <div class="stat-row"><span>先月合計利用時間</span><b style="opacity:.7">${prevHoursLabel}</b></div>
      <div class="stat-row"><span>振替</span><b>${furikae}日</b></div>
      <div class="stat-row"><span>当欠</span><b style="color:var(--over)">${absent}日</b></div>`;
   dlgOpen("statDlg");
@@ -2691,18 +2721,7 @@ $("dlgSave").onclick = () => {
     ? [...calSelCells].filter(x => x !== `${cid}@@${day}`).map(x => { const [c, d] = x.split("@@"); return { cid: c, day: parseInt(d) }; })
     : [];
 
-  // 「休み」で時間・備考・マーカー・生理継承が無く、既存レコードがあれば削除（空セルは通常保存へ）
   const _prevSeiri = state.records[k] && (state.records[k].status === "seiri" || state.records[k].seiriTint);
-  if (pickStatus === "off" && !s && !note && !pickOverlay && !_prevSeiri && !(state.records[k] && state.records[k].stayBg)) {
-    if (state.records[k]) {
-      delete state.records[k];
-      if (state.assign[dkey(day)]) delete state.assign[dkey(day)][cid];
-      extraTargets.forEach(({ cid: tc, day: td }) => applyRecordToDay(tc, td, null));
-      if (hadSelApply) exitCalSelMode();
-      save(); dlgClose("dlg"); renderAfterEdit(); return;
-    }
-    // 空セルの場合はそのまま通常保存フローへ（ーを作成）
-  }
 
   // 時間なし＋マーカーあり → 入力選択を無視してマーカーのみ保存
   if ((pickStatus === "work" || pickStatus === "furikae") && !s && pickOverlay) pickStatus = "none";
@@ -2742,9 +2761,15 @@ $("dlgSave").onclick = () => {
     } else if (state.assign[dkey(day)]) {
       delete state.assign[dkey(day)][cid];
     }
-  } else if (pickStatus === "absent" || pickStatus === "off") {
+  } else if (pickStatus === "absent") {
     if (s && !e) e = "L";
-    state.records[k] = { status: pickStatus, start: s, end: e, note };
+    state.records[k] = { status: "absent", start: s, end: e, note };
+    if (state.assign[dkey(day)]) delete state.assign[dkey(day)][cid];
+  } else if (pickStatus === "off") {
+    // 非破壊：既存データ（利用時間・マーカー等）を保持し status だけ上書き
+    const ex = state.records[k] || {};
+    state.records[k] = { ...ex, status: "off", note };
+    if (s) { state.records[k].start = s; state.records[k].end = e || "L"; }
     if (state.assign[dkey(day)]) delete state.assign[dkey(day)][cid];
   } else if (pickStatus === "mitei") {
     const selDays = [...($("multiDayGrid") || document.createElement("div")).querySelectorAll(".mday-btn.mday-sel")].map(b => parseInt(b.dataset.d));
@@ -2782,8 +2807,15 @@ $("dlgSave").onclick = () => {
   // 繰り返し/まとめて入力を適用
   const primaryRec = state.records[k] || null;
   extraTargets.forEach(({ cid: tc, day: td }) => {
-    applyRecordToDay(tc, td, primaryRec);
     const rk2 = recKey(tc, td);
+    if (pickStatus === "off") {
+      // 非破壊：各セル自身のデータを保持して status だけ off に
+      const exT = state.records[rk2] || {};
+      state.records[rk2] = { ...exT, status: "off", note };
+      if (state.assign[dkey(td)]) delete state.assign[dkey(td)][tc];
+    } else {
+      applyRecordToDay(tc, td, primaryRec);
+    }
     if (state.records[rk2]) state.records[rk2].note = note;
     applyOverlay(rk2);
   });
