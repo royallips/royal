@@ -488,32 +488,29 @@
     .status-grid{grid-template-columns:1fr 1fr}
   }
   @media print {
-    @page { size: B5 landscape; margin: 8mm; }
-    /* 印刷時はシート以外を全て非表示 */
+    @page { size: B5 landscape; margin: 6mm 8mm; }
     body { background: #fff !important; }
     .tabs, nav, #calSelBar, dialog, .btn, .bar,
     .absent-zone, .soukei-zone, .lend-row, .over-banner, .lock-banner,
-    .freebar, .rt-wrap, .lend-zone, .memo-box, label[for],
+    .freebar, .rt-wrap, .lend-zone, .memo-box, label,
     #view-roomslist, #view-cal, #view-manage, #view-settings, #statCards { display: none !important; }
     #view-rooms { display: block !important; }
-    /* シート以外のパネル要素を隠す */
     #view-rooms .panel > *:not(.sheet-view) { display: none !important; }
     #view-rooms .panel { padding: 0; box-shadow: none; border: none; background: none; }
-    /* シートレイアウト印刷用調整 */
     .sheet-view { padding: 0; }
-    .sheet-header { margin-bottom: 4mm; }
-    .sheet-date { font-size: 13pt; }
     .ss-btn { display: none !important; }
-    .sheet-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; max-width: none; margin: 0; }
-    .sheet-col-head { font-size: 10pt; padding: 3px 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .sheet-col.hiru .sheet-col-head { background: #fff8e1 !important; color: #9a6a08; }
-    .sheet-col.yoru .sheet-col-head { background: #e8eeff !important; color: #2c5d8a; }
-    .sheet-table { font-size: 9pt; border-collapse: collapse; width: 100%; table-layout: fixed; }
-    .sh-rno { font-size: 11pt; font-weight: 900; text-align: center; padding: 3px 2px; border: 0.5pt solid #aaa; width: 16pt; color: #c06080; vertical-align: middle; white-space: nowrap; }
-    .sh-names { display: table-cell !important; padding: 2px 4px; border: 0.5pt solid #aaa; border-left: none; vertical-align: middle; white-space: nowrap; overflow: hidden; }
-    .sh-name { font-size: 9pt; font-weight: 700; display: inline; white-space: nowrap; }
-    .sh-name+.sh-name { margin-left: 4pt; }
-    .sh-name small { font-size: .82em; color: #666; margin-left: 1pt; }
+    .sheet-header { margin-bottom: 3mm; justify-content: center; }
+    .sheet-date { font-size: 16pt; font-weight: 900; letter-spacing: .05em; }
+    .sheet-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; max-width: none; margin: 0; }
+    .sheet-col-head { font-size: 13pt; font-weight: 900; padding: 4px 0; letter-spacing: .15em; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .sheet-col.hiru .sheet-col-head { background: #fff0cc !important; color: #8a5a00; border: 1pt solid #c8a040; }
+    .sheet-col.yoru .sheet-col-head { background: #e0eaff !important; color: #1a3a80; border: 1pt solid #7090d0; }
+    .sheet-table { font-size: 10pt; border-collapse: collapse; width: 100%; table-layout: fixed; }
+    .sh-rno { font-size: 13pt; font-weight: 900; text-align: center; padding: 4px 3px; border: 1pt solid #bbb; width: 20pt; color: #c03060; vertical-align: middle; white-space: nowrap; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .sh-names { display: table-cell !important; padding: 3px 6px; border: 1pt solid #bbb; border-left: none; vertical-align: middle; white-space: nowrap; overflow: hidden; }
+    .sh-name { font-size: 11pt; font-weight: 900; display: inline; white-space: nowrap; color: #000; }
+    .sh-name+.sh-name { margin-left: 5pt; }
+    .sh-name small { font-size: .8em; font-weight: 700; color: #444; margin-left: 1pt; }
   }
 </style>
 </head>
