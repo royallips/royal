@@ -488,29 +488,35 @@
     .status-grid{grid-template-columns:1fr 1fr}
   }
   @media print {
-    @page { size: B5 landscape; margin: 6mm 8mm; }
-    body { background: #fff !important; }
-    .tabs, nav, #calSelBar, dialog, .btn, .bar,
+    @page { size: B5 landscape; margin: 5mm 7mm; }
+    html, body { height: 100%; margin: 0; padding: 0; background: #fff !important; }
+    h1, .tabs, nav, #calSelBar, dialog, .btn, .bar, .wrap > .bar,
     .absent-zone, .soukei-zone, .lend-row, .over-banner, .lock-banner,
     .freebar, .rt-wrap, .lend-zone, .memo-box, label,
     #view-roomslist, #view-cal, #view-manage, #view-settings, #statCards { display: none !important; }
-    #view-rooms { display: block !important; }
+    .wrap { padding: 0 !important; }
+    #view-rooms { display: flex !important; flex-direction: column; height: 100%; }
     #view-rooms .panel > *:not(.sheet-view) { display: none !important; }
-    #view-rooms .panel { padding: 0; box-shadow: none; border: none; background: none; }
-    .sheet-view { padding: 0; }
+    #view-rooms .panel { padding: 0; box-shadow: none; border: none; background: none; flex: 1; display: flex; flex-direction: column; }
+    .sheet-view { padding: 0; flex: 1; display: flex; flex-direction: column; }
     .ss-btn { display: none !important; }
-    .sheet-header { margin-bottom: 3mm; justify-content: center; }
-    .sheet-date { font-size: 16pt; font-weight: 900; letter-spacing: .05em; }
-    .sheet-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; max-width: none; margin: 0; }
-    .sheet-col-head { font-size: 13pt; font-weight: 900; padding: 4px 0; letter-spacing: .15em; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    /* ヘッダー */
+    .sheet-header { margin-bottom: 2mm; justify-content: center; flex-shrink: 0; }
+    .sheet-date { font-size: 17pt; font-weight: 900; letter-spacing: .05em; }
+    /* 2列 */
+    .sheet-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; max-width: none; margin: 0; flex: 1; min-height: 0; }
+    .sheet-col { display: flex; flex-direction: column; height: 100%; }
+    .sheet-col-head { font-size: 14pt; font-weight: 900; padding: 3px 0; letter-spacing: .15em; flex-shrink: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .sheet-col.hiru .sheet-col-head { background: #fff0cc !important; color: #8a5a00; border: 1pt solid #c8a040; }
     .sheet-col.yoru .sheet-col-head { background: #e0eaff !important; color: #1a3a80; border: 1pt solid #7090d0; }
-    .sheet-table { font-size: 10pt; border-collapse: collapse; width: 100%; table-layout: fixed; }
-    .sh-rno { font-size: 13pt; font-weight: 900; text-align: center; padding: 4px 3px; border: 1pt solid #bbb; width: 20pt; color: #c03060; vertical-align: middle; white-space: nowrap; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .sh-names { display: table-cell !important; padding: 3px 6px; border: 1pt solid #bbb; border-left: none; vertical-align: middle; white-space: nowrap; overflow: hidden; }
-    .sh-name { font-size: 11pt; font-weight: 900; display: inline; white-space: nowrap; color: #000; }
-    .sh-name+.sh-name { margin-left: 5pt; }
-    .sh-name small { font-size: .8em; font-weight: 700; color: #444; margin-left: 1pt; }
+    /* テーブル */
+    .sheet-table { flex: 1; width: 100%; border-collapse: collapse; table-layout: fixed; height: 100%; }
+    .sheet-table tbody { height: 100%; }
+    .sh-rno { font-size: 14pt; font-weight: 900; text-align: center; padding: 2px 2px; border: 1pt solid #bbb; width: 22pt; color: #c03060; vertical-align: middle; white-space: nowrap; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .sh-names { display: table-cell !important; padding: 2px 4px; border: 1pt solid #bbb; border-left: none; vertical-align: middle; white-space: nowrap; overflow: hidden; }
+    .sh-name { font-size: 12pt; font-weight: 900; display: inline; white-space: nowrap; color: #000; }
+    .sh-name+.sh-name { margin-left: 4pt; }
+    .sh-name small { font-size: .78em; font-weight: 700; color: #333; margin-left: 1pt; }
   }
 </style>
 </head>
