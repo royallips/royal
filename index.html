@@ -107,6 +107,8 @@
   .lf-dn{display:grid;grid-template-columns:24px 9fr 7fr;margin:3px 0}
   #view-roomslist .lf-rno{display:none}
   #view-roomslist .lf-row{grid-template-columns:1fr}
+  #view-roomslist .lf-axis{grid-template-columns:0 repeat(16,1fr)}
+  #view-roomslist .lf-axis span:first-child{display:none}
   #view-roomslist .lf-dn{grid-template-columns:0 9fr 7fr}
   #view-roomslist .lf-freerow{grid-template-columns:1fr}
   #view-roomslist .lf-freerow .lf-rno{display:none}
@@ -466,6 +468,7 @@
     .lf-day{width:92vw;max-width:420px}
     .lf-axis{grid-template-columns:22px repeat(16,1fr)}
     .lf-row{grid-template-columns:22px 1fr}
+    #view-roomslist .lf-axis{grid-template-columns:0 repeat(16,1fr)}
     .lf-freerow{grid-template-columns:22px 1fr}
     .lf-axis span{font-size:9px}
     /* ダイアログ：下からせり出すシート風に。画面幅に収める */
@@ -1501,7 +1504,7 @@ function renderRooms() {
         <button class="btn sm" id="optimizeBtn" ${locked ? "disabled" : ""}>最適に並べ替え</button>
         <button class="btn ghost sm" id="undoBtn" ${(canUndo() && !locked) ? "" : "disabled"}>前に戻す</button>
         <button class="btn ghost sm" id="addNewcomerBtn" ${locked ? "disabled" : ""}>＋入店予定</button>
-        <button class="view-toggle-btn${roomViewMode === 'sheet' ? ' active' : ''}" id="viewToggleBtn">シート</button>
+        <button class="view-toggle-btn${roomViewMode === 'sheet' ? ' active' : ''}" id="viewToggleBtn">切り替え</button>
       </div>
       ${lockBanner}
       ${overBanner}
