@@ -414,9 +414,8 @@
     .reg-stats{gap:8px}
     .reg-stat{padding:8px 10px}
     .reg-stat-num{font-size:19px}
-    html,body{overflow-x:hidden}
     body{padding:8px}
-    .wrap{max-width:100%}
+    .wrap{max-width:100%;overflow-x:hidden}
     h1{font-size:16px}
     .bar{gap:6px;margin:10px 0}
     .btn{padding:8px 12px;font-size:13px}
@@ -560,7 +559,21 @@
   <div id="view-roomslist" style="display:none"></div>
   <div id="view-calendar" style="display:none"></div>
   <div id="view-manage" style="display:none"></div>
-  <div id="view-settings" style="display:none"></div>
+  <div id="view-settings" style="display:none">
+    <div class="panel" id="settings-panel">
+      <div class="sec-title">☁ クラウド同期</div>
+      <div class="field"><label>GAS WebアプリURL</label>
+        <input id="cloudUrlInput" placeholder="https://script.google.com/macros/s/.../exec"></div>
+      <div class="field"><label>パスワード</label>
+        <input id="cloudPassInput" placeholder=""></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+        <button class="btn" id="cloudSaveBtn">接続して同期開始</button>
+        <button class="btn ghost" id="cloudPullBtn">今すぐ最新を取得</button>
+        <button class="btn ghost" id="cloudHelpBtn">使い方</button>
+      </div>
+      <div id="cloudStatus" style="margin-top:8px;font-size:12px;font-weight:700"></div>
+    </div>
+  </div>
 </div>
 
 <dialog id="dlg">
@@ -2475,20 +2488,10 @@ function renderManage() {
   $("addCast2").onclick = () => openCastDlg();
 }
 function renderSettings() {
-  $("view-settings").innerHTML =
-    `<div class="panel">
-      <div class="sec-title">☁ クラウド同期</div>
-      <div class="field"><label>GAS WebアプリURL</label>
-        <input id="cloudUrlInput" placeholder="https://script.google.com/macros/s/.../exec" value="${(cloudUrl || '').replace(/"/g, '&quot;')}"></div>
-      <div class="field"><label>パスワード</label>
-        <input id="cloudPassInput" placeholder="" value="${(cloudPass || '').replace(/"/g, '&quot;')}"></div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
-        <button class="btn" id="cloudSaveBtn">接続して同期開始</button>
-        <button class="btn ghost" id="cloudPullBtn">今すぐ最新を取得</button>
-        <button class="btn ghost" id="cloudHelpBtn">使い方</button>
-      </div>
-      <div id="cloudStatus" style="margin-top:8px;font-size:12px;font-weight:700;color:${_cloudStatusColor || ""}">${_cloudStatusMsg || (cloudUrl ? "接続済み" : "未接続（この端末のみ保存）")}</div>
-    </div>`;
+  const ui = $("cloudUrlInput"); if (ui) ui.value = cloudUrl || "";
+  const pi = $("cloudPassInput"); if (pi) pi.value = cloudPass || "";
+  const st = $("cloudStatus");
+  if (st) { st.textContent = _cloudStatusMsg || (cloudUrl ? "接続済み" : "未接続（この端末のみ保存）"); st.style.color = _cloudStatusColor || ""; }
   const cs = $("cloudSaveBtn");
   if (cs) cs.onclick = () => {
     setCloudUrl(val("cloudUrlInput"));
