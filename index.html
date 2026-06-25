@@ -105,6 +105,11 @@
   .lf-track::after{content:"";position:absolute;top:0;bottom:0;left:56.25%;width:3px;background:#9aa3ad;opacity:.7;z-index:0;pointer-events:none}
   .lf-axis span.border17{border-left:3px solid #9aa3ad}
   .lf-dn{display:grid;grid-template-columns:24px 9fr 7fr;margin:3px 0}
+  #view-roomslist .lf-rno{display:none}
+  #view-roomslist .lf-row{grid-template-columns:1fr}
+  #view-roomslist .lf-dn{grid-template-columns:0 9fr 7fr}
+  #view-roomslist .lf-freerow{grid-template-columns:1fr}
+  #view-roomslist .lf-freerow .lf-rno{display:none}
   .lf-dn .lf-dn-h,.lf-dn .lf-dn-y{font-size:12px;font-weight:800;text-align:center;border-radius:5px;padding:2px 0}
   .lf-dn .lf-dn-h{background:#fff1d6;color:#d98a00;margin:0 2px 0 0}
   .lf-dn .lf-dn-y{background:#e4e8ff;color:#4a55c0;margin:0 0 0 2px}
@@ -756,6 +761,7 @@ let roomsListScrollTarget = null;            // リスピラ一覧で次回ス�
 function normalize(d) {
   d.memos = d.memos || {};
   d.assign = d.assign || {};
+  d.assignList = d.assignList || {};
   d.lends = d.lends || {};
   d.borrows = d.borrows || {};
   d.events = d.events || {};
@@ -1045,8 +1051,9 @@ function refreshCalendar() {
 // 指定日の利用者を13部屋へ配置。手動指定(force)→自動詰め→溢れの順。
 function computeAssignment(day) { return computeAssignmentByKey(dkey(day)); }
 function computeAssignmentForDate(dt) { return computeAssignmentByKey(dkeyForDate(dt)); }
-function computeAssignmentByKey(dk) {
-  const force = state.assign[dk] || {};
+function computeAssignmentAuto(day) { return computeAssignmentByKey(dkey(day), true); }
+function computeAssignmentByKey(dk, useListAssign = false) {
+  const force = useListAssign ? (state.assignList[dk] || {}) : (state.assign[dk] || {});
   // 「自動溢れ」キャストは、手動で部屋番号を指定していない限り常に溢れ扱い
   const autoOverSet = new Set(state.casts.filter(c => c.autoOver).map(c => c.id));
   const isForcedOver = cid =>
@@ -1674,10 +1681,8 @@ function moveCidToRoom(cid, ri) {
 }
 function moveCidToRoomDay(cid, ri, day) {
   if (isLocked(day)) return;
-  pushUndo(day);
-  pinCurrentRooms(day);
-  if (!state.assign[dkey(day)]) state.assign[dkey(day)] = {};
-  state.assign[dkey(day)][cid] = (ri === "OVER") ? "OVER" : Number(ri);
+  if (!state.assignList[dkey(day)]) state.assignList[dkey(day)] = {};
+  state.assignList[dkey(day)][cid] = (ri === "OVER") ? "OVER" : Number(ri);
   save();
   const scroller = document.querySelector("#view-roomslist .lf-scroll");
   const savedLeft = scroller ? scroller.scrollLeft : 0;
@@ -1853,7 +1858,7 @@ function renderRoomsList() {
   let dayBlocks = "", anyDay = false;
   for (let d = fromDay; d <= dim; d++) {
     anyDay = true;
-    const { rooms, overRooms, overflowCount } = computeAssignment(d);
+    const { rooms, overRooms, overflowCount } = computeAssignmentAuto(d);
     const borrows = (state.borrows && state.borrows[dkey(d)]) ? state.borrows[dkey(d)] : [];
 
     const free = freePerHour(rooms);
@@ -2418,6 +2423,7 @@ $("delConfirm").onclick = () => {
   state.casts = state.casts.filter(c => c.id !== cid);
   Object.keys(state.records).forEach(k => { if (k.startsWith(cid + "_")) delete state.records[k]; });
   Object.values(state.assign).forEach(a => { if (a && a[cid] != null) delete a[cid]; });
+  Object.values(state.assignList).forEach(a => { if (a && a[cid] != null) delete a[cid]; });
   Object.keys(state.lends).forEach(k => { state.lends[k] = state.lends[k].filter(l => l.cid !== cid); });
   save(); delTarget = null; delConfirmStage = 0; dlgClose("delDlg"); renderAll();
 };
