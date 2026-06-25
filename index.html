@@ -364,6 +364,7 @@
   .sh-inner{display:flex;align-items:center;gap:4px;padding:4px 6px;height:100%}
   .sh-side-l{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-align:left}
   .sh-side-r{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-align:right}
+  .sh-side-r-only{margin-left:auto;flex:1;text-align:right}
   .sh-name{font-weight:700;white-space:nowrap;display:inline}
   .sh-name+.sh-name{margin-left:8px}
   .sh-name small{font-size:.82em;color:var(--ink-soft);margin-left:1px;font-weight:600}
@@ -503,6 +504,7 @@
     #view-rooms .panel { padding: 0; box-shadow: none; border: none; background: none; flex: 1; display: flex; flex-direction: column; }
     .sheet-view { padding: 0; flex: 1; display: flex; flex-direction: column; }
     .ss-btn { display: none !important; }
+    .ss-exit { display: none !important; }
     /* ヘッダー */
     .sheet-header { margin-bottom: 2mm; justify-content: center; flex-shrink: 0; }
     .sheet-date { font-size: 17pt; font-weight: 900; letter-spacing: .05em; }
@@ -520,6 +522,7 @@
     .sh-inner { display: flex; align-items: center; gap: 3pt; padding: 2px 4px; height: 100%; }
     .sh-side-l { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-align: left; }
     .sh-side-r { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-align: right; }
+    .sh-side-r-only { margin-left: auto; flex: 1; text-align: right; }
     .sh-name { font-size: 12pt; font-weight: 900; display: inline; white-space: nowrap; color: #000; }
     .sh-name+.sh-name { margin-left: 4pt; }
     .sh-name small { font-size: .78em; font-weight: 700; color: #333; margin-left: 1pt; }
@@ -1281,7 +1284,7 @@ function renderStats() {
 function buildRoomsSheet() {
   const { rooms, overRooms } = computeAssignment(roomDay);
   const DN = 17; // 昼夜の境界
-  function fH(h) { const hr = Math.floor(h), mn = Math.round((h - hr) * 60); return mn === 30 ? `${hr}.5` : `${hr}`; }
+  function fH(h) { const hr = Math.floor(h), mn = Math.round((h - hr) * 60); if (hr >= 24) return "L"; return mn === 30 ? `${hr}.5` : `${hr}`; }
   function fmtHiru(sp) {
     if (!sp) return "";
     return `${fH(sp[0])}-${fH(sp[1])}`;
@@ -1309,8 +1312,13 @@ function buildRoomsSheet() {
     // 夜: sp[0]<18→左, sp[0]>=18→右
     const yoruL = yoruW.filter(w => !w.sp || w.sp[0] < 18).map(w => nameTagY(w, false)).join("");
     const yoruR = yoruW.filter(w => w.sp && w.sp[0] >= 18).map(w => nameTagY(w, false)).join("");
-    hiruRows += `<tr><td class="sh-rno">${rno}</td><td class="sh-names"><div class="sh-inner"><span class="sh-side-l">${hiruL}</span><span class="sh-side-r">${hiruR}</span></div></td></tr>`;
-    yoruRows += `<tr><td class="sh-rno">${rno}</td><td class="sh-names"><div class="sh-inner"><span class="sh-side-l">${yoruL}</span><span class="sh-side-r">${yoruR}</span></div></td></tr>`;
+    function makeCell(lHtml, rHtml) {
+      const lPart = lHtml ? `<span class="sh-side-l">${lHtml}</span>` : "";
+      const rPart = rHtml ? `<span class="sh-side-r${!lHtml ? " sh-side-r-only" : ""}">${rHtml}</span>` : "";
+      return `<div class="sh-inner">${lPart}${rPart}</div>`;
+    }
+    hiruRows += `<tr><td class="sh-rno">${rno}</td><td class="sh-names">${makeCell(hiruL, hiruR)}</td></tr>`;
+    yoruRows += `<tr><td class="sh-rno">${rno}</td><td class="sh-names">${makeCell(yoruL, yoruR)}</td></tr>`;
   }
   const y = cur.getFullYear(), m = cur.getMonth();
   const wd = WK[new Date(y, m, roomDay).getDay()];
