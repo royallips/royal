@@ -363,7 +363,7 @@
   .sh-names{padding:3px 5px;border:1px solid #ddd;border-left:none;vertical-align:middle;white-space:nowrap;overflow:hidden}
   .sh-name{font-weight:700;white-space:nowrap;display:inline}
   .sh-name+.sh-name{margin-left:6px}
-  .sh-name small{font-size:11px;color:var(--ink-soft);margin-left:1px;font-weight:600}
+  .sh-name small{font-size:.82em;color:var(--ink-soft);margin-left:1px;font-weight:600}
   .sh-name.over{color:var(--over)}
   .view-toggle-btn{font-size:11px;padding:4px 10px;border-radius:8px;border:1.5px solid var(--pink);background:#fff;color:var(--pink);cursor:pointer;font-weight:700}
   .view-toggle-btn.active{background:var(--pink);color:#fff}
@@ -513,7 +513,7 @@
     .sh-names { display: table-cell !important; padding: 2px 4px; border: 0.5pt solid #aaa; border-left: none; vertical-align: middle; white-space: nowrap; overflow: hidden; }
     .sh-name { font-size: 9pt; font-weight: 700; display: inline; white-space: nowrap; }
     .sh-name+.sh-name { margin-left: 4pt; }
-    .sh-name small { font-size: 7pt; color: #666; margin-left: 1pt; }
+    .sh-name small { font-size: .82em; color: #666; margin-left: 1pt; }
   }
 </style>
 </head>
@@ -1275,7 +1275,7 @@ function buildRoomsSheet() {
   function fH(h) { const hr = Math.floor(h), mn = Math.round((h - hr) * 60); return mn === 30 ? `${hr}.5` : `${hr}`; }
   function fmtHiru(sp) {
     if (!sp) return "";
-    if (sp[0] <= OPEN && sp[1] >= CLOSE) return "";
+    if (sp[0] <= OPEN) return ""; // OPEN以前開始（8時・9時）は時間非表示
     if (sp[1] >= DN) return `${fH(sp[0])}-`;
     return `${fH(sp[0])}-${fH(sp[1])}`;
   }
