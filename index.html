@@ -1284,19 +1284,11 @@ function buildRoomsSheet() {
   function fH(h) { const hr = Math.floor(h), mn = Math.round((h - hr) * 60); return mn === 30 ? `${hr}.5` : `${hr}`; }
   function fmtHiru(sp) {
     if (!sp) return "";
-    const hideStart = sp[0] <= 8;   // 8時以前は開始を非表示
-    const hideEnd   = sp[1] >= DN;  // 17時以降終了は終了を非表示
-    if (hideStart && hideEnd) return "";
-    if (hideStart) return `-${fH(sp[1])}`;
-    if (hideEnd)   return `${fH(sp[0])}-`;
     return `${fH(sp[0])}-${fH(sp[1])}`;
   }
   function fmtYoru(sp) {
     if (!sp) return "";
-    if (sp[0] <= OPEN && sp[1] >= CLOSE) return "";
-    const end = sp[1] >= CLOSE ? "" : fH(sp[1]);
-    if (sp[0] <= DN) return end ? `-${end}` : ""; // endが空なら"-"のみになるので非表示
-    return `${fH(sp[0])}-${end}`;
+    return `${fH(sp[0])}-${fH(sp[1])}`;
   }
   function nameTagH(w, over) {
     const t = fmtHiru(w.sp);
