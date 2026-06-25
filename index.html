@@ -3020,6 +3020,8 @@ document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
   ["rooms", "roomslist", "calendar", "manage", "settings"].forEach(v =>
     $("view-" + v).style.display = v === t.dataset.tab ? "block" : "none");
   renderAll();
+  // 設定タブは確実に描画
+  if (t.dataset.tab === "settings") safeRender(renderSettings, "Settings");
 });
 $("prevM").onclick = () => { cur.setMonth(cur.getMonth() - 1); roomDay = null; calUndoStack = []; exitCalSelMode(); renderAll(); };
 $("nextM").onclick = () => { cur.setMonth(cur.getMonth() + 1); roomDay = null; calUndoStack = []; exitCalSelMode(); renderAll(); };
@@ -3046,14 +3048,26 @@ function enterSSMode() {
 function exitSSMode() {
   document.body.classList.remove("ssmode");
 }
+function safeRender(fn, name) {
+  try { fn(); } catch(e) { console.error("[render error] " + name + ":", e); }
+}
 function renderAll() {
   $("monthLabel").innerHTML = `<span class="ml-year">${cur.getFullYear()}年</span><span class="ml-month">${cur.getMonth() + 1}</span><span class="ml-suffix">月</span>`;
-  renderStats(); renderRooms(); renderRoomsList(); renderCalendar(); renderManage(); renderSettings();
+  safeRender(renderStats, "Stats");
+  safeRender(renderRooms, "Rooms");
+  safeRender(renderRoomsList, "RoomsList");
+  safeRender(renderCalendar, "Calendar");
+  safeRender(renderManage, "Manage");
+  safeRender(renderSettings, "Settings");
 }
 // 月間利用表のセル編集後：表だけ差し替えてスクロール位置を保持
 function renderAfterEdit() {
   scrollPreserve(() => {
-    renderStats(); renderRooms(); renderRoomsList(); renderManage(); renderSettings();
+    safeRender(renderStats, "Stats");
+    safeRender(renderRooms, "Rooms");
+    safeRender(renderRoomsList, "RoomsList");
+    safeRender(renderManage, "Manage");
+    safeRender(renderSettings, "Settings");
     refreshCalendar();
   });
 }
