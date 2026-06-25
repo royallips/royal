@@ -356,13 +356,13 @@
   .sheet-col-head{font-size:15px;font-weight:900;text-align:center;padding:5px 0;border-radius:8px 8px 0 0;letter-spacing:.1em}
   .sheet-col.hiru .sheet-col-head{background:var(--hiru);color:#9a6a08}
   .sheet-col.yoru .sheet-col-head{background:var(--yoru);color:#2c5d8a}
-  .sheet-table{width:100%;border-collapse:collapse;font-size:14px;table-layout:fixed}
-  .sheet-table tbody tr{border-bottom:1px solid #ddd}
-  .sh-rno{font-size:15px;font-weight:900;text-align:center;padding:4px 3px;border:1px solid #ddd;width:28px;min-width:28px;color:var(--pink);vertical-align:middle;white-space:nowrap}
+  .sheet-table{width:100%;border-collapse:collapse;font-size:16px;table-layout:fixed}
+  .sheet-table tbody tr{border-bottom:1px solid #ddd;height:36px}
+  .sh-rno{font-size:17px;font-weight:900;text-align:center;padding:6px 3px;border:1px solid #ddd;width:30px;min-width:30px;color:var(--pink);vertical-align:middle;white-space:nowrap}
   .sh-rno.over{color:var(--over);background:var(--over-bg)}
-  .sh-names{padding:3px 5px;border:1px solid #ddd;border-left:none;vertical-align:middle;white-space:nowrap;overflow:hidden}
+  .sh-names{padding:4px 6px;border:1px solid #ddd;border-left:none;vertical-align:middle;white-space:nowrap;overflow:hidden}
   .sh-name{font-weight:700;white-space:nowrap;display:inline}
-  .sh-name+.sh-name{margin-left:6px}
+  .sh-name+.sh-name{margin-left:8px}
   .sh-name small{font-size:.82em;color:var(--ink-soft);margin-left:1px;font-weight:600}
   .sh-name.over{color:var(--over)}
   .view-toggle-btn{font-size:11px;padding:4px 10px;border-radius:8px;border:1.5px solid var(--pink);background:#fff;color:var(--pink);cursor:pointer;font-weight:700}
@@ -380,10 +380,10 @@
   body.ssmode .sheet-date{font-size:16px}
   body.ssmode .ss-btn{display:none}
   body.ssmode .sheet-cols{gap:5px}
-  body.ssmode .sheet-table{font-size:13px}
-  body.ssmode .sh-rno{font-size:14px;padding:3px 2px}
-  body.ssmode .sh-name{font-size:13px}
-  body.ssmode .sh-name small{font-size:10px}
+  body.ssmode .sheet-table{font-size:15px}
+  body.ssmode .sh-rno{font-size:16px;padding:5px 2px}
+  body.ssmode .sh-name{font-size:15px}
+  body.ssmode .sh-name small{font-size:.82em}
   body.ssmode .sheet-col-head{font-size:13px;padding:4px 0}
   .ss-exit{position:fixed;top:10px;right:10px;z-index:9999;background:rgba(0,0,0,.55);color:#fff;border:none;border-radius:20px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer}
   body:not(.ssmode) .ss-exit{display:none}
@@ -1294,11 +1294,11 @@ function buildRoomsSheet() {
   }
   function nameTagH(w, over) {
     const t = fmtHiru(w.sp);
-    return `<span class="sh-name${over ? ' over' : ''}">${w.name}${t ? `<small>${t}</small>` : ""}</span>`;
+    return `<span class="sh-name${over ? ' over' : ''}">${w.name}${t ? `<small>(${t})</small>` : ""}</span>`;
   }
   function nameTagY(w, over) {
     const t = fmtYoru(w.sp);
-    return `<span class="sh-name${over ? ' over' : ''}">${w.name}${t ? `<small>${t}</small>` : ""}</span>`;
+    return `<span class="sh-name${over ? ' over' : ''}">${w.name}${t ? `<small>(${t})</small>` : ""}</span>`;
   }
   let hiruRows = "", yoruRows = "";
   for (let ri = 0; ri < ROOMS; ri++) {
