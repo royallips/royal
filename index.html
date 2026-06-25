@@ -360,7 +360,8 @@
   .sheet-table tbody tr{border-bottom:1px solid #ddd;height:36px}
   .sh-rno{font-size:17px;font-weight:900;text-align:center;padding:6px 3px;border:1px solid #ddd;width:30px;min-width:30px;color:var(--pink);vertical-align:middle;white-space:nowrap}
   .sh-rno.over{color:var(--over);background:var(--over-bg)}
-  .sh-names{padding:4px 6px;border:1px solid #ddd;border-left:none;vertical-align:middle;overflow:hidden;display:flex;align-items:center;gap:4px}
+  .sh-names{padding:0;border:1px solid #ddd;border-left:none;vertical-align:middle;overflow:hidden}
+  .sh-inner{display:flex;align-items:center;gap:4px;padding:4px 6px;height:100%}
   .sh-side-l{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-align:left}
   .sh-side-r{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-align:right}
   .sh-name{font-weight:700;white-space:nowrap;display:inline}
@@ -515,7 +516,8 @@
     .sheet-table { flex: 1; width: 100%; border-collapse: collapse; table-layout: fixed; height: 100%; }
     .sheet-table tbody { height: 100%; }
     .sh-rno { font-size: 14pt; font-weight: 900; text-align: center; padding: 2px 2px; border: 1pt solid #bbb; width: 22pt; color: #c03060; vertical-align: middle; white-space: nowrap; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .sh-names { display: flex !important; align-items: center; gap: 3pt; padding: 2px 4px; border: 1pt solid #bbb; border-left: none; vertical-align: middle; overflow: hidden; }
+    .sh-names { padding: 0; border: 1pt solid #bbb; border-left: none; vertical-align: middle; overflow: hidden; }
+    .sh-inner { display: flex; align-items: center; gap: 3pt; padding: 2px 4px; height: 100%; }
     .sh-side-l { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-align: left; }
     .sh-side-r { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-align: right; }
     .sh-name { font-size: 12pt; font-weight: 900; display: inline; white-space: nowrap; color: #000; }
@@ -1315,8 +1317,8 @@ function buildRoomsSheet() {
     // 夜: sp[0]<18→左, sp[0]>=18→右
     const yoruL = yoruW.filter(w => !w.sp || w.sp[0] < 18).map(w => nameTagY(w, false)).join("");
     const yoruR = yoruW.filter(w => w.sp && w.sp[0] >= 18).map(w => nameTagY(w, false)).join("");
-    hiruRows += `<tr><td class="sh-rno">${rno}</td><td class="sh-names"><span class="sh-side-l">${hiruL}</span><span class="sh-side-r">${hiruR}</span></td></tr>`;
-    yoruRows += `<tr><td class="sh-rno">${rno}</td><td class="sh-names"><span class="sh-side-l">${yoruL}</span><span class="sh-side-r">${yoruR}</span></td></tr>`;
+    hiruRows += `<tr><td class="sh-rno">${rno}</td><td class="sh-names"><div class="sh-inner"><span class="sh-side-l">${hiruL}</span><span class="sh-side-r">${hiruR}</span></div></td></tr>`;
+    yoruRows += `<tr><td class="sh-rno">${rno}</td><td class="sh-names"><div class="sh-inner"><span class="sh-side-l">${yoruL}</span><span class="sh-side-r">${yoruR}</span></div></td></tr>`;
   }
   const y = cur.getFullYear(), m = cur.getMonth();
   const wd = WK[new Date(y, m, roomDay).getDay()];
@@ -3022,16 +3024,16 @@ $("nextM").onclick = () => { cur.setMonth(cur.getMonth() + 1); roomDay = null; c
 
 function fitSheetNames() {
   document.querySelectorAll(".sh-names").forEach(cell => {
-    cell.style.fontSize = "";
+    const inner = cell.querySelector(".sh-inner") || cell;
+    inner.style.fontSize = "";
     let fs = 16;
-    const sides = cell.querySelectorAll(".sh-side-l,.sh-side-r");
+    const sides = inner.querySelectorAll(".sh-side-l,.sh-side-r");
     function hasOverflow() {
-      if (sides.length) return Array.from(sides).some(s => s.scrollWidth > s.clientWidth + 1);
-      return cell.scrollWidth > cell.clientWidth + 1;
+      return Array.from(sides).some(s => s.scrollWidth > s.clientWidth + 1);
     }
     while (hasOverflow() && fs > 7) {
       fs -= 0.5;
-      cell.style.fontSize = fs + "px";
+      inner.style.fontSize = fs + "px";
     }
   });
 }
