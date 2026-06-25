@@ -359,9 +359,9 @@
   .sheet-table{width:100%;border-collapse:collapse;font-size:14px}
   .sheet-table thead th{background:#f8f0f5;font-size:11px;font-weight:800;padding:3px 4px;border:1px solid #ddd;text-align:center;color:var(--ink-soft)}
   .sheet-table tbody tr{border-bottom:1px solid #eee}
-  .sh-rno{font-size:15px;font-weight:900;text-align:center;padding:4px 3px;border:1px solid #ddd;min-width:26px;color:var(--pink);vertical-align:middle}
+  .sh-rno{font-size:15px;font-weight:900;text-align:center;padding:4px 3px;border:1px solid #ddd;min-width:26px;color:var(--pink);vertical-align:middle;white-space:nowrap}
   .sh-rno.over{color:var(--over);background:var(--over-bg)}
-  .sh-names{padding:3px 4px;border-right:1px solid #ddd;vertical-align:middle;display:flex;flex-wrap:wrap;gap:2px 6px;align-items:center}
+  .sh-names{padding:3px 4px;border-right:1px solid #ddd;border-bottom:1px solid #eee;vertical-align:middle;display:flex;flex-wrap:wrap;gap:2px 6px;align-items:center}
   .sh-name{font-weight:700;white-space:nowrap;flex:1 0 auto}
   .sh-name small{font-size:11px;color:var(--ink-soft);margin-left:2px;font-weight:600}
   .sh-name.over{color:var(--over)}
@@ -501,18 +501,22 @@
     #view-rooms .panel { padding: 0; box-shadow: none; border: none; background: none; }
     /* シートレイアウト印刷用調整 */
     .sheet-view { padding: 0; }
-    .sheet-header { margin-bottom: 5mm; }
-    .sheet-date { font-size: 14pt; }
-    .sheet-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; }
-    .sheet-col-head { font-size: 11pt; padding: 3px 0; }
-    .sheet-table { font-size: 9pt; border-collapse: collapse; width: 100%; }
-    .sheet-table thead th { font-size: 8pt; padding: 2px 3px; border: 0.5pt solid #999; background: #f0f0f0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .sh-rno { font-size: 11pt; padding: 3px 2px; border: 0.5pt solid #999; min-width: 18pt; }
-    .sh-names { padding: 2px 3px; border-right: 0.5pt solid #999; border-bottom: 0.5pt solid #ddd; }
-    .sh-name { font-size: 9pt; font-weight: 700; }
-    .sh-name small { font-size: 7.5pt; }
-    .sheet-col.hiru .sheet-col-head { background: #fff8e1 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; color: #9a6a08; }
-    .sheet-col.yoru .sheet-col-head { background: #e8eeff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; color: #2c5d8a; }
+    .sheet-header { margin-bottom: 4mm; }
+    .sheet-date { font-size: 13pt; }
+    .ss-btn { display: none !important; }
+    .sheet-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
+    .sheet-col-head { font-size: 10pt; padding: 3px 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .sheet-col.hiru .sheet-col-head { background: #fff8e1 !important; color: #9a6a08; }
+    .sheet-col.yoru .sheet-col-head { background: #e8eeff !important; color: #2c5d8a; }
+    .sheet-table { font-size: 9pt; border-collapse: collapse; width: 100%; table-layout: fixed; }
+    .sheet-table colgroup, .sheet-table col { display: table-column; }
+    .sheet-table thead th { font-size: 8pt; padding: 2px 3px; border: 0.5pt solid #aaa; background: #f5f5f5 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; text-align: center; }
+    .sh-rno { font-size: 11pt; font-weight: 900; text-align: center; padding: 3px 2px; border: 0.5pt solid #aaa; width: 18pt; color: #c06080; vertical-align: middle; white-space: nowrap; }
+    .sh-names { display: table-cell !important; padding: 2px 4px; border-right: 0.5pt solid #aaa; border-bottom: 0.5pt solid #ccc; vertical-align: middle; }
+    .sh-name { font-size: 9pt; font-weight: 700; display: inline; margin-right: 4pt; white-space: nowrap; }
+    .sh-name small { font-size: 7pt; color: #666; margin-left: 1pt; }
+    .sheet-table tbody tr:last-child .sh-names,
+    .sheet-table tbody tr:last-child .sh-rno { border-bottom: 0.5pt solid #aaa; }
   }
 </style>
 </head>
@@ -1271,7 +1275,7 @@ function renderStats() {
 function buildRoomsSheet() {
   const { rooms, overRooms } = computeAssignment(roomDay);
   const DN = 17; // 昼夜の境界
-  function fH(h) { const hr = Math.floor(h), mn = Math.round((h - hr) * 60); return mn ? `${hr}:${String(mn).padStart(2,"0")}` : `${hr}`; }
+  function fH(h) { const hr = Math.floor(h), mn = Math.round((h - hr) * 60); return mn === 30 ? `${hr}.5` : `${hr}`; }
   function fmtHiru(sp) {
     if (!sp) return "";
     if (sp[0] <= OPEN && sp[1] >= CLOSE) return "";
