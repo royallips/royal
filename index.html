@@ -348,6 +348,45 @@
   .reg-stat.yoru{background:var(--yoru);border-color:#bcd6f1;color:#2c5d8a}
   .reg-stat.furyo{background:#f1eef0;border-color:#d9cdd4;color:#3a3036}
   .empty-msg{text-align:center;color:var(--ink-soft);padding:20px;font-size:13px}
+  /* シート表示 */
+  .sheet-view{padding:8px 4px}
+  .sheet-header{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:10px}
+  .sheet-date{font-size:18px;font-weight:900;color:var(--ink)}
+  .sheet-cols{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .sheet-col-head{font-size:15px;font-weight:900;text-align:center;padding:5px 0;border-radius:8px 8px 0 0;letter-spacing:.1em}
+  .sheet-col.hiru .sheet-col-head{background:var(--hiru);color:#9a6a08}
+  .sheet-col.yoru .sheet-col-head{background:var(--yoru);color:#2c5d8a}
+  .sheet-table{width:100%;border-collapse:collapse;font-size:14px}
+  .sheet-table thead th{background:#f8f0f5;font-size:11px;font-weight:800;padding:3px 4px;border:1px solid #ddd;text-align:center;color:var(--ink-soft)}
+  .sheet-table tbody tr{border-bottom:1px solid #eee}
+  .sh-rno{font-size:15px;font-weight:900;text-align:center;padding:4px 3px;border:1px solid #ddd;min-width:26px;color:var(--pink);vertical-align:middle}
+  .sh-rno.over{color:var(--over);background:var(--over-bg)}
+  .sh-names{padding:3px 4px;border-right:1px solid #ddd;vertical-align:middle;display:flex;flex-wrap:wrap;gap:2px 6px;align-items:center}
+  .sh-name{font-weight:700;white-space:nowrap;flex:1 0 auto}
+  .sh-name small{font-size:11px;color:var(--ink-soft);margin-left:2px;font-weight:600}
+  .sh-name.over{color:var(--over)}
+  .view-toggle-btn{font-size:11px;padding:4px 10px;border-radius:8px;border:1.5px solid var(--pink);background:#fff;color:var(--pink);cursor:pointer;font-weight:700}
+  .view-toggle-btn.active{background:var(--pink);color:#fff}
+  /* スクショモード */
+  .ss-btn{font-size:11px;padding:4px 10px;border-radius:8px;border:1.5px solid #4caf50;background:#fff;color:#4caf50;cursor:pointer;font-weight:700}
+  body.ssmode *{-webkit-tap-highlight-color:transparent}
+  body.ssmode .tabs,body.ssmode .bar,body.ssmode .absent-zone,body.ssmode .soukei-zone,
+  body.ssmode .lend-row,body.ssmode .over-banner,body.ssmode .lock-banner,
+  body.ssmode .rt-wrap,body.ssmode label,body.ssmode .memo-box,body.ssmode .hint{display:none!important}
+  body.ssmode{background:#fff!important;padding:0!important;margin:0!important}
+  body.ssmode #view-rooms{padding:0;margin:0}
+  body.ssmode #view-rooms .panel{padding:8px 6px;box-shadow:none;border:none;background:#fff}
+  body.ssmode .sheet-view{padding:4px 2px}
+  body.ssmode .sheet-date{font-size:16px}
+  body.ssmode .ss-btn{display:none}
+  body.ssmode .sheet-cols{gap:5px}
+  body.ssmode .sheet-table{font-size:13px}
+  body.ssmode .sh-rno{font-size:14px;padding:3px 2px}
+  body.ssmode .sh-name{font-size:13px}
+  body.ssmode .sh-name small{font-size:10px}
+  body.ssmode .sheet-col-head{font-size:13px;padding:4px 0}
+  .ss-exit{position:fixed;top:10px;right:10px;z-index:9999;background:rgba(0,0,0,.55);color:#fff;border:none;border-radius:20px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer}
+  body:not(.ssmode) .ss-exit{display:none}
   .hint{font-size:11px;color:var(--ink-soft);margin-top:4px}
   .room-move-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
   .room-move-list button{padding:7px 10px;border-radius:8px;border:1.5px solid var(--line);background:#fff;cursor:pointer;font-weight:700;font-size:12px}
@@ -448,9 +487,37 @@
     .cards{grid-template-columns:1fr 1fr}
     .status-grid{grid-template-columns:1fr 1fr}
   }
+  @media print {
+    @page { size: B5 landscape; margin: 8mm; }
+    /* 印刷時はシート以外を全て非表示 */
+    body { background: #fff !important; }
+    .tabs, nav, #calSelBar, dialog, .btn, .bar,
+    .absent-zone, .soukei-zone, .lend-row, .over-banner, .lock-banner,
+    .freebar, .rt-wrap, .lend-zone, .memo-box, label[for],
+    #view-roomslist, #view-cal, #view-manage, #view-settings, #statCards { display: none !important; }
+    #view-rooms { display: block !important; }
+    /* シート以外のパネル要素を隠す */
+    #view-rooms .panel > *:not(.sheet-view) { display: none !important; }
+    #view-rooms .panel { padding: 0; box-shadow: none; border: none; background: none; }
+    /* シートレイアウト印刷用調整 */
+    .sheet-view { padding: 0; }
+    .sheet-header { margin-bottom: 5mm; }
+    .sheet-date { font-size: 14pt; }
+    .sheet-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; }
+    .sheet-col-head { font-size: 11pt; padding: 3px 0; }
+    .sheet-table { font-size: 9pt; border-collapse: collapse; width: 100%; }
+    .sheet-table thead th { font-size: 8pt; padding: 2px 3px; border: 0.5pt solid #999; background: #f0f0f0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .sh-rno { font-size: 11pt; padding: 3px 2px; border: 0.5pt solid #999; min-width: 18pt; }
+    .sh-names { padding: 2px 3px; border-right: 0.5pt solid #999; border-bottom: 0.5pt solid #ddd; }
+    .sh-name { font-size: 9pt; font-weight: 700; }
+    .sh-name small { font-size: 7.5pt; }
+    .sheet-col.hiru .sheet-col-head { background: #fff8e1 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; color: #9a6a08; }
+    .sheet-col.yoru .sheet-col-head { background: #e8eeff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; color: #2c5d8a; }
+  }
 </style>
 </head>
 <body>
+<button class="ss-exit" onclick="exitSSMode()">✕ 戻る</button>
 <div class="wrap">
   <h1>ロイヤル利用管理</h1>
   <div class="bar">
@@ -744,7 +811,7 @@ const roomLabel = ri => ROOM_LABELS[ri] != null ? ROOM_LABELS[ri] : (ri + 1);
 
 let state = load();
 let cur = new Date(); cur.setDate(1);
-let roomDay = null, editing = null, pickStatus = "work";
+let roomDay = null, editing = null, pickStatus = "work", roomViewMode = "timeline";
 let castGroup = "hiru", castRank = "", calGroup = "hiru", calSearch = "", calScrollLeft = null;
 let selBar = null, moveTarget = null, delTarget = null, statTarget = null, delConfirmStage = 0;
 let lendStore = null, lendMode = "lend";   // lend=加盟店へ掛け持ち / borrow=ロイヤルに掛け持ち
@@ -1201,6 +1268,56 @@ function renderStats() {
 }
 
 /* ===== 8. リスピラ編集 ============================================= */
+function buildRoomsSheet() {
+  const { rooms, overRooms } = computeAssignment(roomDay);
+  const DN = 17; // 昼夜の境界
+  function fH(h) { const hr = Math.floor(h), mn = Math.round((h - hr) * 60); return mn ? `${hr}:${String(mn).padStart(2,"0")}` : `${hr}`; }
+  function fmtHiru(sp) {
+    if (!sp) return "";
+    if (sp[0] <= OPEN && sp[1] >= CLOSE) return "";
+    if (sp[1] >= DN) return `${fH(sp[0])}-`;
+    return `${fH(sp[0])}-${fH(sp[1])}`;
+  }
+  function fmtYoru(sp) {
+    if (!sp) return "";
+    if (sp[0] <= OPEN && sp[1] >= CLOSE) return "";
+    const end = sp[1] >= CLOSE ? "" : fH(sp[1]);
+    if (sp[0] <= DN) return end ? `-${end}` : ""; // endが空なら"-"のみになるので非表示
+    return `${fH(sp[0])}-${end}`;
+  }
+  function nameTagH(w, over) {
+    const t = fmtHiru(w.sp);
+    return `<span class="sh-name${over ? ' over' : ''}">${w.name}${t ? `<small>${t}</small>` : ""}</span>`;
+  }
+  function nameTagY(w, over) {
+    const t = fmtYoru(w.sp);
+    return `<span class="sh-name${over ? ' over' : ''}">${w.name}${t ? `<small>${t}</small>` : ""}</span>`;
+  }
+  let hiruRows = "", yoruRows = "";
+  for (let ri = 0; ri < ROOMS; ri++) {
+    const rno = roomLabel(ri);
+    const hiruW = rooms[ri].filter(w => w.sp && w.sp[0] < DN);
+    const yoruW = rooms[ri].filter(w => w.sp && w.sp[1] > DN);
+    hiruRows += `<tr><td class="sh-rno">${rno}</td><td class="sh-names">${hiruW.map(w => nameTagH(w, false)).join("")}</td></tr>`;
+    yoruRows += `<tr><td class="sh-rno">${rno}</td><td class="sh-names">${yoruW.map(w => nameTagY(w, false)).join("")}</td></tr>`;
+  }
+  const y = cur.getFullYear(), m = cur.getMonth();
+  const wd = WK[new Date(y, m, roomDay).getDay()];
+  const thead = `<thead><tr><th>部屋</th><th>名前</th></tr></thead>`;
+  return `<div class="sheet-view">
+    <div class="sheet-header"><span class="sheet-date">${m+1}月${roomDay}日（${wd}）</span><button class="ss-btn" onclick="enterSSMode()">印刷</button></div>
+    <div class="sheet-cols">
+      <div class="sheet-col hiru">
+        <div class="sheet-col-head">昼の部</div>
+        <table class="sheet-table">${thead}<tbody>${hiruRows}</tbody></table>
+      </div>
+      <div class="sheet-col yoru">
+        <div class="sheet-col-head">夜の部</div>
+        <table class="sheet-table">${thead}<tbody>${yoruRows}</tbody></table>
+      </div>
+    </div>
+  </div>`;
+}
 function renderRooms() {
   const dim = daysIn(cur);
   if (roomDay === null || roomDay > dim) {
@@ -1340,33 +1457,26 @@ function renderRooms() {
         <button class="btn sm" id="optimizeBtn" ${locked ? "disabled" : ""}>最適に並べ替え</button>
         <button class="btn ghost sm" id="undoBtn" ${(canUndo() && !locked) ? "" : "disabled"}>前に戻す</button>
         <button class="btn ghost sm" id="addNewcomerBtn" ${locked ? "disabled" : ""}>＋入店予定</button>
+        <button class="view-toggle-btn${roomViewMode === 'sheet' ? ' active' : ''}" id="viewToggleBtn">シート</button>
       </div>
       ${lockBanner}
       ${overBanner}
       ${absentHtml}
-      <div class="lend-row">${lendHtml}${borrowHtml}</div>
-      <div class="rt-wrap ${locked ? 'locked' : ''}"><div class="rt">
-        <div class="rt-axis"><div></div>${dnLabel}</div>
-        <div class="rt-axis"><div></div><div class="ax">${axis}</div></div>
-        ${roomRows}
-        <div class="freebar"><div class="fl">空き<br>部屋</div><div class="ft">${freeCells}</div></div>
-        <div class="hint" style="padding-left:54px"></div>
-      </div></div>
-      <label style="font-weight:700;font-size:12px;color:var(--ink-soft);display:block;margin-top:14px">メモ</label>
-      <textarea class="memo-box" id="dayMemo" rows="2" placeholder="">${memo}</textarea>
-      ${soukeiHtml}
+      ${roomViewMode === 'sheet' ? buildRoomsSheet() : `<div class="lend-row">${lendHtml}${borrowHtml}</div><div class="rt-wrap ${locked ? 'locked' : ''}"><div class="rt"><div class="rt-axis"><div></div>${dnLabel}</div><div class="rt-axis"><div></div><div class="ax">${axis}</div></div>${roomRows}<div class="freebar"><div class="fl">空き<br>部屋</div><div class="ft">${freeCells}</div></div><div class="hint" style="padding-left:54px"></div></div></div>`}
+      ${roomViewMode === 'sheet' ? '' : `<label style="font-weight:700;font-size:12px;color:var(--ink-soft);display:block;margin-top:14px">メモ</label><textarea class="memo-box" id="dayMemo" rows="2" placeholder="">${memo}</textarea>${soukeiHtml}`}
     </div>`;
 
   $("roomDateInput").onchange = e => {
     const d = new Date(e.target.value + "T00:00:00"); if (isNaN(d)) return;
     cur = new Date(d.getFullYear(), d.getMonth(), 1); roomDay = d.getDate(); renderAll();
   };
-  $("dayMemo").onchange = e => { state.memos[dkey(roomDay)] = e.target.value; save(); };
+  const dm = $("dayMemo"); if (dm) dm.onchange = e => { state.memos[dkey(roomDay)] = e.target.value; save(); };
   const ob = $("optimizeBtn"); if (ob) ob.onclick = () => { if (!isLocked(roomDay)) optimizeRooms(); };
   const anb = $("addNewcomerBtn"); if (anb) anb.onclick = () => { if (!isLocked(roomDay)) openNewcomerDlg(); };
   const ub = $("undoBtn"); if (ub) ub.onclick = () => { if (!isLocked(roomDay)) doUndo(); };
   const lb = $("lockBtn"); if (lb) lb.onclick = () => toggleLock(roomDay);
   const srb = $("soukeiReqBtn"); if (srb) srb.onclick = () => buildSoukeiRequest();
+  const vtb = $("viewToggleBtn"); if (vtb) vtb.onclick = () => { roomViewMode = roomViewMode === "timeline" ? "sheet" : "timeline"; renderRooms(); };
   adjustBarFontSizes();
 }
 function adjustBarFontSizes() {
@@ -2892,6 +3002,13 @@ document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
 $("prevM").onclick = () => { cur.setMonth(cur.getMonth() - 1); roomDay = null; calUndoStack = []; exitCalSelMode(); renderAll(); };
 $("nextM").onclick = () => { cur.setMonth(cur.getMonth() + 1); roomDay = null; calUndoStack = []; exitCalSelMode(); renderAll(); };
 
+function enterSSMode() {
+  document.body.classList.add("ssmode");
+  window.scrollTo(0, 0);
+}
+function exitSSMode() {
+  document.body.classList.remove("ssmode");
+}
 function renderAll() {
   $("monthLabel").innerHTML = `<span class="ml-year">${cur.getFullYear()}年</span><span class="ml-month">${cur.getMonth() + 1}</span><span class="ml-suffix">月</span>`;
   renderStats(); renderRooms(); renderRoomsList(); renderCalendar(); renderManage(); renderSettings();
