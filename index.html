@@ -356,14 +356,14 @@
   .sheet-col-head{font-size:15px;font-weight:900;text-align:center;padding:5px 0;border-radius:8px 8px 0 0;letter-spacing:.1em}
   .sheet-col.hiru .sheet-col-head{background:var(--hiru);color:#9a6a08}
   .sheet-col.yoru .sheet-col-head{background:var(--yoru);color:#2c5d8a}
-  .sheet-table{width:100%;border-collapse:collapse;font-size:14px}
-  .sheet-table thead th{background:#f8f0f5;font-size:11px;font-weight:800;padding:3px 4px;border:1px solid #ddd;text-align:center;color:var(--ink-soft)}
-  .sheet-table tbody tr{border-bottom:1px solid #eee}
-  .sh-rno{font-size:15px;font-weight:900;text-align:center;padding:4px 3px;border:1px solid #ddd;min-width:26px;color:var(--pink);vertical-align:middle;white-space:nowrap}
+  .sheet-table{width:100%;border-collapse:collapse;font-size:14px;table-layout:fixed}
+  .sheet-table tbody tr{border-bottom:1px solid #ddd}
+  .sh-rno{font-size:15px;font-weight:900;text-align:center;padding:4px 3px;border:1px solid #ddd;width:28px;min-width:28px;color:var(--pink);vertical-align:middle;white-space:nowrap}
   .sh-rno.over{color:var(--over);background:var(--over-bg)}
-  .sh-names{padding:3px 4px;border-right:1px solid #ddd;border-bottom:1px solid #eee;vertical-align:middle;display:flex;flex-wrap:wrap;gap:2px 6px;align-items:center}
-  .sh-name{font-weight:700;white-space:nowrap;flex:1 0 auto}
-  .sh-name small{font-size:11px;color:var(--ink-soft);margin-left:2px;font-weight:600}
+  .sh-names{padding:3px 5px;border:1px solid #ddd;border-left:none;vertical-align:middle;white-space:nowrap;overflow:hidden}
+  .sh-name{font-weight:700;white-space:nowrap;display:inline}
+  .sh-name+.sh-name{margin-left:6px}
+  .sh-name small{font-size:11px;color:var(--ink-soft);margin-left:1px;font-weight:600}
   .sh-name.over{color:var(--over)}
   .view-toggle-btn{font-size:11px;padding:4px 10px;border-radius:8px;border:1.5px solid var(--pink);background:#fff;color:var(--pink);cursor:pointer;font-weight:700}
   .view-toggle-btn.active{background:var(--pink);color:#fff}
@@ -509,14 +509,11 @@
     .sheet-col.hiru .sheet-col-head { background: #fff8e1 !important; color: #9a6a08; }
     .sheet-col.yoru .sheet-col-head { background: #e8eeff !important; color: #2c5d8a; }
     .sheet-table { font-size: 9pt; border-collapse: collapse; width: 100%; table-layout: fixed; }
-    .sheet-table colgroup, .sheet-table col { display: table-column; }
-    .sheet-table thead th { font-size: 8pt; padding: 2px 3px; border: 0.5pt solid #aaa; background: #f5f5f5 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; text-align: center; }
-    .sh-rno { font-size: 11pt; font-weight: 900; text-align: center; padding: 3px 2px; border: 0.5pt solid #aaa; width: 18pt; color: #c06080; vertical-align: middle; white-space: nowrap; }
-    .sh-names { display: table-cell !important; padding: 2px 4px; border-right: 0.5pt solid #aaa; border-bottom: 0.5pt solid #ccc; vertical-align: middle; }
-    .sh-name { font-size: 9pt; font-weight: 700; display: inline; margin-right: 4pt; white-space: nowrap; }
+    .sh-rno { font-size: 11pt; font-weight: 900; text-align: center; padding: 3px 2px; border: 0.5pt solid #aaa; width: 16pt; color: #c06080; vertical-align: middle; white-space: nowrap; }
+    .sh-names { display: table-cell !important; padding: 2px 4px; border: 0.5pt solid #aaa; border-left: none; vertical-align: middle; white-space: nowrap; overflow: hidden; }
+    .sh-name { font-size: 9pt; font-weight: 700; display: inline; white-space: nowrap; }
+    .sh-name+.sh-name { margin-left: 4pt; }
     .sh-name small { font-size: 7pt; color: #666; margin-left: 1pt; }
-    .sheet-table tbody tr:last-child .sh-names,
-    .sheet-table tbody tr:last-child .sh-rno { border-bottom: 0.5pt solid #aaa; }
   }
 </style>
 </head>
@@ -1307,7 +1304,7 @@ function buildRoomsSheet() {
   }
   const y = cur.getFullYear(), m = cur.getMonth();
   const wd = WK[new Date(y, m, roomDay).getDay()];
-  const thead = `<thead><tr><th>部屋</th><th>名前</th></tr></thead>`;
+  const thead = "";
   return `<div class="sheet-view">
     <div class="sheet-header"><span class="sheet-date">${m+1}月${roomDay}日（${wd}）</span><button class="ss-btn" onclick="enterSSMode()">印刷</button></div>
     <div class="sheet-cols">
@@ -1481,6 +1478,7 @@ function renderRooms() {
   const lb = $("lockBtn"); if (lb) lb.onclick = () => toggleLock(roomDay);
   const srb = $("soukeiReqBtn"); if (srb) srb.onclick = () => buildSoukeiRequest();
   const vtb = $("viewToggleBtn"); if (vtb) vtb.onclick = () => { roomViewMode = roomViewMode === "timeline" ? "sheet" : "timeline"; renderRooms(); };
+  if (roomViewMode === "sheet") setTimeout(fitSheetNames, 0);
   adjustBarFontSizes();
 }
 function adjustBarFontSizes() {
@@ -3006,6 +3004,16 @@ document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
 $("prevM").onclick = () => { cur.setMonth(cur.getMonth() - 1); roomDay = null; calUndoStack = []; exitCalSelMode(); renderAll(); };
 $("nextM").onclick = () => { cur.setMonth(cur.getMonth() + 1); roomDay = null; calUndoStack = []; exitCalSelMode(); renderAll(); };
 
+function fitSheetNames() {
+  document.querySelectorAll(".sh-names").forEach(cell => {
+    cell.style.fontSize = "";
+    let fs = 14;
+    while (cell.scrollWidth > cell.clientWidth + 1 && fs > 7) {
+      fs -= 0.5;
+      cell.style.fontSize = fs + "px";
+    }
+  });
+}
 function enterSSMode() {
   document.body.classList.add("ssmode");
   window.scrollTo(0, 0);
