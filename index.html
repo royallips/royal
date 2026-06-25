@@ -119,7 +119,8 @@
   .lf-bar.rank-premier{border-color:#2f6fd0}.lf-bar.rank-vip{border-color:#caa233}
   .lf-bar .lf-barlabel.furyo-name{color:#e0463c}
   .lf-bar.clash{box-shadow:inset 0 0 0 1.2px rgba(224,70,60,.85)}
-  .lf-bar .lf-barlabel{position:relative;z-index:2;overflow:hidden;text-overflow:ellipsis}
+  .lf-bar .lf-barlabel{position:relative;z-index:2;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:2px}
+  .lf-endtime{font-size:9px;font-weight:600;opacity:.8;flex-shrink:0}
   .lf-bar .clash-ov{position:absolute;top:0;bottom:0;background:rgba(224,70,60,.28);border-left:1.2px solid rgba(224,70,60,.65);border-right:1.2px solid rgba(224,70,60,.65);z-index:1}
   .lf-bar.bsh{background:#fff}.lf-bar.btp{background:#fff}
   .lf-freerow{display:grid;grid-template-columns:24px 1fr;border-top:2px solid var(--line)}
@@ -1079,6 +1080,7 @@ function overlap(a, b) { return a[0] < b[1] && b[0] < a[1]; }
 function occupies(sp, h) { return sp[0] < h + 1 && h < sp[1]; }
 // バー表示用：spから時間文字列（中抜けの各枠用、終了がCLOSEなら "L"）
 function fmtSp(sp) { if (!sp) return ""; const e = sp[1] >= CLOSE ? "L" : sp[1]; return sp[0] + "-" + e; }
+function lfEnd(sp) { if (!sp) return ""; const e = sp[1]; if (e >= 24) return "L"; return e % 1 === 0.5 ? String(e) : String(Math.floor(e)); }
 function sortedCasts(group) {
   return state.casts.filter(c => c.group === group).slice()
     .sort((a, b) => a.name.localeCompare(b.name, "ja"));
@@ -2022,7 +2024,7 @@ function renderRoomsList() {
         const cobj = state.casts.find(x => x.id === w.cid);
         const rankCls = cobj && cobj.rank === "premier" ? " rank-premier" : cobj && cobj.rank === "vip" ? " rank-vip" : "";
         const nameCls = cobj && (cobj.furyo || cobj.autoOver) ? " furyo-name" : "";
-        return `<div class="lf-bar ${k % 2 ? 'b2' : 'b1'}${rankCls}${w.r && w.r.hideNet ? ' has-hidenet' : ''} ${w.clash ? 'clash' : ''}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name} ${fmtSp(w.sp)}${w.r && w.r.hideNet ? ' 非掲載' : ''}">${ov}<span class="lf-barlabel${nameCls}">${w.name}</span></div>`;
+        return `<div class="lf-bar ${k % 2 ? 'b2' : 'b1'}${rankCls}${w.r && w.r.hideNet ? ' has-hidenet' : ''} ${w.clash ? 'clash' : ''}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name} ${fmtSp(w.sp)}${w.r && w.r.hideNet ? ' 非掲載' : ''}">${ov}<span class="lf-barlabel${nameCls}">${w.name}<span class="lf-endtime">${lfEnd(w.sp)}</span></span></div>`;
       }).join("");
     }
     let roomRows = "";
@@ -2036,8 +2038,8 @@ function renderRoomsList() {
         const rankCls = cobj && cobj.rank === "premier" ? " rank-premier" : cobj && cobj.rank === "vip" ? " rank-vip" : "";
         const nameCls = cobj && (cobj.furyo || cobj.autoOver) ? " furyo-name" : "";
         if (w.borrow)
-          return `<div class="lf-bar bw${rankCls} store-${w.store||''}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name} ${fmtSp(w.sp)}（掛け持ち）"><span class="lf-barlabel${nameCls}">${w.name}</span></div>`;
-        return `<div class="lf-bar ov${rankCls}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name} ${fmtSp(w.sp)}"><span class="lf-barlabel${nameCls}">${w.name}</span></div>`;
+          return `<div class="lf-bar bw${rankCls} store-${w.store||''}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name} ${fmtSp(w.sp)}（掛け持ち）"><span class="lf-barlabel${nameCls}">${w.name}<span class="lf-endtime">${lfEnd(w.sp)}</span></span></div>`;
+        return `<div class="lf-bar ov${rankCls}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name} ${fmtSp(w.sp)}"><span class="lf-barlabel${nameCls}">${w.name}<span class="lf-endtime">${lfEnd(w.sp)}</span></span></div>`;
       }).join("");
       const allBorrow = arr.length && arr.every(x => x.borrow);
       const rno = allBorrow ? "借" : (++ovNo);
