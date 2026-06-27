@@ -129,6 +129,9 @@
   .lf-cell{display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;border-left:1px solid rgba(255,255,255,.6)}
   .lf-memo{font-size:13px;color:#5a3b2e;background:#fff8e6;border-top:1px solid var(--line);padding:6px 9px;white-space:pre-wrap;word-break:break-word;line-height:1.4}
   .lf-memo-input{width:100%;box-sizing:border-box;border:none;border-top:1px solid var(--line);background:#fff8e6;font-size:12px;font-family:inherit;padding:5px 8px;resize:none;color:#5a3b2e;outline:none;line-height:1.4}
+  .lf-lend-row{border-top:1px solid var(--line);padding:5px 6px;display:flex;flex-direction:column;gap:4px}
+  .lf-lend-zone{display:flex;flex-wrap:wrap;align-items:center;gap:3px}
+  .lf-lend-title{font-size:10px;font-weight:800;margin-right:2px}.lf-lend-zone.l .lf-lend-title{color:var(--lend)}.lf-lend-zone.b .lf-lend-title{color:var(--borrow)}
   .lf-event{font-size:13px;font-weight:800;color:#b5532a;background:#fff1e6;border-bottom:1px solid var(--line);padding:5px 9px;white-space:pre-wrap;word-break:break-word;line-height:1.3}
   .rt-event{display:inline-flex;align-items:center;background:#fff1e6;color:#b5532a;border:1.5px solid #f0c4a3;border-radius:20px;padding:3px 12px;font-size:12px;font-weight:800}
   .absent-zone{margin:10px 0;border:1.5px solid var(--over);border-radius:12px;background:#fff6f5;padding:10px}  .absent-zone .az-title{color:var(--over);font-weight:800;font-size:13px;margin-bottom:6px}
@@ -1839,8 +1842,13 @@ function moveCidToRoom(cid, ri) {
 }
 function moveCidToRoomDay(cid, ri, day) {
   if (isLocked(day)) return;
-  if (!state.assignList[dkey(day)]) state.assignList[dkey(day)] = {};
-  state.assignList[dkey(day)][cid] = (ri === "OVER") ? "OVER" : Number(ri);
+  const dk = dkey(day);
+  if (!state.assignList[dk]) state.assignList[dk] = {};
+  // 移動前に全キャストの現在位置を固定（自動詰めを防ぐ）
+  const { rooms, overRooms } = computeAssignmentByKey(dk, true);
+  rooms.forEach((arr, rIdx) => arr.forEach(w => { if (state.assignList[dk][w.cid] == null) state.assignList[dk][w.cid] = rIdx; }));
+  (overRooms || []).forEach(arr => arr.forEach(w => { if (state.assignList[dk][w.cid] == null) state.assignList[dk][w.cid] = "OVER"; }));
+  state.assignList[dk][cid] = (ri === "OVER") ? "OVER" : Number(ri);
   save();
   const scroller = document.querySelector("#view-roomslist .lf-scroll");
   const savedLeft = scroller ? scroller.scrollLeft : 0;
@@ -2080,6 +2088,17 @@ function renderRoomsList() {
     const memoArea = `<textarea class="lf-memo-input" data-day="${d}" rows="3" placeholder="メモ">${esc(memo)}</textarea>`;
     const ev = (state.events && state.events[dkey(d)]) ? state.events[dkey(d)] : "";
     const evHtml = ev ? `<div class="lf-event">${esc(ev)}</div>` : "";
+    // 掛け持ち表示
+    const dLends = (state.lends && state.lends[dkey(d)]) || [];
+    const dBorrows = (state.borrows && state.borrows[dkey(d)]) || [];
+    const lendItems = dLends.map(l => { const c = state.casts.find(x => x.id === l.cid); const nm = c ? c.name : "(削除)";
+      return `<span class="lend-item"><span class="store store-${l.store}">${l.store}</span>${nm} ${tL(l.start)}-${tL(l.end)}</span>`; }).join("");
+    const borrowItems = dBorrows.map(l =>
+      `<span class="lend-item borrow"><span class="store store-${l.store}">${l.store}</span>${l.name ? esc(l.name) + " " : ""}${tL(l.start)}-${tL(l.end)}</span>`).join("");
+    const lendBorrowHtml = (dLends.length || dBorrows.length) ? `<div class="lf-lend-row">
+      ${dLends.length ? `<div class="lf-lend-zone l"><span class="lf-lend-title">↗掛け持ち</span>${lendItems}</div>` : ""}
+      ${dBorrows.length ? `<div class="lf-lend-zone b"><span class="lf-lend-title">↘掛け持ち</span>${borrowItems}</div>` : ""}
+    </div>` : "";
     dayBlocks += `<div class="lf-day ${isToday ? 'today' : ''}" data-day="${d}">
         <div class="lf-dayhead ${wkcls}">${todayMk}${m + 1}/${d}<small>(${WK[wd]})</small>${overflowCount ? `<span class="lf-over">溢${overflowCount}</span>` : ""}<span class="lf-freesum">空計${freeSum}</span></div>
         ${evHtml}
@@ -2087,6 +2106,7 @@ function renderRoomsList() {
         <div class="lf-axis"><span style="border:none"></span>${axisTop}</div>
         ${roomRows}
         <div class="lf-freerow"><div class="lf-rno" style="font-size:9px">空き</div><div class="lf-freebar">${freeCells}</div></div>
+        ${lendBorrowHtml}
         ${memoArea}
       </div>`;
   }
