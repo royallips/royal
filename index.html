@@ -1857,6 +1857,7 @@ function moveCidToRoomDay(cid, ri, day) {
   if (newScroller) newScroller.scrollLeft = savedLeft;
 }
 let dragCid = null, dragMoved = false, dragDay = null;
+let lendTargetDay = null; // openLend が対象とする日（null=roomDay）
 document.addEventListener("dragstart", e => {
   const rtBar = e.target.closest(".rt-bar[draggable=true]");
   const lfBar = e.target.closest(".lf-bar[draggable=true]");
@@ -1948,27 +1949,29 @@ $("moveAuto").onclick = () => {
 };
 $("moveX").onclick = () => { dlgClose("moveDlg"); selBar = null; renderRooms(); };
 
-function addLend(bucket, obj) {
-  const k = dkey(roomDay);
+function addLend(bucket, obj, day) {
+  const k = dkey(day != null ? day : roomDay);
   if (!state[bucket][k]) state[bucket][k] = [];
   state[bucket][k].push(obj); save();
 }
-function removeLend(bucket, i) {
-  if (isLocked(roomDay)) { alert("部屋割りが確定（ロック）されています。解除してから操作してください。"); return; }
-  const k = dkey(roomDay);
+function removeLend(bucket, i, day) {
+  const d = day != null ? day : roomDay;
+  if (isLocked(d)) { alert("部屋割りが確定（ロック）されています。解除してから操作してください。"); return; }
+  const k = dkey(d);
   if (state[bucket][k]) { state[bucket][k].splice(i, 1); save(); renderAll(); }
 }
-function openLend(mode) {
-  if (isLocked(roomDay)) { alert("部屋割りが確定（ロック）されています。解除してから操作してください。"); return; }
+function openLend(mode, day) {
+  lendTargetDay = day != null ? day : roomDay;
+  if (isLocked(lendTargetDay)) { alert("部屋割りが確定（ロック）されています。解除してから操作してください。"); return; }
   lendMode = mode; lendStore = null;
   const isLend = mode === "lend";
   $("lendTitle").textContent = isLend ? "加盟店へ掛け持ち" : "ロイヤルに掛け持ち";
   $("lendCast").parentElement.style.display = isLend ? "block" : "none";
   $("lendStoreLabel").textContent = isLend ? "加盟店" : "相手の加盟店";
   if (isLend) {
-    const workers = state.casts.filter(c => span(rec(c.id, roomDay)));
+    const workers = state.casts.filter(c => span(rec(c.id, lendTargetDay)));
     $("lendCast").innerHTML = workers.length
-      ? workers.map(c => `<option value="${c.id}">${c.name}（${fmtTime(rec(c.id, roomDay))}）</option>`).join("")
+      ? workers.map(c => `<option value="${c.id}">${c.name}（${fmtTime(rec(c.id, lendTargetDay))}）</option>`).join("")
       : `<option value="">この日に利用のキャストがいません</option>`;
   }
   const grid = $("lendStoreGrid"); grid.className = "store-grid" + (isLend ? "" : " bw");
@@ -1987,22 +1990,23 @@ function openLend(mode) {
 }
 $("lendSave").onclick = () => {
   if (!lendStore) { alert("加盟店を選んでください"); return; }
+  const td = lendTargetDay != null ? lendTargetDay : roomDay;
   if (lendMode === "lend") {
     const cid = $("lendCast").value;
     if (!cid) { alert("キャストを選んでください"); return; }
-    const r = rec(cid, roomDay);
+    const r = rec(cid, td);
     const castStart = r ? String(r.start ?? "") : "";
     const castEnd = r ? String(r.end ?? "") : "";
     const s = val("lendStart") || castStart;
     const e = val("lendEnd") || castEnd || "L";
     if (!s) { alert("開始時間を入力してください"); return; }
-    addLend("lends", { cid, store: lendStore, start: s, end: e });
+    addLend("lends", { cid, store: lendStore, start: s, end: e }, td);
     save();
   } else {
     const s = val("lendStart"); if (!s) { alert("開始時間を入力してください"); return; }
     const e = val("lendEnd") || "L";
     const nm = val("lendName");
-    addLend("borrows", { store: lendStore, start: s, end: e, name: nm });
+    addLend("borrows", { store: lendStore, start: s, end: e, name: nm }, td);
   }
   dlgClose("lendDlg"); renderAll();
 };
@@ -2052,32 +2056,59 @@ function renderRoomsList() {
       return ov;
     });
 
+    const LANE_PITCH = 15, LANE_BAR_H = 13;
+    function assignLanes(arr) {
+      const sorted = arr.slice().sort((a, b) => a.sp[0] - b.sp[0]);
+      const laneEnd = [];
+      const laneOf = new Map();
+      sorted.forEach(w => {
+        let lane = laneEnd.findIndex(e => e <= w.sp[0]);
+        if (lane === -1) { lane = laneEnd.length; laneEnd.push(-Infinity); }
+        laneEnd[lane] = w.sp[1];
+        laneOf.set(w.cid, lane);
+      });
+      return { laneOf, n: Math.max(1, laneEnd.length) };
+    }
     function barsHtml(arr) {
-      return arr.map((w, k) => {
+      if (!arr.length) return { html: "", h: null };
+      const { laneOf, n } = assignLanes(arr);
+      const trackH = n > 1 ? n * LANE_PITCH : null;
+      const html = arr.map((w, k) => {
+        const lane = laneOf.get(w.cid) ?? 0;
         const ov = clashOverlayHtml(w, arr);
         const cobj = state.casts.find(x => x.id === w.cid);
         const rankCls = cobj && cobj.rank === "premier" ? " rank-premier" : cobj && cobj.rank === "vip" ? " rank-vip" : "";
         const nameCls = cobj && (cobj.furyo || cobj.autoOver) ? " furyo-name" : "";
-        return `<div class="lf-bar ${k % 2 ? 'b2' : 'b1'}${rankCls}${w.r && w.r.hideNet ? ' has-hidenet' : ''} ${w.clash ? 'clash' : ''}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name} ${fmtSp(w.sp)}${w.r && w.r.hideNet ? ' 非掲載' : ''}">${ov}<span class="lf-barlabel${nameCls}">${w.name}<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
+        const laneStyle = n > 1 ? `;top:${1 + lane * LANE_PITCH}px;height:${LANE_BAR_H}px` : "";
+        return `<div class="lf-bar ${k % 2 ? 'b2' : 'b1'}${rankCls}${w.r && w.r.hideNet ? ' has-hidenet' : ''} ${w.clash ? 'clash' : ''}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%${laneStyle}" title="${w.name} ${fmtSp(w.sp)}${w.r && w.r.hideNet ? ' 非掲載' : ''}">${ov}<span class="lf-barlabel${nameCls}">${w.name}<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
       }).join("");
+      return { html, h: trackH };
     }
     let roomRows = "";
-    for (let ri = 0; ri < ROOMS; ri++)
-      roomRows += `<div class="lf-row"><div class="lf-rno">${roomLabel(ri)}</div><div class="lf-track" data-ri="${ri}" data-day="${d}">${roomOverlays[ri]}${barsHtml(rooms[ri])}</div></div>`;
+    for (let ri = 0; ri < ROOMS; ri++) {
+      const { html: bHtml, h: bH } = barsHtml(rooms[ri]);
+      const tStyle = bH ? ` style="height:${bH}px"` : "";
+      roomRows += `<div class="lf-row"><div class="lf-rno">${roomLabel(ri)}</div><div class="lf-track"${tStyle} data-ri="${ri}" data-day="${d}">${roomOverlays[ri]}${bHtml}</div></div>`;
+    }
     roomRows += `<div class="lf-overline"></div>`;
     let ovNo = 0;
     (overRooms || []).forEach((arr) => {
+      const { laneOf, n: ovN } = assignLanes(arr);
+      const ovTrackH = ovN > 1 ? ovN * LANE_PITCH : null;
       const bars = arr.map(w => {
+        const lane = laneOf.get(w.cid) ?? 0;
         const cobj = state.casts.find(x => x.id === w.cid);
         const rankCls = cobj && cobj.rank === "premier" ? " rank-premier" : cobj && cobj.rank === "vip" ? " rank-vip" : "";
         const nameCls = cobj && (cobj.furyo || cobj.autoOver) ? " furyo-name" : "";
+        const laneStyle = ovN > 1 ? `;top:${1 + lane * LANE_PITCH}px;height:${LANE_BAR_H}px` : "";
         if (w.borrow)
-          return `<div class="lf-bar bw${rankCls} store-${w.store||''}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name} ${fmtSp(w.sp)}（掛け持ち）"><span class="lf-barlabel${nameCls}">${w.name}<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
-        return `<div class="lf-bar ov${rankCls}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name} ${fmtSp(w.sp)}"><span class="lf-barlabel${nameCls}">${w.name}<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
+          return `<div class="lf-bar bw${rankCls} store-${w.store||''}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%${laneStyle}" title="${w.name} ${fmtSp(w.sp)}（掛け持ち）"><span class="lf-barlabel${nameCls}">${w.name}<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
+        return `<div class="lf-bar ov${rankCls}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%${laneStyle}" title="${w.name} ${fmtSp(w.sp)}"><span class="lf-barlabel${nameCls}">${w.name}<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
       }).join("");
       const allBorrow = arr.length && arr.every(x => x.borrow);
       const rno = allBorrow ? "借" : (++ovNo);
-      roomRows += `<div class="lf-row over"><div class="lf-rno" style="background:var(--over-bg);color:var(--over)">${rno}</div><div class="lf-track" data-ri="OVER" data-day="${d}">${bars}</div></div>`;
+      const tStyle = ovTrackH ? ` style="height:${ovTrackH}px"` : "";
+      roomRows += `<div class="lf-row over"><div class="lf-rno" style="background:var(--over-bg);color:var(--over)">${rno}</div><div class="lf-track"${tStyle} data-ri="OVER" data-day="${d}">${bars}</div></div>`;
     });
     roomRows += `<div class="lf-row over"><div class="lf-rno" style="background:var(--over-bg);color:var(--over)">${ovNo === 0 ? '溢' : ''}</div><div class="lf-track" data-ri="OVER" data-day="${d}"></div></div>`;
 
@@ -2091,14 +2122,14 @@ function renderRoomsList() {
     // 掛け持ち表示
     const dLends = (state.lends && state.lends[dkey(d)]) || [];
     const dBorrows = (state.borrows && state.borrows[dkey(d)]) || [];
-    const lendItems = dLends.map(l => { const c = state.casts.find(x => x.id === l.cid); const nm = c ? c.name : "(削除)";
-      return `<span class="lend-item"><span class="store store-${l.store}">${l.store}</span>${nm} ${tL(l.start)}-${tL(l.end)}</span>`; }).join("");
-    const borrowItems = dBorrows.map(l =>
-      `<span class="lend-item borrow"><span class="store store-${l.store}">${l.store}</span>${l.name ? esc(l.name) + " " : ""}${tL(l.start)}-${tL(l.end)}</span>`).join("");
-    const lendBorrowHtml = (dLends.length || dBorrows.length) ? `<div class="lf-lend-row">
-      ${dLends.length ? `<div class="lf-lend-zone l"><span class="lf-lend-title">↗掛け持ち</span>${lendItems}</div>` : ""}
-      ${dBorrows.length ? `<div class="lf-lend-zone b"><span class="lf-lend-title">↘掛け持ち</span>${borrowItems}</div>` : ""}
-    </div>` : "";
+    const lendItems = dLends.map((l, i) => { const c = state.casts.find(x => x.id === l.cid); const nm = c ? c.name : "(削除)";
+      return `<span class="lend-item"><span class="store store-${l.store}">${l.store}</span>${nm} ${tL(l.start)}-${tL(l.end)}<span class="del" onclick="removeLend('lends',${i},${d})">×</span></span>`; }).join("");
+    const borrowItems = dBorrows.map((l, i) =>
+      `<span class="lend-item borrow"><span class="store store-${l.store}">${l.store}</span>${l.name ? esc(l.name) + " " : ""}${tL(l.start)}-${tL(l.end)}<span class="del" onclick="removeLend('borrows',${i},${d})">×</span></span>`).join("");
+    const lendBorrowHtml = `<div class="lf-lend-row">
+      <div class="lf-lend-zone l"><span class="lf-lend-title">↗加盟店へ掛け持ち</span>${lendItems}<button class="btn lend sm" onclick="openLend('lend',${d})">＋</button></div>
+      <div class="lf-lend-zone b"><span class="lf-lend-title">↘ロイヤルに掛け持ち</span>${borrowItems}<button class="btn borrow sm" onclick="openLend('borrow',${d})">＋</button></div>
+    </div>`;
     dayBlocks += `<div class="lf-day ${isToday ? 'today' : ''}" data-day="${d}">
         <div class="lf-dayhead ${wkcls}">${todayMk}${m + 1}/${d}<small>(${WK[wd]})</small>${overflowCount ? `<span class="lf-over">溢${overflowCount}</span>` : ""}<span class="lf-freesum">空計${freeSum}</span></div>
         ${evHtml}
