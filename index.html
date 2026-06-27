@@ -128,6 +128,7 @@
   .lf-freebar{display:grid;grid-template-columns:repeat(16,1fr);height:27px}
   .lf-cell{display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;border-left:1px solid rgba(255,255,255,.6)}
   .lf-memo{font-size:13px;color:#5a3b2e;background:#fff8e6;border-top:1px solid var(--line);padding:6px 9px;white-space:pre-wrap;word-break:break-word;line-height:1.4}
+  .lf-memo-input{width:100%;box-sizing:border-box;border:none;border-top:1px solid var(--line);background:#fff8e6;font-size:12px;font-family:inherit;padding:5px 8px;resize:none;color:#5a3b2e;outline:none;line-height:1.4}
   .lf-event{font-size:13px;font-weight:800;color:#b5532a;background:#fff1e6;border-bottom:1px solid var(--line);padding:5px 9px;white-space:pre-wrap;word-break:break-word;line-height:1.3}
   .rt-event{display:inline-flex;align-items:center;background:#fff1e6;color:#b5532a;border:1.5px solid #f0c4a3;border-radius:20px;padding:3px 12px;font-size:12px;font-weight:800}
   .absent-zone{margin:10px 0;border:1.5px solid var(--over);border-radius:12px;background:#fff6f5;padding:10px}  .absent-zone .az-title{color:var(--over);font-weight:800;font-size:13px;margin-bottom:6px}
@@ -2076,17 +2077,17 @@ function renderRoomsList() {
     const isToday = d === todayD;
     const todayMk = isToday ? '<span class="lf-todaymk">今日</span>' : "";
     const memo = (state.memos && state.memos[dkey(d)]) ? state.memos[dkey(d)] : "";
-    const memoHtml = memo ? `<div class="lf-memo">${esc(memo)}</div>` : "";
+    const memoArea = `<textarea class="lf-memo-input" data-day="${d}" rows="3" placeholder="メモ">${esc(memo)}</textarea>`;
     const ev = (state.events && state.events[dkey(d)]) ? state.events[dkey(d)] : "";
     const evHtml = ev ? `<div class="lf-event">${esc(ev)}</div>` : "";
-    dayBlocks += `<div class="lf-day ${isToday ? 'today' : ''}" data-day="${d}" onclick="jumpToDay(${d})">
+    dayBlocks += `<div class="lf-day ${isToday ? 'today' : ''}" data-day="${d}">
         <div class="lf-dayhead ${wkcls}">${todayMk}${m + 1}/${d}<small>(${WK[wd]})</small>${overflowCount ? `<span class="lf-over">溢${overflowCount}</span>` : ""}<span class="lf-freesum">空計${freeSum}</span></div>
         ${evHtml}
         ${lfDnLabel}
         <div class="lf-axis"><span style="border:none"></span>${axisTop}</div>
         ${roomRows}
         <div class="lf-freerow"><div class="lf-rno" style="font-size:9px">空き</div><div class="lf-freebar">${freeCells}</div></div>
-        ${memoHtml}
+        ${memoArea}
       </div>`;
   }
   if (!anyDay) dayBlocks = `<div class="empty-msg">表示できる日がありません。</div>`;
@@ -2111,6 +2112,14 @@ function renderRoomsList() {
   }
   roomsListScrollTarget = null;
   setTimeout(fitBarLabels, 0);
+  $("view-roomslist").querySelectorAll(".lf-memo-input").forEach(ta => {
+    ta.onchange = e => {
+      const d = Number(e.target.dataset.day);
+      if (!state.memos) state.memos = {};
+      state.memos[dkey(d)] = e.target.value;
+      save();
+    };
+  });
 }
 // 集計カードはキャスト管理タブのときだけ表示
 function syncStatCards() {
