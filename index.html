@@ -78,8 +78,8 @@
   .highday small{font-size:9px;color:#d0738a;font-weight:700}
 
   /* リスピラ一覧 */
-  .lf-scroll{display:flex;align-items:flex-start;gap:16px;overflow-x:auto;padding-bottom:10px}
-  .lf-day{flex:0 0 auto;width:calc(33vw - 30px);min-width:300px;border:1.5px solid var(--line);border-radius:12px;overflow:hidden;cursor:pointer}
+  .lf-scroll{display:flex;align-items:flex-start;gap:16px;overflow-x:auto;padding-top:6px;transform:scaleY(-1)}
+  .lf-day{flex:0 0 auto;width:calc(33vw - 30px);min-width:300px;border:1.5px solid var(--line);border-radius:12px;overflow:hidden;cursor:pointer;transform:scaleY(-1)}
   .lf-day:hover{box-shadow:0 4px 14px rgba(232,69,122,.18)}
   .lf-dayhead{background:#e0e0e0;font-weight:800;font-size:18px;padding:10px 13px;display:flex;align-items:center;gap:6px;border-bottom:1.5px solid var(--line)}
   .lf-dayhead small{font-weight:700;color:var(--ink-soft)}
@@ -214,7 +214,7 @@
   .cell .note{display:block;font-size:9px;color:#b3679a;font-weight:700;margin-top:1px;white-space:normal;line-height:1.05}
   .cell .xmark{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;pointer-events:none}
   .cell .xmark.red{color:#e8253c;font-size:26px;text-shadow:0 0 1px #e8253c}
-  .cell .xmark.black{display:block;font-size:0;width:55%;height:2px;background:#222;border-radius:1px;margin:auto;position:absolute;inset:0;top:50%;transform:translateY(-50%);left:50%;transform:translate(-50%,-50%)}
+  .cell .xmark.black{display:block;font-size:0;width:40%;height:2px;background:#222;border-radius:1px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}
   .cell .omark{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;pointer-events:none;color:var(--over)}
   .cell.sel-cell{outline:2.5px solid var(--pink);outline-offset:-2px;background:#ffe8f3 !important}
   .mday-btn{min-width:26px;padding:3px 2px;font-size:11px;line-height:1.2}
