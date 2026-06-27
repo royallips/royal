@@ -81,13 +81,11 @@
   .lf-scroll{display:flex;align-items:flex-start;gap:16px;overflow-x:auto;padding-bottom:10px}
   .lf-day{flex:0 0 auto;width:calc(33vw - 30px);min-width:300px;border:1.5px solid var(--line);border-radius:12px;overflow:hidden;cursor:pointer}
   .lf-day:hover{box-shadow:0 4px 14px rgba(232,69,122,.18)}
-  .lf-dayhead{background:var(--pink-soft);font-weight:800;font-size:18px;padding:10px 13px;display:flex;align-items:center;gap:6px;border-bottom:1.5px solid var(--line)}
+  .lf-dayhead{background:#e0e0e0;font-weight:800;font-size:18px;padding:10px 13px;display:flex;align-items:center;gap:6px;border-bottom:1.5px solid var(--line)}
   .lf-dayhead small{font-weight:700;color:var(--ink-soft)}
   .lf-dayhead.sat{background:#dcecff}.lf-dayhead.sun{background:#ffe0e0}
-  .lf-day.today{border-color:var(--pink);box-shadow:0 0 0 2px var(--pink)}
-  .lf-day.today .lf-dayhead{background:var(--pink);color:#fff}
-  .lf-day.today .lf-dayhead small{color:#ffe3ef}
-  .lf-todaymk{display:inline-block;font-size:11px;background:#fff;color:var(--pink);border-radius:6px;padding:1px 6px;font-weight:800;margin-right:2px}
+  .lf-day.today{border-color:var(--pink);box-shadow:0 0 0 3px var(--pink)}
+  .lf-todaymk{display:inline-block;font-size:11px;background:var(--pink);color:#fff;border-radius:6px;padding:1px 6px;font-weight:800;margin-right:2px}
   .lf-day.flash{animation:lfflash 1.2s ease-out}
   @keyframes lfflash{0%{box-shadow:0 0 0 3px var(--pink)}60%{box-shadow:0 0 0 3px var(--pink)}100%{box-shadow:0 0 0 0 transparent}}
   .lf-dayhead .lf-over{margin-left:auto;background:var(--over);color:#fff;border-radius:10px;padding:2px 10px;font-size:15px}
