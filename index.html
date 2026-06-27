@@ -270,6 +270,7 @@
   .rt-bar.dragging,.lf-bar.dragging{opacity:.45}
   .rt-bar[draggable=true],.lf-bar[draggable=true]{cursor:grab}
   .rt-bar[draggable=true]:active,.lf-bar[draggable=true]:active{cursor:grabbing}
+  .lf-bar:hover{z-index:1000 !important}
   .rt-track.dropok,.lf-track.dropok{background:#e9f8ef !important;outline:2px dashed var(--bar);outline-offset:-2px}
   .rt-row.over .rt-track.dropok{background:#fdeceb !important;outline-color:var(--over)}
 
@@ -2056,59 +2057,32 @@ function renderRoomsList() {
       return ov;
     });
 
-    const LANE_PITCH = 15, LANE_BAR_H = 13;
-    function assignLanes(arr) {
-      const sorted = arr.slice().sort((a, b) => a.sp[0] - b.sp[0]);
-      const laneEnd = [];
-      const laneOf = new Map();
-      sorted.forEach(w => {
-        let lane = laneEnd.findIndex(e => e <= w.sp[0]);
-        if (lane === -1) { lane = laneEnd.length; laneEnd.push(-Infinity); }
-        laneEnd[lane] = w.sp[1];
-        laneOf.set(w.cid, lane);
-      });
-      return { laneOf, n: Math.max(1, laneEnd.length) };
-    }
     function barsHtml(arr) {
-      if (!arr.length) return { html: "", h: null };
-      const { laneOf, n } = assignLanes(arr);
-      const trackH = n > 1 ? n * LANE_PITCH : null;
-      const html = arr.map((w, k) => {
-        const lane = laneOf.get(w.cid) ?? 0;
+      return arr.map((w, k) => {
         const ov = clashOverlayHtml(w, arr);
         const cobj = state.casts.find(x => x.id === w.cid);
         const rankCls = cobj && cobj.rank === "premier" ? " rank-premier" : cobj && cobj.rank === "vip" ? " rank-vip" : "";
         const nameCls = cobj && (cobj.furyo || cobj.autoOver) ? " furyo-name" : "";
-        const laneStyle = n > 1 ? `;top:${1 + lane * LANE_PITCH}px;height:${LANE_BAR_H}px` : "";
-        return `<div class="lf-bar ${k % 2 ? 'b2' : 'b1'}${rankCls}${w.r && w.r.hideNet ? ' has-hidenet' : ''} ${w.clash ? 'clash' : ''}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%${laneStyle}" title="${w.name} ${fmtSp(w.sp)}${w.r && w.r.hideNet ? ' 非掲載' : ''}">${ov}<span class="lf-barlabel${nameCls}">${w.name}<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
+        return `<div class="lf-bar ${k % 2 ? 'b2' : 'b1'}${rankCls}${w.r && w.r.hideNet ? ' has-hidenet' : ''} ${w.clash ? 'clash' : ''}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name} ${fmtSp(w.sp)}${w.r && w.r.hideNet ? ' 非掲載' : ''}">${ov}<span class="lf-barlabel${nameCls}">${w.name}<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
       }).join("");
-      return { html, h: trackH };
     }
     let roomRows = "";
-    for (let ri = 0; ri < ROOMS; ri++) {
-      const { html: bHtml, h: bH } = barsHtml(rooms[ri]);
-      const tStyle = bH ? ` style="height:${bH}px"` : "";
-      roomRows += `<div class="lf-row"><div class="lf-rno">${roomLabel(ri)}</div><div class="lf-track"${tStyle} data-ri="${ri}" data-day="${d}">${roomOverlays[ri]}${bHtml}</div></div>`;
-    }
+    for (let ri = 0; ri < ROOMS; ri++)
+      roomRows += `<div class="lf-row"><div class="lf-rno">${roomLabel(ri)}</div><div class="lf-track" data-ri="${ri}" data-day="${d}">${roomOverlays[ri]}${barsHtml(rooms[ri])}</div></div>`;
     roomRows += `<div class="lf-overline"></div>`;
     let ovNo = 0;
     (overRooms || []).forEach((arr) => {
-      const { laneOf, n: ovN } = assignLanes(arr);
-      const ovTrackH = ovN > 1 ? ovN * LANE_PITCH : null;
-      const bars = arr.map(w => {
-        const lane = laneOf.get(w.cid) ?? 0;
+      const bars = arr.map((w, k) => {
         const cobj = state.casts.find(x => x.id === w.cid);
         const rankCls = cobj && cobj.rank === "premier" ? " rank-premier" : cobj && cobj.rank === "vip" ? " rank-vip" : "";
         const nameCls = cobj && (cobj.furyo || cobj.autoOver) ? " furyo-name" : "";
-        const laneStyle = ovN > 1 ? `;top:${1 + lane * LANE_PITCH}px;height:${LANE_BAR_H}px` : "";
         if (w.borrow)
-          return `<div class="lf-bar bw${rankCls} store-${w.store||''}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%${laneStyle}" title="${w.name} ${fmtSp(w.sp)}（掛け持ち）"><span class="lf-barlabel${nameCls}">${w.name}<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
-        return `<div class="lf-bar ov${rankCls}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%${laneStyle}" title="${w.name} ${fmtSp(w.sp)}"><span class="lf-barlabel${nameCls}">${w.name}<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
+          return `<div class="lf-bar bw${rankCls} store-${w.store||''}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name} ${fmtSp(w.sp)}（掛け持ち）"><span class="lf-barlabel${nameCls}">${w.name}<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
+        return `<div class="lf-bar ov${rankCls}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name} ${fmtSp(w.sp)}"><span class="lf-barlabel${nameCls}">${w.name}<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
       }).join("");
       const allBorrow = arr.length && arr.every(x => x.borrow);
       const rno = allBorrow ? "借" : (++ovNo);
-      const tStyle = ovTrackH ? ` style="height:${ovTrackH}px"` : "";
-      roomRows += `<div class="lf-row over"><div class="lf-rno" style="background:var(--over-bg);color:var(--over)">${rno}</div><div class="lf-track"${tStyle} data-ri="OVER" data-day="${d}">${bars}</div></div>`;
+      roomRows += `<div class="lf-row over"><div class="lf-rno" style="background:var(--over-bg);color:var(--over)">${rno}</div><div class="lf-track" data-ri="OVER" data-day="${d}">${bars}</div></div>`;
     });
     roomRows += `<div class="lf-row over"><div class="lf-rno" style="background:var(--over-bg);color:var(--over)">${ovNo === 0 ? '溢' : ''}</div><div class="lf-track" data-ri="OVER" data-day="${d}"></div></div>`;
 
