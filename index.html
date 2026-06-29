@@ -3124,6 +3124,7 @@ function fitSheetNames() {
 function enterSSMode() {
   document.body.classList.add("ssmode");
   window.scrollTo(0, 0);
+  setTimeout(() => window.print(), 100);
 }
 function exitSSMode() {
   document.body.classList.remove("ssmode");
