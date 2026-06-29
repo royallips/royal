@@ -206,7 +206,7 @@
   .st-seiri{background:var(--seiri)!important}.st-shukuhaku{background:var(--shukuhaku)!important}
   .st-yotei{background:var(--yotei)!important}.st-tenpaku{background:var(--tenpaku)!important}
   .st-mitei{background:var(--mitei)!important;color:var(--ink-soft)}
-  .cell .timeunder{font-size:10px;display:block;line-height:1.1;letter-spacing:-.3px}
+  .cell .timeunder{font-size:11.5px;display:block;line-height:1.1;letter-spacing:-.5px}
   .cell .hidenet{font-size:8px;font-weight:800;color:#c0392b;background:#ffe3e0;border-radius:4px;padding:0 2px;display:inline-block;margin-top:1px}
   .cell.nakanuke{background:#fff}
   .cell.nakanuke .timeunder{font-size:9px;line-height:1.2;font-weight:800;text-align:center}
@@ -2214,7 +2214,7 @@ function cellInner(rc) {
     case "absent":
       return { inner: `<span class="timeunder">${fmtTime(rc)}</span><span class="xmark red">✕</span>${note}`, cls: stayCls };
     case "off":
-      return { inner: `<span class="xmark black"></span>`, cls: stayCls };
+      return { inner: (rc.start ? `<span class="timeunder">${fmtTime(rc)}</span>` : "") + `<span class="xmark black"></span>`, cls: stayCls };
     default:
       return { inner: "", cls: "" };
   }
