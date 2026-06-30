@@ -545,17 +545,17 @@
     #view-rooms .panel > .soukei-zone,
     .rt-wrap, .freebar, .hint, .ss-btn, .ss-exit,
     h1, .tabs, nav, dialog { display: none !important; }
-    .wrap { padding: 0 !important; }
-    #view-rooms { display: block !important; }
-    #view-rooms .panel { padding: 0; box-shadow: none; border: none; background: none; }
+    .wrap { padding: 0 !important; margin: 0 !important; width: 100% !important; }
+    #view-rooms { display: block !important; margin: 0 !important; padding: 0 !important; width: 100% !important; }
+    #view-rooms .panel { padding: 0; margin: 0; box-shadow: none; border: none; background: none; overflow: visible !important; width: 100% !important; box-sizing: border-box; }
     /* ヘッダー */
     .ss-btn { display: none !important; }
     .ss-exit { display: none !important; }
     .sheet-header { margin-bottom: 2mm; justify-content: center; }
     .sheet-date { font-size: 14pt; font-weight: 900; }
     /* シート本体: 高さ固定でテーブルを収める */
-    .sheet-view { padding: 0; display: flex; flex-direction: column; height: 128mm; overflow: hidden; }
-    .sheet-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; max-width: none; margin: 0; flex: 1; min-height: 0; overflow: hidden; }
+    .sheet-view { padding: 0; display: flex; flex-direction: column; height: 128mm; overflow: hidden; width: 100%; box-sizing: border-box; }
+    .sheet-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; max-width: 100%; width: 100%; margin: 0; flex: 1; min-height: 0; overflow: hidden; box-sizing: border-box; }
     .sheet-col { display: flex; flex-direction: column; overflow: hidden; }
     .sheet-col-head { font-size: 11pt; font-weight: 900; padding: 2px 0; letter-spacing: .1em; flex-shrink: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .sheet-col.hiru .sheet-col-head { background: #fff0cc !important; color: #8a5a00; border: 1pt solid #c8a040; }
@@ -2055,9 +2055,19 @@ function renderRoomsList() {
   const lfDnLabel = `<div class="lf-dn"><span></span><span class="lf-dn-h">昼</span><span class="lf-dn-y">夜</span></div>`;
 
   let dayBlocks = "", anyDay = false;
+  let needSave = false;
   for (let d = fromDay; d <= dim; d++) {
     anyDay = true;
     const { rooms, overRooms, overflowCount } = computeAssignmentAuto(d);
+    // 手動移動していないキャストの現在位置をassignListに焼き込む（新規追加分だけ自動配置）
+    const dk2 = dkey(d);
+    if (!state.assignList[dk2]) state.assignList[dk2] = {};
+    rooms.forEach((arr, rIdx) => arr.forEach(w => {
+      if (!w.borrow && state.assignList[dk2][w.cid] == null) { state.assignList[dk2][w.cid] = rIdx; needSave = true; }
+    }));
+    (overRooms || []).forEach(arr => arr.forEach(w => {
+      if (!w.borrow && state.assignList[dk2][w.cid] == null) { state.assignList[dk2][w.cid] = "OVER"; needSave = true; }
+    }));
     const borrows = (state.borrows && state.borrows[dkey(d)]) ? state.borrows[dkey(d)] : [];
 
     const free = freePerHour(rooms);
@@ -2141,6 +2151,7 @@ function renderRoomsList() {
       </div>`;
   }
   if (!anyDay) dayBlocks = `<div class="empty-msg">表示できる日がありません。</div>`;
+  if (needSave) save();
 
   $("view-roomslist").innerHTML =
     `<div class="panel">
