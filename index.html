@@ -375,17 +375,21 @@
   .empty-msg{text-align:center;color:var(--ink-soft);padding:20px;font-size:13px}
   /* シート表示 */
   .sheet-view{padding:8px 4px}
-  .sheet-top-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+  .sheet-top-row{display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap}
   .sheet-header{display:flex;align-items:center;justify-content:center;gap:10px;flex-shrink:0}
   .sheet-date{font-size:18px;font-weight:900;color:var(--ink);white-space:nowrap}
-  .sheet-kake-row{display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap;align-items:center}
-  .sh-kake-zone{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;padding:2px 6px;border-radius:6px;white-space:nowrap}
+  .sheet-kake-row{display:flex;gap:8px;flex:1;flex-wrap:wrap;align-items:center}
+  .sh-kake-zone{display:inline-flex;align-items:center;gap:4px;font-size:14px;font-weight:700;padding:4px 10px;border-radius:8px;white-space:nowrap}
   .sh-kake-zone.lend{color:var(--lend);background:rgba(140,44,196,.08)}
   .sh-kake-zone.borrow{color:var(--borrow);background:rgba(74,159,212,.1)}
-  .sh-kake-zone.over{color:var(--over);background:rgba(224,70,60,.08)}
+  .sh-kake-zone.over{color:var(--over);background:rgba(224,70,60,.08);font-size:18px}
+  .sh-kake-zone.over .sh-kake-label{font-size:12px}
+  .sh-kake-zone.over .sh-kake-item{font-size:17px}
   .sh-kake-zone.soukei{color:#1f8a9c;background:rgba(31,138,156,.08)}
-  .sh-kake-label{font-size:10px;font-weight:900;margin-right:2px;opacity:.8}
-  .sh-kake-item{background:rgba(255,255,255,.7);border-radius:4px;padding:0 4px;font-size:10px}
+  .sh-kake-label{font-size:11px;font-weight:900;margin-right:3px;opacity:.8}
+  .sh-kake-item{background:rgba(255,255,255,.7);border-radius:5px;padding:1px 6px;font-size:13px}
+  .sheet-memo-row{margin-top:8px}
+  .sheet-memo-row .memo-box{margin-top:0}
   .sheet-cols{display:grid;grid-template-columns:1fr 1fr;gap:6px;max-width:420px;margin:0 auto}
   .sheet-col-head{font-size:15px;font-weight:900;text-align:center;padding:5px 0;border-radius:8px 8px 0 0;letter-spacing:.1em}
   .sheet-col.hiru .sheet-col-head{background:var(--hiru);color:#9a6a08}
@@ -411,9 +415,8 @@
   body.ssmode .tabs,body.ssmode .bar,body.ssmode .absent-zone,body.ssmode .soukei-zone,
   body.ssmode .lend-row,body.ssmode .over-banner,body.ssmode .lock-banner,
   body.ssmode .rt-wrap,body.ssmode label,body.ssmode .memo-box,body.ssmode .hint{display:none!important}
-  body.ssmode .sheet-extra{display:block!important;margin-top:4px}
-  body.ssmode .sheet-extra label{display:block!important;font-size:10px;font-weight:700;margin-top:4px;margin-bottom:2px}
-  body.ssmode .sheet-extra .memo-box{display:block!important;width:100%;font-size:10px;border:1px solid #bbb;padding:3px 5px;box-sizing:border-box;resize:none;min-height:30px}
+  body.ssmode .sheet-memo-row .memo-box{display:block!important;width:100%;font-size:10px;border:1px solid #bbb;padding:3px 5px;box-sizing:border-box;resize:none;min-height:30px}
+  body.ssmode .sheet-extra{display:none!important}
   body.ssmode .sheet-top-row{display:flex!important;align-items:center;gap:6px;flex-wrap:nowrap;margin-bottom:4px}
   body.ssmode .sheet-kake-row{display:flex!important;flex-wrap:nowrap;margin:0}
   body.ssmode .sh-kake-zone{display:inline-flex!important;font-size:10px}
@@ -567,10 +570,13 @@
     .sheet-date { font-size: 12pt; font-weight: 900; white-space: nowrap; }
     .sheet-kake-row { display: flex !important; gap: 3pt; flex-wrap: wrap; align-items: center; flex: 1; margin: 0; }
     .sh-kake-zone { display: inline-flex !important; font-size: 7pt; padding: 1pt 4pt; border-radius: 3pt; }
+    .sh-kake-zone.over { font-size: 12pt; }
+    .sh-kake-zone.over .sh-kake-label { font-size: 7pt; }
+    .sh-kake-zone.over .sh-kake-item { font-size: 11pt; }
     .sh-kake-label { font-size: 7pt; }
     .sh-kake-item { font-size: 6.5pt; padding: 0 3pt; }
     /* シート本体: 高さ固定でテーブルを収める */
-    .sheet-view { padding: 0; display: flex; flex-direction: column; height: 150mm; overflow: hidden; width: 100%; box-sizing: border-box; }
+    .sheet-view { padding: 0; display: flex; flex-direction: column; height: 174mm; overflow: hidden; width: 100%; box-sizing: border-box; }
     .sheet-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; max-width: 100%; width: 100%; margin: 0; flex: 1; min-height: 0; overflow: hidden; box-sizing: border-box; }
     .sheet-col { display: flex; flex-direction: column; overflow: hidden; }
     .sheet-col-head { font-size: 11pt; font-weight: 900; padding: 2px 0; letter-spacing: .1em; flex-shrink: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -586,10 +592,9 @@
     .sh-name { font-size: 10pt; font-weight: 900; display: inline; white-space: nowrap; color: #000; }
     .sh-name+.sh-name { margin-left: 3pt; }
     .sh-name small { font-size: .75em; font-weight: 700; color: #333; margin-left: 1pt; }
-    /* 溢れ・他店・掛け持ち・メモ */
-    .sheet-extra { display: block !important; margin-top: 1mm; }
-    .sheet-extra label { display: block !important; font-weight: 700; font-size: 7pt; margin-bottom: 1pt; }
-    .sheet-extra .memo-box { display: block !important; width: 100%; font-size: 8pt; border: none; padding: 1pt 3pt; box-sizing: border-box; resize: none; height: 18mm; }
+    .sheet-memo-row { flex-shrink: 0; margin-top: 1mm; }
+    .sheet-memo-row .memo-box { display: block !important; width: 100%; font-size: 8pt; border: 1pt solid #bbb !important; padding: 2pt 4pt; box-sizing: border-box; resize: none; height: 16mm; }
+    .sheet-extra { display: none !important; }
   }
 </style>
 </head>
@@ -1360,7 +1365,7 @@ function renderStats() {
 }
 
 /* ===== 8. リスピラ編集 ============================================= */
-function buildRoomsSheet() {
+function buildRoomsSheet(memo) {
   const { rooms, overRooms } = computeAssignment(roomDay);
   const DN = 17; // 昼夜の境界
   function fH(h) { const hr = Math.floor(h), mn = Math.round((h - hr) * 60); if (hr >= 24) return "L"; return mn === 30 ? `${hr}.5` : `${hr}`; }
@@ -1422,19 +1427,19 @@ function buildRoomsSheet() {
     if (r && isUse(r.status) && r.start2) { const sp2 = spanRaw(r.start2, r.end2); if (sp2 && sp2[1] >= CLOSE) return true; }
     return false;
   });
-  const soukeiZoneHtml = soukeiCasts.length ? shZone("送迎", soukeiCasts.map(c => {
+  const soukeiZoneHtml = shZone("送迎", soukeiCasts.map(c => {
     if (c.soukei === "ari") return c.name;
     const st = stMap[c.id];
     const label = st === "hitsuyou" ? "必要" : st === "fuyou" ? "不要" : "要確認";
     return `${c.name}(${label})`;
-  }), "soukei") : "";
+  }), "soukei");
   const thead = "";
   return `<div class="sheet-view">
     <div class="sheet-top-row">
       <div class="sheet-header">
         <span class="sheet-date">${m+1}月${roomDay}日（${wd}）</span>
       </div>
-      <div class="sheet-kake-row">${lendZone}${borrowZone}${overZone}${soukeiZoneHtml}</div>
+      <div class="sheet-kake-row">${overZone}${lendZone}${borrowZone}${soukeiZoneHtml}</div>
     </div>
     <div class="sheet-cols">
       <div class="sheet-col hiru">
@@ -1445,6 +1450,9 @@ function buildRoomsSheet() {
         <div class="sheet-col-head">夜の部</div>
         <table class="sheet-table">${thead}<tbody>${yoruRows}</tbody></table>
       </div>
+    </div>
+    <div class="sheet-memo-row">
+      <textarea class="memo-box" id="dayMemo" rows="5" placeholder="メモ">${memo}</textarea>
     </div>
   </div>`;
 }
@@ -1599,9 +1607,9 @@ function renderRooms() {
       ${lockBanner}
       ${overBanner}
       ${absentHtml}
-      ${roomViewMode === 'sheet' ? buildRoomsSheet() : `<div class="lend-row">${lendHtml}${borrowHtml}</div><div class="rt-wrap ${locked ? 'locked' : ''}"><div class="rt"><div class="rt-axis"><div></div>${dnLabel}</div><div class="rt-axis"><div></div><div class="ax">${axis}</div></div>${roomRows}<div class="hint" style="padding-left:54px"></div></div></div>`}
+      ${roomViewMode === 'sheet' ? buildRoomsSheet(memo) : `<div class="lend-row">${lendHtml}${borrowHtml}</div><div class="rt-wrap ${locked ? 'locked' : ''}"><div class="rt"><div class="rt-axis"><div></div>${dnLabel}</div><div class="rt-axis"><div></div><div class="ax">${axis}</div></div>${roomRows}<div class="hint" style="padding-left:54px"></div></div></div>`}
       ${roomViewMode === 'sheet'
-        ? `<div class="sheet-extra"><label style="font-weight:700;font-size:12px;color:var(--ink-soft);display:block;margin-top:6px">メモ</label><textarea class="memo-box" id="dayMemo" rows="5" placeholder="">${memo}</textarea>${soukeiHtml}</div>`
+        ? `<div class="sheet-extra">${soukeiHtml}</div>`
         : `<label style="font-weight:700;font-size:12px;color:var(--ink-soft);display:block;margin-top:14px">メモ</label><textarea class="memo-box" id="dayMemo" rows="5" placeholder="">${memo}</textarea>${soukeiHtml}`}
     </div>`;
 
