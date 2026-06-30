@@ -374,8 +374,12 @@
   .empty-msg{text-align:center;color:var(--ink-soft);padding:20px;font-size:13px}
   /* シート表示 */
   .sheet-view{padding:8px 4px}
-  .sheet-header{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:10px}
+  .sheet-header{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-bottom:4px}
   .sheet-date{font-size:18px;font-weight:900;color:var(--ink)}
+  .sheet-header-bar{display:grid;grid-template-columns:1fr auto 1fr;align-items:stretch;gap:3px;margin-bottom:4px}
+  .sheet-center-date{font-size:16px;font-weight:900;text-align:center;display:flex;align-items:center;justify-content:center;padding:0 12px;color:var(--ink)}
+  .sheet-col-head.hiru-head{background:var(--hiru);color:#9a6a08;border-radius:8px 8px 0 0;text-align:center;padding:5px 0;font-size:15px;font-weight:900;letter-spacing:.1em}
+  .sheet-col-head.yoru-head{background:var(--yoru);color:#2c5d8a;border-radius:8px 8px 0 0;text-align:center;padding:5px 0;font-size:15px;font-weight:900;letter-spacing:.1em}
   .sheet-cols{display:grid;grid-template-columns:1fr 1fr;gap:6px;max-width:420px;margin:0 auto}
   .sheet-col-head{font-size:15px;font-weight:900;text-align:center;padding:5px 0;border-radius:8px 8px 0 0;letter-spacing:.1em}
   .sheet-col.hiru .sheet-col-head{background:var(--hiru);color:#9a6a08}
@@ -411,6 +415,8 @@
   body.ssmode #view-rooms .panel{padding:8px 6px;box-shadow:none;border:none;background:#fff}
   body.ssmode .sheet-view{padding:4px 2px}
   body.ssmode .sheet-date{font-size:16px}
+  body.ssmode .sheet-header-bar{margin-bottom:3px}
+  body.ssmode .sheet-center-date{font-size:15px}
   body.ssmode .ss-btn{display:none}
   body.ssmode .sheet-cols{gap:5px}
   body.ssmode .sheet-table{font-size:15px}
@@ -551,15 +557,17 @@
     /* ヘッダー */
     .ss-btn { display: none !important; }
     .ss-exit { display: none !important; }
-    .sheet-header { margin-bottom: 2mm; justify-content: center; }
-    .sheet-date { font-size: 14pt; font-weight: 900; }
+    .sheet-header { display: none !important; }
+    /* 日付＋昼夜ヘッダー統合バー */
+    .sheet-header-bar { display: grid !important; grid-template-columns: 1fr auto 1fr; gap: 2mm; margin-bottom: 1.5mm; align-items: stretch; }
+    .sheet-center-date { font-size: 13pt; font-weight: 900; text-align: center; display: flex; align-items: center; justify-content: center; padding: 0 6pt; }
+    .sheet-col-head.hiru-head { background: #fff0cc !important; color: #8a5a00; border: 1pt solid #c8a040; font-size: 10pt; font-weight: 900; padding: 2pt 0; text-align: center; letter-spacing: .1em; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .sheet-col-head.yoru-head { background: #e0eaff !important; color: #1a3a80; border: 1pt solid #7090d0; font-size: 10pt; font-weight: 900; padding: 2pt 0; text-align: center; letter-spacing: .1em; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     /* シート本体: 高さ固定でテーブルを収める */
-    .sheet-view { padding: 0; display: flex; flex-direction: column; height: 128mm; overflow: hidden; }
+    .sheet-view { padding: 0; display: flex; flex-direction: column; height: 133mm; overflow: hidden; }
     .sheet-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; max-width: none; margin: 0; flex: 1; min-height: 0; overflow: hidden; }
     .sheet-col { display: flex; flex-direction: column; overflow: hidden; }
-    .sheet-col-head { font-size: 11pt; font-weight: 900; padding: 2px 0; letter-spacing: .1em; flex-shrink: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .sheet-col.hiru .sheet-col-head { background: #fff0cc !important; color: #8a5a00; border: 1pt solid #c8a040; }
-    .sheet-col.yoru .sheet-col-head { background: #e0eaff !important; color: #1a3a80; border: 1pt solid #7090d0; }
+    .sheet-col-head { font-size: 10pt; font-weight: 900; padding: 2px 0; letter-spacing: .1em; flex-shrink: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .sheet-table { flex: 1; width: 100%; border-collapse: collapse; table-layout: fixed; }
     .sh-rno { font-size: 11pt; font-weight: 900; text-align: center; padding: 1px 2px; border: 1pt solid #bbb; width: 18pt; color: #c03060; vertical-align: middle; white-space: nowrap; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .sh-names { padding: 0; border: 1pt solid #bbb; border-left: none; vertical-align: middle; overflow: hidden; }
@@ -578,7 +586,7 @@
     .sheet-extra .lend-item { font-size: 7.5pt; padding: 0 4pt; margin: 1pt; }
     .sheet-extra .lend-item .store { min-width: 13pt; height: 13pt; font-size: 7pt; }
     .sheet-extra label { display: block !important; font-weight: 700; font-size: 7.5pt; margin-bottom: 1pt; }
-    .sheet-extra .memo-box { display: block !important; width: 100%; font-size: 8pt; border: 1pt solid #bbb; padding: 2pt 4pt; box-sizing: border-box; resize: none; height: 12mm; }
+    .sheet-extra .memo-box { display: block !important; width: 100%; font-size: 8pt; border: 1pt solid #bbb; padding: 2pt 4pt; box-sizing: border-box; resize: none; height: 9mm; }
   }
 </style>
 </head>
@@ -1392,14 +1400,17 @@ function buildRoomsSheet() {
   const wd = WK[new Date(y, m, roomDay).getDay()];
   const thead = "";
   return `<div class="sheet-view">
-    <div class="sheet-header"><span class="sheet-date">${m+1}月${roomDay}日（${wd}）</span><button class="ss-btn" onclick="enterSSMode()">印刷</button></div>
+    <div class="sheet-header"><button class="ss-btn" onclick="enterSSMode()">印刷</button></div>
+    <div class="sheet-header-bar">
+      <div class="sheet-col-head hiru-head">昼の部</div>
+      <div class="sheet-center-date">${m+1}月${roomDay}日（${wd}）</div>
+      <div class="sheet-col-head yoru-head">夜の部</div>
+    </div>
     <div class="sheet-cols">
       <div class="sheet-col hiru">
-        <div class="sheet-col-head">昼の部</div>
         <table class="sheet-table">${thead}<tbody>${hiruRows}</tbody></table>
       </div>
       <div class="sheet-col yoru">
-        <div class="sheet-col-head">夜の部</div>
         <table class="sheet-table">${thead}<tbody>${yoruRows}</tbody></table>
       </div>
     </div>
