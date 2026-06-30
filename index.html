@@ -92,7 +92,8 @@
   .lf-dayhead .lf-freesum{margin-left:auto;color:#2d7a4a;font-size:16px;font-weight:800}
   .lf-dayhead .lf-over+.lf-freesum{margin-left:6px}
   .lf-axis{display:grid;grid-template-columns:24px repeat(16,1fr);font-size:12px;color:var(--ink-soft);border-bottom:1px solid var(--line)}
-  .lf-axis span{border-left:1px solid var(--line);height:20px;padding-left:2px}
+  .lf-axis span{border-left:1px solid var(--line);height:20px;padding-left:2px;display:flex;align-items:center;gap:2px}
+  .lf-axis-free{display:inline-block;min-width:10px;text-align:center;border-radius:3px;font-size:7px;font-weight:800;line-height:11px;padding:0 1px}
   .lf-row{display:grid;grid-template-columns:24px 1fr;align-items:stretch;border-bottom:1px solid #f3e6ee;min-height:34px}
   .lf-overline{background:var(--over);height:3px;padding:0;margin:1px 0}
   .lf-row.over{background:var(--over-bg);min-height:28px}
@@ -108,8 +109,6 @@
   #view-roomslist .lf-row{grid-template-columns:1fr}
   #view-roomslist .lf-axis{grid-template-columns:0 repeat(16,1fr)}
   #view-roomslist .lf-dn{grid-template-columns:0 9fr 7fr}
-  #view-roomslist .lf-freerow{grid-template-columns:1fr}
-  #view-roomslist .lf-freerow .lf-rno{display:none}
   .lf-dn .lf-dn-h,.lf-dn .lf-dn-y{font-size:12px;font-weight:800;text-align:center;border-radius:5px;padding:2px 0}
   .lf-dn .lf-dn-h{background:#fff1d6;color:#d98a00;margin:0 2px 0 0}
   .lf-dn .lf-dn-y{background:#e4e8ff;color:#4a55c0;margin:0 0 0 2px}
@@ -123,9 +122,6 @@
   .lf-endtime{font-weight:600;opacity:.85;flex-shrink:0}
   .lf-bar .clash-ov{position:absolute;top:0;bottom:0;background:rgba(224,70,60,.28);border-left:1.2px solid rgba(224,70,60,.65);border-right:1.2px solid rgba(224,70,60,.65);z-index:1}
   .lf-bar.bsh{background:#fff}.lf-bar.btp{background:#fff}
-  .lf-freerow{display:grid;grid-template-columns:24px 1fr;border-top:2px solid var(--line)}
-  .lf-freebar{display:grid;grid-template-columns:repeat(16,1fr);height:27px}
-  .lf-cell{display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;border-left:1px solid rgba(255,255,255,.6)}
   .lf-memo{font-size:13px;color:#5a3b2e;background:#fff8e6;border-top:1px solid var(--line);padding:6px 9px;white-space:pre-wrap;word-break:break-word;line-height:1.4}
   .lf-memo-input{width:100%;box-sizing:border-box;border:none;border-top:1px solid var(--line);background:#fff8e6;font-size:12px;font-family:inherit;padding:5px 8px;resize:none;color:#5a3b2e;outline:none;line-height:1.4}
   .lf-lend-row{border-top:1px solid var(--line);padding:5px 6px;display:flex;flex-direction:column;gap:4px}
@@ -515,8 +511,8 @@
     .lf-axis{grid-template-columns:22px repeat(16,1fr)}
     .lf-row{grid-template-columns:22px 1fr;min-height:28px}
     #view-roomslist .lf-axis{grid-template-columns:0 repeat(16,1fr)}
-    .lf-freerow{grid-template-columns:22px 1fr}
     .lf-axis span{font-size:10px}
+    .lf-axis-free{font-size:6px;min-width:8px;line-height:9px}
     /* ダイアログ：下からせり出すシート風に。画面幅に収める */
     dialog{box-sizing:border-box;width:100vw;max-width:100vw;border-radius:18px 18px 0 0;margin:0;position:fixed;left:0;right:0;bottom:0;top:auto}
     dialog::backdrop{background:rgba(60,20,40,.4)}
@@ -2118,8 +2114,6 @@ function renderRoomsList() {
   const todayD = isCur ? today.getDate() : -1;
   const fromDay = 1; // 月の全日を表示
 
-  let axisTop = "";
-  for (let h = OPEN; h < CLOSE; h++) axisTop += `<span class="${h === 17 ? 'border17' : ''}">${h}</span>`;
   const lfDnLabel = `<div class="lf-dn"><span></span><span class="lf-dn-h">昼</span><span class="lf-dn-y">夜</span></div>`;
 
   let dayBlocks = "", anyDay = false;
@@ -2139,11 +2133,10 @@ function renderRoomsList() {
     const borrows = (state.borrows && state.borrows[dkey(d)]) ? state.borrows[dkey(d)] : [];
 
     const free = freePerHour(rooms);
-    const freeSum = free.reduce((a, b) => a + b, 0);
-    let freeCells = "";
-    free.forEach(f => {
-      const ratio = f / ROOMS;
-      freeCells += `<div class="lf-cell" style="background:${freeBg(ratio)};color:${ratio > .55 ? '#fff' : '#3a2630'}">${f}</div>`;
+    let axisTop = "";
+    free.forEach((f, i) => {
+      const h = OPEN + i, ratio = f / ROOMS;
+      axisTop += `<span class="${h === 17 ? 'border17' : ''}">${h}<small class="lf-axis-free" style="background:${freeBg(ratio)};color:${ratio > .55 ? '#fff' : '#3a2630'}">${f}</small></span>`;
     });
 
     // 連続2時間以上空いている部屋のセルに赤オーバーレイを生成
@@ -2214,7 +2207,6 @@ function renderRoomsList() {
         ${lfDnLabel}
         <div class="lf-axis"><span style="border:none"></span>${axisTop}</div>
         ${roomRows}
-        <div class="lf-freerow"><div class="lf-rno" style="font-size:9px">空き</div><div class="lf-freebar">${freeCells}</div></div>
         ${memoArea}
       </div>`;
   }
