@@ -103,6 +103,7 @@
   .lf-track::after{content:"";position:absolute;top:0;bottom:0;left:56.25%;width:3px;background:#9aa3ad;opacity:.7;z-index:0;pointer-events:none}
   .lf-axis span.border17{border-left:3px solid #9aa3ad}
   .lf-dn{display:grid;grid-template-columns:24px 9fr 7fr;margin:3px 0}
+  #view-roomslist .panel{padding:6px;margin-bottom:0}
   #view-roomslist .lf-rno{display:none}
   #view-roomslist .lf-row{grid-template-columns:1fr}
   #view-roomslist .lf-axis{grid-template-columns:0 repeat(16,1fr)}
@@ -152,11 +153,10 @@
   .soukei-item.kakunin{background:#fff;color:#157180;border-color:#1f8a9c;border-style:dashed;cursor:pointer}
   .soukei-item.need{background:#e0492a;color:#fff;border-color:#b5391f;cursor:pointer}
   .soukei-item.noneed{background:#f0f0f0;color:#999;border-color:#ddd;cursor:pointer;text-decoration:line-through}
-  .soukei-inline{display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap}
-  .soukei-inline .sk-mini-label{font-size:11px;font-weight:800;color:#157180}
-  .soukei-inline .soukei-item{padding:1px 7px;font-size:10px;margin:0;gap:3px}
-  .soukei-inline .soukei-item small{font-size:8px}
-  .soukei-inline .btn.sm{padding:2px 8px;font-size:10px}
+  .bar .sh-kake-zone.soukei{margin-left:0}
+  .sh-kake-zone.soukei .soukei-item{padding:1px 7px;font-size:12px;margin:0;border-radius:5px;gap:3px}
+  .sh-kake-zone.soukei .soukei-item small{font-size:9px}
+  .sh-kake-zone.soukei #soukeiReqBtn{padding:2px 9px;font-size:11px;margin-left:2px}
 
   .panel{background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:14px;margin-bottom:16px;overflow:auto}
   .sec-title{font-weight:800;font-size:15px;margin:4px 0 10px;display:flex;align-items:center;gap:8px}
@@ -1568,7 +1568,7 @@ function renderRooms() {
     });
     if (soukeiList.length) {
       const stMap = (state.soukeiStatus && state.soukeiStatus[dkey(roomDay)]) || {};
-      soukeiHtml = `<span class="soukei-inline"><span class="sk-mini-label">🚗送迎</span>` +
+      soukeiHtml = `<span class="sh-kake-zone soukei"><span class="sh-kake-label">送迎</span>` +
         soukeiList.map(c => {
           if (c.soukei === "ari") {
             return `<span class="soukei-item ari">${c.name}</span>`;
@@ -2223,7 +2223,6 @@ function renderRoomsList() {
 
   $("view-roomslist").innerHTML =
     `<div class="panel">
-      <div class="sec-title">リスピラ</div>
       <div class="lf-scroll">${dayBlocks}</div>
     </div>`;
   // 横スクロール位置：指定日（チップからのジャンプ）優先、なければ当日へ
