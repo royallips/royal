@@ -544,6 +544,13 @@
     .sh-inner{padding:0 2px;gap:2px}
     .sh-name{font-size:14px}
     .sh-name small{font-size:.8em}
+    /* 部屋割りサイドバーはスマホでは縦積みに戻す */
+    .rooms-layout{flex-direction:column}
+    .rooms-layout .rt-wrap{flex:none;width:100%}
+    .rooms-sb{flex-direction:column}
+    .sb-card{flex:0 0 auto;min-height:50px;max-height:none;overflow:visible}
+    .sb-card.memo{flex:0 0 auto;height:80px}
+    .sb-card-body{overflow:visible}
   }
   @media (max-width:380px){
     .cards{grid-template-columns:1fr 1fr}
