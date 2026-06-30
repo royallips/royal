@@ -544,7 +544,7 @@
     .status-grid{grid-template-columns:1fr 1fr}
   }
   @media print {
-    @page { size: B5 landscape; margin: 4mm 6mm; }
+    @page { size: B5 landscape; margin: 8mm 6mm; }
     /* B5横: 257×182mm → 余白4mm×6mm → 使用可能 249×174mm */
     html, body { margin: 0; padding: 0; background: #fff !important; }
     /* 不要要素を非表示 */
@@ -569,14 +569,14 @@
     .sheet-header { justify-content: flex-start; gap: 4pt; flex-shrink: 0; margin-bottom: 0; }
     .sheet-date { font-size: 12pt; font-weight: 900; white-space: nowrap; }
     .sheet-kake-row { display: flex !important; gap: 3pt; flex-wrap: wrap; align-items: center; flex: 1; margin: 0; }
-    .sh-kake-zone { display: inline-flex !important; font-size: 7pt; padding: 1pt 4pt; border-radius: 3pt; }
-    .sh-kake-zone.over { font-size: 12pt; }
-    .sh-kake-zone.over .sh-kake-label { font-size: 7pt; }
-    .sh-kake-zone.over .sh-kake-item { font-size: 11pt; }
-    .sh-kake-label { font-size: 7pt; }
-    .sh-kake-item { font-size: 6.5pt; padding: 0 3pt; }
+    .sh-kake-zone { display: inline-flex !important; font-size: 14pt; padding: 2pt 6pt; border-radius: 3pt; }
+    .sh-kake-zone.over { font-size: 18pt; }
+    .sh-kake-zone.over .sh-kake-label { font-size: 12pt; }
+    .sh-kake-zone.over .sh-kake-item { font-size: 17pt; }
+    .sh-kake-label { font-size: 12pt; }
+    .sh-kake-item { font-size: 14pt; padding: 0 5pt; }
     /* シート本体: 高さ固定でテーブルを収める */
-    .sheet-view { padding: 0; display: flex; flex-direction: column; height: 174mm; overflow: hidden; width: 100%; box-sizing: border-box; }
+    .sheet-view { padding: 0; display: flex; flex-direction: column; height: 166mm; overflow: hidden; width: 100%; box-sizing: border-box; }
     .sheet-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; max-width: 100%; width: 100%; margin: 0; flex: 1; min-height: 0; overflow: hidden; box-sizing: border-box; }
     .sheet-col { display: flex; flex-direction: column; overflow: hidden; }
     .sheet-col-head { font-size: 11pt; font-weight: 900; padding: 2px 0; letter-spacing: .1em; flex-shrink: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -1608,9 +1608,9 @@ function renderRooms() {
       ${overBanner}
       ${absentHtml}
       ${roomViewMode === 'sheet' ? buildRoomsSheet(memo) : `<div class="lend-row">${lendHtml}${borrowHtml}</div><div class="rt-wrap ${locked ? 'locked' : ''}"><div class="rt"><div class="rt-axis"><div></div>${dnLabel}</div><div class="rt-axis"><div></div><div class="ax">${axis}</div></div>${roomRows}<div class="hint" style="padding-left:54px"></div></div></div>`}
-      ${roomViewMode === 'sheet'
-        ? `<div class="sheet-extra">${soukeiHtml}</div>`
-        : `<label style="font-weight:700;font-size:12px;color:var(--ink-soft);display:block;margin-top:14px">メモ</label><textarea class="memo-box" id="dayMemo" rows="5" placeholder="">${memo}</textarea>${soukeiHtml}`}
+      ${roomViewMode !== 'sheet'
+        ? `<label style="font-weight:700;font-size:12px;color:var(--ink-soft);display:block;margin-top:14px">メモ</label><textarea class="memo-box" id="dayMemo" rows="5" placeholder="">${memo}</textarea>${soukeiHtml}`
+        : ``}
     </div>`;
 
   $("roomDateInput").onchange = e => {
