@@ -230,6 +230,17 @@
   .roomday-nav button{background:none;border:none;font-size:18px;cursor:pointer;color:var(--pink);padding:2px 10px}
 
   .rt-wrap{overflow-x:auto;padding-bottom:4px}
+  .rooms-layout{display:flex;gap:10px;align-items:stretch}
+  .rooms-layout .rt-wrap{flex:0 0 65%;min-width:0}
+  .rooms-sb{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0;min-height:0}
+  .sb-card{border:1.5px solid var(--line);border-radius:10px;padding:6px 8px;display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;box-sizing:border-box}
+  .sb-card.lend{border-color:var(--lend);background:#f6effb}.sb-card.lend .sb-card-title{color:var(--lend)}
+  .sb-card.borrow{border-color:var(--borrow);background:#eef6fc}.sb-card.borrow .sb-card-title{color:var(--borrow)}
+  .sb-card.soukei{border-color:#1f8a9c;background:rgba(31,138,156,.06)}.sb-card.soukei .sb-card-title{color:#1f8a9c}
+  .sb-card.memo{flex:2;background:#fff8e6}
+  .sb-card-title{font-size:11px;font-weight:900;display:flex;align-items:center;gap:4px;flex-shrink:0;margin-bottom:4px}
+  .sb-card-body{flex:1;overflow-y:auto;display:flex;flex-wrap:wrap;gap:3px 4px;align-content:flex-start}
+  .sb-memo{width:100%;height:100%;border:none;resize:none;font-size:12px;font-family:inherit;background:transparent;outline:none;padding:0;box-sizing:border-box;color:var(--ink)}
   .rt{min-width:820px}
   .rt-axis{display:grid;grid-template-columns:54px 1fr;margin-bottom:2px}
   .rt-axis .ax{display:grid;grid-template-columns:repeat(16,1fr);font-size:14px;font-weight:700;color:var(--ink-soft)}
@@ -416,7 +427,8 @@
   body.ssmode *{-webkit-tap-highlight-color:transparent}
   body.ssmode .tabs,body.ssmode .bar,body.ssmode .absent-zone,body.ssmode .soukei-zone,
   body.ssmode .lend-row,body.ssmode .over-banner,body.ssmode .lock-banner,
-  body.ssmode .rt-wrap,body.ssmode label,body.ssmode .memo-box,body.ssmode .hint{display:none!important}
+  body.ssmode .rt-wrap,body.ssmode label,body.ssmode .memo-box,body.ssmode .hint,
+  body.ssmode .rooms-sb{display:none!important}
   body.ssmode .sheet-memo-row .memo-box{display:block!important;width:100%;font-size:10px;border:1px solid #bbb;padding:3px 5px;box-sizing:border-box;resize:none;min-height:30px}
   body.ssmode .sheet-extra{display:none!important}
   body.ssmode .sheet-top-row{display:flex!important;align-items:center;gap:6px;flex-wrap:nowrap;margin-bottom:4px}
@@ -558,6 +570,7 @@
     #view-rooms .panel > .lend-row,
     #view-rooms .panel > label,
     #view-rooms .panel > .memo-box,
+    #view-rooms .rooms-sb,
     #view-rooms .panel > .soukei-zone,
     .rt-wrap, .freebar, .hint, .ss-btn, .ss-exit,
     h1, .tabs, nav, dialog { display: none !important; }
@@ -1548,13 +1561,13 @@ function renderRooms() {
   // 本日の送迎（当日のみ。送迎設定があり、利用が24時(L)までのキャスト）
   const tdy0 = new Date();
   const isToday0 = tdy0.getFullYear() === cur.getFullYear() && tdy0.getMonth() === cur.getMonth() && tdy0.getDate() === roomDay;
-  let soukeiHtml = "";
+  let soukeiSbBody = `<span style="font-size:11px;color:var(--ink-soft)">本日は対象なし</span>`;
+  let soukeiReqBtn = "";
   if (isToday0) {
     const soukeiList = state.casts.filter(c => {
       if (c.soukei !== "ari" && c.soukei !== "kakunin") return false;
       const r = rec(c.id, roomDay);
       const sp = span(r);
-      // 通常の利用が24時(L)まで、または中抜け2回目が24時(L)まで
       if (sp && sp[1] >= CLOSE) return true;
       if (r && isUse(r.status) && r.start2) {
         const sp2 = spanRaw(r.start2, r.end2);
@@ -1564,37 +1577,24 @@ function renderRooms() {
     });
     if (soukeiList.length) {
       const stMap = (state.soukeiStatus && state.soukeiStatus[dkey(roomDay)]) || {};
-      soukeiHtml = `<span class="sh-kake-zone soukei"><span class="sh-kake-label">送迎</span>` +
-        soukeiList.map(c => {
-          if (c.soukei === "ari") {
-            return `<span class="soukei-item ari">${c.name}</span>`;
-          }
-          // 要確認：クリックで 要確認→必要→不要 を循環
-          const st = stMap[c.id]; // undefined=要確認 / "hitsuyou"=必要 / "fuyou"=不要
-          const label = st === "hitsuyou" ? "必要" : st === "fuyou" ? "不要" : "要確認";
-          const klass = st === "hitsuyou" ? "need" : st === "fuyou" ? "noneed" : "kakunin";
-          return `<span class="soukei-item ${klass}" onclick="cycleSoukei('${c.id}')">${c.name}<small>${label}</small></span>`;
-        }).join("") + `<button class="btn sm" id="soukeiReqBtn">依頼を作成</button></span>`;
+      soukeiReqBtn = `<button class="btn sm" id="soukeiReqBtn" style="font-size:10px;padding:1px 6px;margin-left:auto">依頼を作成</button>`;
+      soukeiSbBody = soukeiList.map(c => {
+        if (c.soukei === "ari") return `<span class="soukei-item ari">${c.name}</span>`;
+        const st = stMap[c.id];
+        const label = st === "hitsuyou" ? "必要" : st === "fuyou" ? "不要" : "要確認";
+        const klass = st === "hitsuyou" ? "need" : st === "fuyou" ? "noneed" : "kakunin";
+        return `<span class="soukei-item ${klass}" onclick="cycleSoukei('${c.id}')">${c.name}<small>${label}</small></span>`;
+      }).join("");
     }
   }
 
   // 加盟店へ掛け持ち
   const lends = state.lends[dkey(roomDay)] || [];
-  const lendHtml = `<div class="lend-zone"><div class="lz-title l">↗ 他店部屋抑え（${lends.length}件）
-      <button class="btn lend sm" onclick="openLend('lend')">＋ 追加</button></div>` +
-    (lends.length
-      ? lends.map((l, i) => { const c = l.cid ? state.casts.find(x => x.id === l.cid) : null; const nm = c ? c.name : (l.name || "");
-          return `<span class="lend-item"><span class="store store-${l.store}">${l.store}</span>${nm ? nm + " " : ""}${tL(l.start)}-${tL(l.end)}<span class="del" onclick="removeLend('lends',${i})">×</span></span>`; }).join("")
-      : `<div class="hint"></div>`) + `</div>`;
-
-  // ロイヤルに掛け持ち（加盟店から部屋を借りる）
   const borrows = state.borrows[dkey(roomDay)] || [];
-  const borrowHtml = `<div class="lend-zone borrow"><div class="lz-title b">↘ ロイヤルに掛け持ち（${borrows.length}件）
-      <button class="btn borrow sm" onclick="openLend('borrow')">＋ 追加</button></div>` +
-    (borrows.length
-      ? borrows.map((l, i) =>
-          `<span class="lend-item borrow"><span class="store store-${l.store}">${l.store}</span>${l.name ? esc(l.name) + " " : ""}${tL(l.start)}-${tL(l.end)}<span class="del" onclick="removeLend('borrows',${i})">×</span></span>`).join("")
-      : `<div class="hint"></div>`) + `</div>`;
+  const lendSbItems = lends.map((l, i) => { const c = l.cid ? state.casts.find(x => x.id === l.cid) : null; const nm = c ? c.name : (l.name || "");
+    return `<span class="lf-hi-item">${l.store}${nm ? " "+nm : ""} ${tL(l.start)}-${tL(l.end)}<span class="del" onclick="removeLend('lends',${i})">×</span></span>`; }).join("");
+  const borrowSbItems = borrows.map((l, i) =>
+    `<span class="lf-hi-item borrow">${l.store}${l.name ? " "+esc(l.name) : ""} ${tL(l.start)}-${tL(l.end)}<span class="del" onclick="removeLend('borrows',${i})">×</span></span>`).join("");
 
   const overWorkers = overRooms.flatMap(arr => arr.filter(w => !w.borrow));
   const overHtml = `<div class="lend-zone over"><div class="lz-title" style="color:var(--over)">⚠ 溢れ（${overWorkers.length}名）</div>` +
@@ -1609,7 +1609,7 @@ function renderRooms() {
         <button class="lock-toggle ${locked ? 'on' : 'off'}" id="lockBtn">${locked ? '🔒 確定済み' : '🔓 未確定'}</button>
         <div class="roomday-nav"><button onclick="changeRoomDay(-1)">‹</button>
           <input type="date" id="roomDateInput" value="${dateStr}"><button onclick="changeRoomDay(1)">›</button></div>
-        <span style="font-weight:800">${m + 1}/${roomDay}（${WK[new Date(y, m, roomDay).getDay()]}）　利用${total}名</span>${eventTag}${soukeiHtml}
+        <span style="font-weight:800">${m + 1}/${roomDay}（${WK[new Date(y, m, roomDay).getDay()]}）　利用${total}名</span>${eventTag}
         <span style="font-size:12px;font-weight:700"><span class="tag hiru">昼 ${hiruN}名</span> <span class="tag yoru">夜 ${yoruN}名</span></span>
         <button class="btn sm" id="optimizeBtn" ${locked ? "disabled" : ""} style="margin-left:auto">最適に並べ替え</button>
         <button class="btn ghost sm" id="undoBtn" ${(canUndo() && !locked) ? "" : "disabled"}>前に戻す</button>
@@ -1619,10 +1619,16 @@ function renderRooms() {
       ${lockBanner}
       ${overBanner}
       ${absentHtml}
-      ${roomViewMode === 'sheet' ? buildRoomsSheet(memo) : `<div class="lend-row">${lendHtml}${borrowHtml}</div><div class="rt-wrap ${locked ? 'locked' : ''}"><div class="rt"><div class="rt-axis"><div></div>${dnLabel}</div><div class="rt-axis"><div></div><div class="ax">${axis}</div></div>${roomRows}<div class="hint" style="padding-left:54px"></div></div></div>`}
-      ${roomViewMode !== 'sheet'
-        ? `<label style="font-weight:700;font-size:12px;color:var(--ink-soft);display:block;margin-top:14px">メモ</label><textarea class="memo-box" id="dayMemo" rows="5" placeholder="">${memo}</textarea>`
-        : ``}
+      ${roomViewMode === 'sheet' ? buildRoomsSheet(memo) : `
+      <div class="rooms-layout">
+        <div class="rt-wrap ${locked ? 'locked' : ''}"><div class="rt"><div class="rt-axis"><div></div>${dnLabel}</div><div class="rt-axis"><div></div><div class="ax">${axis}</div></div>${roomRows}<div class="hint" style="padding-left:54px"></div></div></div>
+        <div class="rooms-sb">
+          <div class="sb-card lend"><div class="sb-card-title">↗ 他店部屋<button class="lf-hi-add lend" onclick="openLend('lend')" style="margin-left:auto">＋</button></div><div class="sb-card-body">${lendSbItems}</div></div>
+          <div class="sb-card borrow"><div class="sb-card-title">↘ 掛け持ち<button class="lf-hi-add borrow" onclick="openLend('borrow')" style="margin-left:auto">＋</button></div><div class="sb-card-body">${borrowSbItems}</div></div>
+          <div class="sb-card soukei"><div class="sb-card-title">送迎${soukeiReqBtn}</div><div class="sb-card-body">${soukeiSbBody}</div></div>
+          <div class="sb-card memo"><textarea class="sb-memo" id="dayMemo" placeholder="メモ">${memo}</textarea></div>
+        </div>
+      </div>`}
     </div>`;
 
   $("roomDateInput").onchange = e => {
