@@ -78,7 +78,7 @@
   .highday small{font-size:9px;color:#d0738a;font-weight:700}
 
   /* リスピラ一覧 */
-  .lf-scroll{display:flex;align-items:flex-end;gap:16px;overflow-x:auto;padding-top:6px;transform:scaleY(-1)}
+  .lf-scroll{display:flex;align-items:flex-end;gap:16px;overflow-x:auto;padding-top:6px;transform:scaleY(-1);cursor:grab;user-select:none}
   .lf-day{flex:0 0 auto;width:calc(33vw - 30px);min-width:300px;border:1.5px solid var(--line);border-radius:12px;overflow:hidden;cursor:pointer;transform:scaleY(-1)}
   .lf-day:hover{box-shadow:0 4px 14px rgba(232,69,122,.18)}
   .lf-dayhead{background:#e0e0e0;font-weight:800;font-size:18px;padding:10px 13px;display:flex;align-items:center;gap:6px;border-bottom:1.5px solid var(--line)}
@@ -164,6 +164,7 @@
   .cal th .daynum{display:block;line-height:0.95;margin-bottom:-2px}
   .cal th small{line-height:0.9;display:inline-block;margin-top:-3px}
   .cal .name-col{position:sticky;left:0;background:#fff;text-align:left;font-weight:700;min-width:78px;z-index:1;padding-left:8px;cursor:pointer}
+  .mitei-badge{color:#e0463c;font-size:9px;font-weight:900;margin-left:3px;vertical-align:middle;white-space:nowrap}
   .cal .name-col:hover{background:var(--pink-soft);text-decoration:underline}
   .cal th.name-col{position:sticky;top:0;left:0;z-index:5;background:var(--pink-mid);cursor:default}
   .cal th.avail-col{background:var(--pink-mid)}
@@ -630,7 +631,7 @@
   <div class="dlg-head"><span id="dlgTitle"></span><span class="x" id="dlgX">×</span></div>
   <div class="dlg-body">
     <div class="status-grid" id="statusGridInput">
-      <button data-s="work">利用</button><button data-s="furikae">振替</button><button data-s="mitei">未定</button><button data-s="absent">当日欠勤</button><button data-s="off">休み</button>
+      <button data-s="work">利用</button><button data-s="furikae">振替</button><button data-s="mitei"><span style="font-weight:900;margin-right:3px">△</span>未定</button><button data-s="absent">当日欠勤</button><button data-s="off"><span style="display:inline-block;width:18px;height:2px;background:currentColor;border-radius:1px;vertical-align:middle;margin-right:3px"></span>休み</button>
     </div>
     <div class="marker-section">
       <div class="status-grid marker-grid" id="statusGridMarker">
@@ -2203,6 +2204,28 @@ function renderRoomsList() {
       save();
     };
   });
+
+  // マウスドラッグでスクロール
+  const lfScroll = $("view-roomslist").querySelector(".lf-scroll");
+  if (lfScroll) {
+    let isDown = false, startX = 0, scrollLeft = 0;
+    lfScroll.addEventListener("mousedown", e => {
+      if (e.target.closest(".lf-bar, button, textarea, input, .del")) return;
+      isDown = true;
+      lfScroll.style.cursor = "grabbing";
+      startX = e.pageX + lfScroll.scrollLeft;
+      scrollLeft = lfScroll.scrollLeft;
+    });
+    document.addEventListener("mouseup", () => {
+      isDown = false;
+      lfScroll.style.cursor = "";
+    });
+    document.addEventListener("mousemove", e => {
+      if (!isDown) return;
+      e.preventDefault();
+      lfScroll.scrollLeft = startX - e.pageX;
+    });
+  }
 }
 // 集計カードはキャスト管理タブのときだけ表示
 function syncStatCards() {
@@ -2332,10 +2355,14 @@ function calTable(group) {
   const prevDim = daysIn(prevDate);
   const prevY = prevDate.getFullYear(), prevM = prevDate.getMonth() + 1;
 
+  const todayDk = `${tdy.getFullYear()}-${String(tdy.getMonth()+1).padStart(2,'0')}-${String(tdy.getDate()).padStart(2,'0')}`;
   let rows = "";
   casts.forEach(c => {
     const gmark = calSearch ? `<span class="gmk ${c.group}">${c.group === "hiru" ? "昼" : "夜"}</span>` : "";
-    let r = `<td class='name-col' onclick="openStat('${c.id}')">${gmark}${c.name}</td>`;
+    const hasWork = Object.entries(state.records).some(([k, v]) =>
+      k.startsWith(c.id + "_") && k.slice(c.id.length + 1) >= todayDk && v && v.status === "work"
+    );
+    let r = `<td class='name-col' onclick="openStat('${c.id}')">${gmark}${c.name}${!hasWork ? '<span class="mitei-badge">未定</span>' : ''}</td>`;
     let dayOpts = `<option value="">−</option>`;
     for (let dd = 1; dd <= dim; dd++) dayOpts += `<option value="${dd}" ${String(c.availDates) === String(dd) ? "selected" : ""}>${dd}日</option>`;
     r += `<td class='avail-col'><select class="availin" onchange="setAvail('${c.id}',this.value)" onclick="event.stopPropagation()">${dayOpts}</select></td>`;
