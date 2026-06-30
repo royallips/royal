@@ -386,38 +386,40 @@
   .reg-stat.furyo{background:#f1eef0;border-color:#d9cdd4;color:#3a3036}
   .empty-msg{text-align:center;color:var(--ink-soft);padding:20px;font-size:13px}
   /* シート表示 */
-  .sheet-view{padding:8px 4px}
-  .sheet-top-row{display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap}
-  .sheet-header{display:flex;align-items:center;justify-content:center;gap:10px;flex-shrink:0}
-  .sheet-date{font-size:18px;font-weight:900;color:var(--ink);white-space:nowrap}
-  .sheet-kake-row{display:flex;gap:8px;flex:1;flex-wrap:wrap;align-items:center}
-  .sh-kake-zone{display:inline-flex;align-items:center;gap:4px;font-size:14px;font-weight:700;padding:4px 10px;border-radius:8px;white-space:nowrap}
+  .sheet-view{padding:4px;display:flex;flex-direction:column;height:calc(100vh - 150px);overflow:hidden;box-sizing:border-box}
+  .sheet-top-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:nowrap;flex-shrink:0}
+  .sheet-header{display:flex;align-items:center;gap:8px;flex-shrink:0}
+  .sheet-date{font-size:16px;font-weight:900;color:var(--ink);white-space:nowrap}
+  .sheet-kake-row{display:flex;gap:6px;flex:1;flex-wrap:wrap;align-items:center}
+  .sh-kake-zone{display:inline-flex;align-items:center;gap:4px;font-size:13px;font-weight:700;padding:3px 8px;border-radius:8px;white-space:nowrap}
   .sh-kake-zone.lend{color:var(--lend);background:rgba(140,44,196,.08)}
   .sh-kake-zone.borrow{color:var(--borrow);background:rgba(74,159,212,.1)}
-  .sh-kake-zone.over{color:var(--over);background:rgba(224,70,60,.08);font-size:18px}
-  .sh-kake-zone.over .sh-kake-label{font-size:12px}
-  .sh-kake-zone.over .sh-kake-item{font-size:17px}
+  .sh-kake-zone.over{color:var(--over);background:rgba(224,70,60,.08);font-size:16px}
+  .sh-kake-zone.over .sh-kake-label{font-size:11px}
+  .sh-kake-zone.over .sh-kake-item{font-size:15px}
   .sh-kake-zone.soukei{color:#1f8a9c;background:rgba(31,138,156,.08);margin-left:auto}
-  .sh-kake-label{font-size:11px;font-weight:900;margin-right:3px;opacity:.8}
-  .sh-kake-item{background:rgba(255,255,255,.7);border-radius:5px;padding:1px 6px;font-size:13px}
-  .sheet-memo-row{margin-top:8px}
+  .sh-kake-label{font-size:10px;font-weight:900;margin-right:3px;opacity:.8}
+  .sh-kake-item{background:rgba(255,255,255,.7);border-radius:5px;padding:1px 6px;font-size:12px}
+  .sheet-memo-row{flex-shrink:0;margin-top:4px}
   .sheet-memo-row .memo-box{margin-top:0}
-  .sheet-cols{display:grid;grid-template-columns:1fr 1fr;gap:6px;max-width:420px;margin:0 auto}
-  .sheet-col-head{font-size:15px;font-weight:900;text-align:center;padding:5px 0;border-radius:8px 8px 0 0;letter-spacing:.1em}
+  .sheet-cols{display:grid;grid-template-columns:1fr 1fr;gap:6px;flex:1;min-height:0;overflow:hidden;box-sizing:border-box}
+  .sheet-col{display:flex;flex-direction:column;overflow:hidden;min-height:0}
+  .sheet-col-head{font-size:13px;font-weight:900;text-align:center;padding:3px 0;border-radius:6px 6px 0 0;letter-spacing:.1em;flex-shrink:0}
   .sheet-col.hiru .sheet-col-head{background:var(--hiru);color:#9a6a08}
   .sheet-col.yoru .sheet-col-head{background:var(--yoru);color:#2c5d8a}
-  .sheet-table{width:100%;border-collapse:collapse;font-size:16px;table-layout:fixed}
-  .sheet-table tbody tr{border-bottom:1px solid #ddd;height:36px}
-  .sh-rno{font-size:17px;font-weight:900;text-align:center;padding:6px 3px;border:1px solid #ddd;width:30px;min-width:30px;color:var(--pink);vertical-align:middle;white-space:nowrap}
+  .sheet-table{width:100%;height:100%;border-collapse:collapse;table-layout:fixed;flex:1}
+  .sheet-table tbody{height:100%;display:table-row-group}
+  .sheet-table tbody tr{border-bottom:1px solid #ddd;height:1px}
+  .sh-rno{font-size:13px;font-weight:900;text-align:center;padding:0;border:1px solid #ddd;width:26px;min-width:26px;color:var(--pink);vertical-align:middle;white-space:nowrap}
   .sh-rno.over{color:var(--over);background:var(--over-bg)}
   .sh-names{padding:0;border:1px solid #ddd;border-left:none;vertical-align:middle;overflow:hidden}
-  .sh-inner{display:flex;align-items:center;gap:3px;padding:3px 5px;box-sizing:border-box;width:100%}
+  .sh-inner{display:flex;align-items:center;gap:3px;padding:0 4px;box-sizing:border-box;width:100%;height:100%;font-size:18px}
   .sh-side-l{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-align:left}
   .sh-side-r{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-align:right}
   .sh-side-r-only{margin-left:auto;flex:1;text-align:right}
-  .sh-name{font-weight:700;white-space:nowrap;display:inline}
-  .sh-name+.sh-name{margin-left:8px}
-  .sh-name small{font-size:.82em;color:var(--ink-soft);margin-left:1px;font-weight:600}
+  .sh-name{font-weight:900;white-space:nowrap;display:inline;line-height:1}
+  .sh-name+.sh-name{margin-left:6px}
+  .sh-name small{font-size:.78em;color:var(--ink-soft);margin-left:1px;font-weight:600}
   .sh-name.over{color:var(--over)}
   .sh-vip{font-size:8px;font-weight:900;color:#8a6a00;background:#fbf1d2;border:1px solid #f5c800;border-radius:3px;padding:0 3px;margin-left:2px;vertical-align:middle;line-height:1.3}
   .view-toggle-btn{font-size:11px;padding:4px 10px;border-radius:8px;border:1.5px solid var(--pink);background:#fff;color:var(--pink);cursor:pointer;font-weight:700}
@@ -437,15 +439,8 @@
   body.ssmode{background:#fff!important;padding:0!important;margin:0!important}
   body.ssmode #view-rooms{padding:0;margin:0}
   body.ssmode #view-rooms .panel{padding:8px 6px;box-shadow:none;border:none;background:#fff}
-  body.ssmode .sheet-view{padding:4px 2px}
-  body.ssmode .sheet-date{font-size:16px}
+  body.ssmode .sheet-view{height:calc(100vh - 30px)}
   body.ssmode .ss-btn{display:none}
-  body.ssmode .sheet-cols{gap:5px}
-  body.ssmode .sheet-table{font-size:15px}
-  body.ssmode .sh-rno{font-size:16px;padding:5px 2px}
-  body.ssmode .sh-name{font-size:15px}
-  body.ssmode .sh-name small{font-size:.82em}
-  body.ssmode .sheet-col-head{font-size:13px;padding:4px 0}
   .ss-exit{position:fixed;top:10px;right:10px;z-index:9999;background:rgba(0,0,0,.55);color:#fff;border:none;border-radius:20px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer}
   body:not(.ssmode) .ss-exit{display:none}
   .hint{font-size:11px;color:var(--ink-soft);margin-top:4px}
@@ -544,13 +539,10 @@
     /* 凡例は小さめに折り返し */
     .legend{gap:8px;font-size:10px}
     /* シートビュー：スマホ幅に合わせる */
-    .sheet-cols{max-width:100%;gap:4px}
-    .sheet-col-head{font-size:13px;padding:3px 0}
-    .sheet-table{font-size:13px}
-    .sheet-table tbody tr{height:30px}
-    .sh-rno{font-size:13px;width:24px;min-width:24px;padding:3px 2px}
-    .sh-inner{padding:2px 4px;gap:2px}
-    .sh-name{font-size:12px}
+    .sheet-view{height:calc(100vh - 120px)}
+    .sh-rno{font-size:11px;width:20px;min-width:20px}
+    .sh-inner{padding:0 2px;gap:2px}
+    .sh-name{font-size:14px}
     .sh-name small{font-size:.8em}
   }
   @media (max-width:380px){
@@ -801,11 +793,18 @@
 <dialog id="lendDlg">
   <div class="dlg-head"><span id="lendTitle">他店部屋抑え</span><span class="x" id="lendX">×</span></div>
   <div class="dlg-body">
+    <div id="lendTypeRow" style="display:none;margin-bottom:10px">
+      <div style="font-size:12px;font-weight:700;color:var(--ink-soft);margin-bottom:4px">種別</div>
+      <div style="display:flex;gap:6px">
+        <button id="lendTypeBorrow" class="btn borrow" style="flex:1;font-size:13px" onclick="setLendType('borrow')">掛け持ち</button>
+        <button id="lendTypeNewcomer" class="btn ghost" style="flex:1;font-size:13px" onclick="setLendType('newcomer')">入店予定</button>
+      </div>
+    </div>
     <label style="font-size:12px;font-weight:700;color:var(--ink-soft)" id="lendStoreLabel">加盟店</label>
     <div class="store-grid" id="lendStoreGrid">
       <button data-st="M">M</button><button data-st="T">T</button><button data-st="E">E</button><button data-st="L">L</button><button data-st="MR">MR</button><button data-st="F">F</button>
     </div>
-    <div class="field" id="lendNameField" style="margin-top:8px"><label>名前（わかる場合のみ）</label><input id="lendName" placeholder="例 あおい"></div>
+    <div class="field" id="lendNameField" style="margin-top:8px"><label id="lendNameLabel">名前（わかる場合のみ）</label><input id="lendName" placeholder="例 あおい"></div>
     <div class="time-row" style="margin-top:8px">
       <div class="field"><label>開始</label>
         <div style="display:flex;gap:6px">
@@ -1262,8 +1261,8 @@ function computeAssignmentByKey(dk, useListAssign = false) {
   const borrowWorkers = [];
   ((state.borrows && state.borrows[dk]) || []).forEach((b, bi) => {
     const sp = spanRaw(b.start, b.end);
-    const label = b.name ? (b.store + " " + b.name) : b.store;
-    if (sp) borrowWorkers.push({ cid: "bw:" + bi, name: label, sp, r: null, borrow: true, store: b.store });
+    const label = b.newcomer ? (b.name || "入店予定") : (b.name ? (b.store + " " + b.name) : b.store);
+    if (sp) borrowWorkers.push({ cid: "bw:" + bi, name: label, sp, r: null, borrow: true, store: b.store || null, newcomer: b.newcomer || false });
   });
   workers.sort((a, b) => a.sp[0] - b.sp[0] || a.sp[1] - b.sp[1]);
 
@@ -1441,7 +1440,7 @@ function buildRoomsSheet(memo) {
     return `<span class="sh-kake-zone ${cls}"><span class="sh-kake-label">${label}</span>${itemsHtml}</span>`;
   }
   const lendZone = shZone("他店部屋", shLends.map(l => `${l.store} ${tL(l.start)}-${tL(l.end)}`), "lend");
-  const borrowZone = shZone("掛け持ち", shBorrows.map(l => `${l.store}${l.name ? " "+l.name : ""} ${tL(l.start)}-${tL(l.end)}`), "borrow");
+  const borrowZone = shZone("掛け持ちor入店", shBorrows.map(l => l.newcomer ? `入店予定 ${l.name || ""} ${tL(l.start)}-${tL(l.end)}` : `${l.store}${l.name ? " "+l.name : ""} ${tL(l.start)}-${tL(l.end)}`), "borrow");
   const overZone = shZone("溢れ", shOverWorkers.map(w => `${w.name} ${fmtSp(w.sp)}`), "over");
   // 送迎
   const stMap = (state.soukeiStatus && state.soukeiStatus[dk]) || {};
@@ -1503,6 +1502,8 @@ function renderRooms() {
       const cobj = state.casts.find(x => x.id === w.cid);
       const rankCls = cobj && cobj.rank === "premier" ? " rank-premier" : cobj && cobj.rank === "vip" ? " rank-vip" : "";
       const nameCls = cobj && (cobj.furyo || cobj.autoOver) ? " furyo-name" : "";
+      if (w.borrow && w.newcomer)
+        return `<div class="rt-bar newcomer${rankCls} ${w.clash ? 'clash' : ''} ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${left}%;width:${width}%;border-color:#2a9a4a" title="${w.name} ${fmtSp(w.sp)}（入店予定）" onclick="openMove('${w.cid}',event)">${ov}<span class="rt-barlabel">${w.name}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
       if (w.borrow)
         return `<div class="rt-bar bw${rankCls} store-${w.store||''} ${w.clash ? 'clash' : ''} ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${left}%;width:${width}%" title="${w.name} ${fmtSp(w.sp)}（掛け持ち）" onclick="openMove('${w.cid}',event)">${ov}<span class="rt-barlabel${nameCls}">${w.name}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
       if (w.newcomer)
@@ -1524,8 +1525,10 @@ function renderRooms() {
     const bars = arr.map(w => {
       const cobj = state.casts.find(x => x.id === w.cid);
       const nameCls = cobj && (cobj.furyo || cobj.autoOver) ? " furyo-name" : "";
+      if (w.borrow && w.newcomer)
+        return `<div class="rt-bar newcomer ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;border-color:#2a9a4a" title="${w.name} ${fmtSp(w.sp)}（入店予定）" onclick="openMove('${w.cid}',event)"><span class="rt-barlabel">${w.name}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
       if (w.borrow)
-        return `<div class="rt-bar bw store-${w.store||''} ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name} ${fmtSp(w.sp)}（ロイヤルに掛け持ち）" onclick="openMove('${w.cid}',event)"><span class="rt-barlabel${nameCls}">${w.name}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
+        return `<div class="rt-bar bw store-${w.store||''} ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name} ${fmtSp(w.sp)}（掛け持ち）" onclick="openMove('${w.cid}',event)"><span class="rt-barlabel${nameCls}">${w.name}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
       return `<div class="rt-bar ov ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name} ${fmtSp(w.sp)}" onclick="openMove('${w.cid}',event)"><span class="rt-barlabel${nameCls}">${w.name}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
     }).join("");
     const hasCast = arr.some(w => !w.borrow);
@@ -1593,8 +1596,9 @@ function renderRooms() {
   const borrows = state.borrows[dkey(roomDay)] || [];
   const lendSbItems = lends.map((l, i) => { const c = l.cid ? state.casts.find(x => x.id === l.cid) : null; const nm = c ? c.name : (l.name || "");
     return `<span class="lf-hi-item">${l.store}${nm ? " "+nm : ""} ${tL(l.start)}-${tL(l.end)}<span class="del" onclick="removeLend('lends',${i})">×</span></span>`; }).join("");
-  const borrowSbItems = borrows.map((l, i) =>
-    `<span class="lf-hi-item borrow">${l.store}${l.name ? " "+esc(l.name) : ""} ${tL(l.start)}-${tL(l.end)}<span class="del" onclick="removeLend('borrows',${i})">×</span></span>`).join("");
+  const borrowSbItems = borrows.map((l, i) => l.newcomer
+    ? `<span class="lf-hi-item" style="background:rgba(42,154,74,.1);color:#1a7a3a">入店 ${esc(l.name)} ${tL(l.start)}-${tL(l.end)}<span class="del" onclick="removeLend('borrows',${i})">×</span></span>`
+    : `<span class="lf-hi-item borrow">${l.store}${l.name ? " "+esc(l.name) : ""} ${tL(l.start)}-${tL(l.end)}<span class="del" onclick="removeLend('borrows',${i})">×</span></span>`).join("");
 
   const overWorkers = overRooms.flatMap(arr => arr.filter(w => !w.borrow));
   const overHtml = `<div class="lend-zone over"><div class="lz-title" style="color:var(--over)">⚠ 溢れ（${overWorkers.length}名）</div>` +
@@ -1624,7 +1628,7 @@ function renderRooms() {
         <div class="rt-wrap ${locked ? 'locked' : ''}"><div class="rt"><div class="rt-axis"><div></div>${dnLabel}</div><div class="rt-axis"><div></div><div class="ax">${axis}</div></div>${roomRows}<div class="hint" style="padding-left:54px"></div></div></div>
         <div class="rooms-sb">
           <div class="sb-card lend"><div class="sb-card-title">↗ 他店部屋<button class="lf-hi-add lend" onclick="openLend('lend')" style="margin-left:auto">＋</button></div><div class="sb-card-body">${lendSbItems}</div></div>
-          <div class="sb-card borrow"><div class="sb-card-title">↘ 掛け持ち<button class="lf-hi-add borrow" onclick="openLend('borrow')" style="margin-left:auto">＋</button></div><div class="sb-card-body">${borrowSbItems}</div></div>
+          <div class="sb-card borrow"><div class="sb-card-title">↘ 掛け持ちor入店<button class="lf-hi-add borrow" onclick="openLend('borrow')" style="margin-left:auto">＋</button></div><div class="sb-card-body">${borrowSbItems}</div></div>
           <div class="sb-card soukei"><div class="sb-card-title">送迎${soukeiReqBtn}</div><div class="sb-card-body">${soukeiSbBody}</div></div>
           <div class="sb-card memo"><textarea class="sb-memo" id="dayMemo" placeholder="メモ">${memo}</textarea></div>
         </div>
@@ -2075,12 +2079,24 @@ function removeLend(bucket, i, day) {
   const k = dkey(d);
   if (state[bucket][k]) { state[bucket][k].splice(i, 1); save(); renderAll(); }
 }
+let lendIsNewcomer = false;
+function setLendType(type) {
+  lendIsNewcomer = type === "newcomer";
+  $("lendTypeBorrow").className = "btn " + (lendIsNewcomer ? "ghost" : "borrow");
+  $("lendTypeNewcomer").className = "btn " + (lendIsNewcomer ? "borrow" : "ghost");
+  $("lendStoreLabel").style.display = lendIsNewcomer ? "none" : "";
+  $("lendStoreGrid").style.display = lendIsNewcomer ? "none" : "";
+  $("lendNameLabel").textContent = lendIsNewcomer ? "名前" : "名前（わかる場合のみ）";
+  if (lendIsNewcomer) { lendStore = null; document.querySelectorAll("#lendStoreGrid button").forEach(x => x.classList.remove("sel")); }
+}
 function openLend(mode, day) {
   lendTargetDay = day != null ? day : roomDay;
   if (isLocked(lendTargetDay)) { alert("部屋割りが確定（ロック）されています。解除してから操作してください。"); return; }
-  lendMode = mode; lendStore = null;
+  lendMode = mode; lendStore = null; lendIsNewcomer = false;
   const isLend = mode === "lend";
-  $("lendTitle").textContent = isLend ? "他店部屋抑え" : "ロイヤルに掛け持ち";
+  $("lendTitle").textContent = isLend ? "他店部屋抑え" : "掛け持ちor入店";
+  $("lendTypeRow").style.display = isLend ? "none" : "";
+  setLendType("borrow");
   $("lendStoreLabel").textContent = isLend ? "加盟店" : "相手の加盟店";
   const grid = $("lendStoreGrid"); grid.className = "store-grid" + (isLend ? "" : " bw");
   document.querySelectorAll("#lendStoreGrid button").forEach(b => {
@@ -2096,15 +2112,19 @@ function openLend(mode, day) {
   dlgOpen("lendDlg");
 }
 $("lendSave").onclick = () => {
-  if (!lendStore) { alert("加盟店を選んでください"); return; }
   const td = lendTargetDay != null ? lendTargetDay : roomDay;
   const s = val("lendStart"); if (!s) { alert("開始時間を入力してください"); return; }
   const e = val("lendEnd") || "L";
   const nm = val("lendName");
   if (lendMode === "lend") {
+    if (!lendStore) { alert("加盟店を選んでください"); return; }
     addLend("lends", { store: lendStore, start: s, end: e, name: nm }, td);
     save();
+  } else if (lendIsNewcomer) {
+    if (!nm) { alert("名前を入力してください"); return; }
+    addLend("borrows", { store: null, start: s, end: e, name: nm, newcomer: true }, td);
   } else {
+    if (!lendStore) { alert("加盟店を選んでください"); return; }
     addLend("borrows", { store: lendStore, start: s, end: e, name: nm }, td);
   }
   dlgClose("lendDlg"); renderAll();
@@ -2181,6 +2201,8 @@ function renderRoomsList() {
         const cobj = state.casts.find(x => x.id === w.cid);
         const rankCls = cobj && cobj.rank === "premier" ? " rank-premier" : cobj && cobj.rank === "vip" ? " rank-vip" : "";
         const nameCls = cobj && (cobj.furyo || cobj.autoOver) ? " furyo-name" : "";
+        if (w.borrow && w.newcomer)
+          return `<div class="lf-bar newcomer${rankCls}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1};border-color:#2a9a4a" title="${w.name} ${fmtSp(w.sp)}（入店予定）"><span class="lf-barlabel">${w.name}<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
         if (w.borrow)
           return `<div class="lf-bar bw${rankCls} store-${w.store||''}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name} ${fmtSp(w.sp)}（掛け持ち）"><span class="lf-barlabel${nameCls}">${w.name}<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
         return `<div class="lf-bar ov${rankCls}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name} ${fmtSp(w.sp)}"><span class="lf-barlabel${nameCls}">${w.name}<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
@@ -2203,10 +2225,11 @@ function renderRoomsList() {
     const dBorrows = (state.borrows && state.borrows[dkey(d)]) || [];
     const lendItems = dLends.map((l, i) => { const c = l.cid ? state.casts.find(x => x.id === l.cid) : null; const nm = c ? c.name : (l.name || l.store);
       return `<span class="lf-hi-item">${nm} ${tL(l.start)}-${tL(l.end)}<span class="del" onclick="event.stopPropagation();removeLend('lends',${i},${d})">×</span></span>`; }).join("");
-    const borrowItems = dBorrows.map((l, i) =>
-      `<span class="lf-hi-item borrow">${l.name ? esc(l.name) : l.store} ${tL(l.start)}-${tL(l.end)}<span class="del" onclick="event.stopPropagation();removeLend('borrows',${i},${d})">×</span></span>`).join("");
+    const borrowItems = dBorrows.map((l, i) => l.newcomer
+      ? `<span class="lf-hi-item" style="background:rgba(42,154,74,.1);color:#1a7a3a">入店 ${esc(l.name)} ${tL(l.start)}-${tL(l.end)}<span class="del" onclick="event.stopPropagation();removeLend('borrows',${i},${d})">×</span></span>`
+      : `<span class="lf-hi-item borrow">${l.name ? esc(l.name) : l.store} ${tL(l.start)}-${tL(l.end)}<span class="del" onclick="event.stopPropagation();removeLend('borrows',${i},${d})">×</span></span>`).join("");
     const lendHead = `<span class="lf-head-kake lend" onclick="event.stopPropagation()"><span class="lf-kake-label">他店部屋</span>${lendItems}<button class="lf-hi-add lend" onclick="openLend('lend',${d})">＋</button></span>`;
-    const borrowHead = `<span class="lf-head-kake borrow" onclick="event.stopPropagation()"><span class="lf-kake-label">掛け持ち</span>${borrowItems}<button class="lf-hi-add borrow" onclick="openLend('borrow',${d})">＋</button></span>`;
+    const borrowHead = `<span class="lf-head-kake borrow" onclick="event.stopPropagation()"><span class="lf-kake-label">掛け持ちor入店</span>${borrowItems}<button class="lf-hi-add borrow" onclick="openLend('borrow',${d})">＋</button></span>`;
     dayBlocks += `<div class="lf-day ${isToday ? 'today' : ''}" data-day="${d}">
         <div class="lf-dayhead ${wkcls}">${todayMk}${m + 1}/${d}<small>(${WK[wd]})</small>${lendHead}${borrowHead}</div>
         ${evHtml}
@@ -3220,7 +3243,7 @@ function fitSheetNames() {
   document.querySelectorAll(".sh-names").forEach(cell => {
     const inner = cell.querySelector(".sh-inner") || cell;
     inner.style.fontSize = "";
-    let fs = 16;
+    let fs = 18;
     const sides = inner.querySelectorAll(".sh-side-l,.sh-side-r");
     function hasOverflow() {
       return Array.from(sides).some(s => s.scrollWidth > s.clientWidth + 1);
@@ -3267,7 +3290,7 @@ function renderAfterEdit() {
 window.openDlg = openDlg; window.changeRoomDay = changeRoomDay; window.openMove = openMove;
 window.assignRoom = assignRoom; window.openStat = openStat; window.openEvent = openEvent;
 window.toggleRoomLock = toggleRoomLock;
-window.setAvail = setAvail; window.cycleAsk = cycleAsk; window.openLend = openLend; window.cycleSoukei = cycleSoukei;
+window.setAvail = setAvail; window.cycleAsk = cycleAsk; window.openLend = openLend; window.cycleSoukei = cycleSoukei; window.setLendType = setLendType;
 window.removeLend = removeLend; window.jumpToDay = jumpToDay; window.jumpToListDay = jumpToListDay; window.jumpToListDate = jumpToListDate; window.searchCastInCalendar = searchCastInCalendar; window.editAskLabel = editAskLabel;
 window.optimizeRooms = optimizeRooms; window.openCastDlg = openCastDlg;
 window.toggleMDay = toggleMDay;
