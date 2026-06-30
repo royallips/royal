@@ -407,6 +407,7 @@
   .sh-name+.sh-name{margin-left:8px}
   .sh-name small{font-size:.82em;color:var(--ink-soft);margin-left:1px;font-weight:600}
   .sh-name.over{color:var(--over)}
+  .sh-vip{font-size:8px;font-weight:900;color:#8a6a00;background:#fbf1d2;border:1px solid #f5c800;border-radius:3px;padding:0 3px;margin-left:2px;vertical-align:middle;line-height:1.3}
   .view-toggle-btn{font-size:11px;padding:4px 10px;border-radius:8px;border:1.5px solid var(--pink);background:#fff;color:var(--pink);cursor:pointer;font-weight:700}
   .view-toggle-btn.active{background:var(--pink);color:#fff}
   /* スクショモード */
@@ -535,8 +536,9 @@
     .sheet-table{font-size:13px}
     .sheet-table tbody tr{height:30px}
     .sh-rno{font-size:13px;width:24px;min-width:24px;padding:3px 2px}
-    .sh-inner{padding:2px 4px;gap:2px}
-    .sh-name{font-size:13px}
+    .sh-inner{padding:2px 4px;gap:3px;justify-content:center;flex-wrap:wrap}
+    .sh-side-l,.sh-side-r,.sh-side-r-only{text-align:center;flex:none}
+    .sh-name{font-size:12px}
     .sh-name small{font-size:.8em}
   }
   @media (max-width:380px){
@@ -573,6 +575,9 @@
     .sh-kake-zone.over { font-size: 12pt; }
     .sh-kake-zone.over .sh-kake-label { font-size: 10pt; }
     .sh-kake-zone.over .sh-kake-item { font-size: 12pt; }
+    .sh-kake-zone.soukei { font-size: 8pt; }
+    .sh-kake-zone.soukei .sh-kake-label { font-size: 7pt; }
+    .sh-kake-zone.soukei .sh-kake-item { font-size: 8pt; }
     .sh-kake-label { font-size: 10pt; }
     .sh-kake-item { font-size: 12pt; padding: 0 5pt; }
     /* シート本体: 高さ固定でテーブルを収める */
@@ -585,11 +590,12 @@
     .sheet-table { flex: 1; width: 100%; border-collapse: collapse; table-layout: fixed; }
     .sh-rno { font-size: 11pt; font-weight: 900; text-align: center; padding: 1px 2px; border: 1pt solid #bbb; width: 18pt; color: #c03060; vertical-align: middle; white-space: nowrap; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .sh-names { padding: 0; border: 1pt solid #bbb; border-left: none; vertical-align: middle; overflow: hidden; }
-    .sh-inner { display: flex; align-items: center; gap: 2pt; padding: 1px 3px; height: 100%; }
-    .sh-side-l { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-align: left; }
-    .sh-side-r { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-align: right; }
-    .sh-side-r-only { margin-left: auto; flex: 1; text-align: right; }
-    .sh-name { font-size: 10pt; font-weight: 900; display: inline; white-space: nowrap; color: #000; }
+    .sh-inner { display: flex; align-items: center; justify-content: center; gap: 4pt; padding: 1px 3px; height: 100%; flex-wrap: wrap; }
+    .sh-side-l { min-width: 0; white-space: nowrap; overflow: hidden; text-align: center; }
+    .sh-side-r { min-width: 0; white-space: nowrap; overflow: hidden; text-align: center; }
+    .sh-side-r-only { text-align: center; }
+    .sh-name { font-size: 9pt; font-weight: 900; display: inline; white-space: nowrap; color: #000; }
+    .sh-vip { font-size: 6pt; font-weight: 900; color: #8a6a00; background: #fbf1d2 !important; border: 0.5pt solid #f5c800; border-radius: 2pt; padding: 0 2pt; margin-left: 1pt; vertical-align: middle; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .sh-name+.sh-name { margin-left: 3pt; }
     .sh-name small { font-size: .75em; font-weight: 700; color: #333; margin-left: 1pt; }
     .sheet-memo-row { flex-shrink: 0; margin-top: 1mm; }
@@ -1377,13 +1383,17 @@ function buildRoomsSheet(memo) {
     if (!sp) return "";
     return `${fH(sp[0])}-${fH(sp[1])}`;
   }
+  function vipTag(w) {
+    const c = state.casts.find(x => x.id === w.cid);
+    return c && c.rank === "vip" ? `<span class="sh-vip">VIP</span>` : "";
+  }
   function nameTagH(w, over) {
     const t = fmtHiru(w.sp);
-    return `<span class="sh-name${over ? ' over' : ''}">${w.name}${t ? `<small>(${t})</small>` : ""}</span>`;
+    return `<span class="sh-name${over ? ' over' : ''}">${w.name}${vipTag(w)}${t ? `<small>(${t})</small>` : ""}</span>`;
   }
   function nameTagY(w, over) {
     const t = fmtYoru(w.sp);
-    return `<span class="sh-name${over ? ' over' : ''}">${w.name}${t ? `<small>(${t})</small>` : ""}</span>`;
+    return `<span class="sh-name${over ? ' over' : ''}">${w.name}${vipTag(w)}${t ? `<small>(${t})</small>` : ""}</span>`;
   }
   let hiruRows = "", yoruRows = "";
   for (let ri = 0; ri < ROOMS; ri++) {
