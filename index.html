@@ -1433,7 +1433,6 @@ function buildRoomsSheet() {
     <div class="sheet-top-row">
       <div class="sheet-header">
         <span class="sheet-date">${m+1}月${roomDay}日（${wd}）</span>
-        <button class="ss-btn" onclick="enterSSMode()">印刷</button>
       </div>
       <div class="sheet-kake-row">${lendZone}${borrowZone}${overZone}${soukeiZoneHtml}</div>
     </div>
@@ -1590,11 +1589,12 @@ function renderRooms() {
           <input type="date" id="roomDateInput" value="${dateStr}"><button onclick="changeRoomDay(1)">›</button></div>
         <span style="font-weight:800">${m + 1}/${roomDay}（${WK[new Date(y, m, roomDay).getDay()]}）　利用${total}名</span>${eventTag}
         <span style="font-size:12px;font-weight:700"><span class="tag hiru">昼 ${hiruN}名</span> <span class="tag yoru">夜 ${yoruN}名</span></span>
-        <button class="lock-toggle ${locked ? 'on' : 'off'}" id="lockBtn" style="margin-left:auto">${locked ? '🔒 確定済み' : '🔓 未確定'}</button>
-        <button class="btn sm" id="optimizeBtn" ${locked ? "disabled" : ""}>最適に並べ替え</button>
+        <button class="btn sm" id="optimizeBtn" ${locked ? "disabled" : ""} style="margin-left:auto">最適に並べ替え</button>
         <button class="btn ghost sm" id="undoBtn" ${(canUndo() && !locked) ? "" : "disabled"}>前に戻す</button>
         <button class="btn ghost sm" id="addNewcomerBtn" ${locked ? "disabled" : ""}>＋入店予定</button>
         <button class="view-toggle-btn${roomViewMode === 'sheet' ? ' active' : ''}" id="viewToggleBtn">切り替え</button>
+        ${roomViewMode === 'sheet' ? `<button class="lock-toggle off" onclick="enterSSMode()" style="background:#4caf50;border-color:#4caf50;color:#fff">🖨 印刷</button>` : ''}
+        <button class="lock-toggle ${locked ? 'on' : 'off'}" id="lockBtn">${locked ? '🔒 確定済み' : '🔓 未確定'}</button>
       </div>
       ${lockBanner}
       ${overBanner}
