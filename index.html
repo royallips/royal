@@ -1003,7 +1003,7 @@ function cloudGetUrl(params) {
 function cloudPush() {
   if (!cloudUrl || suppressPush) return;
   if (cloudPushTimer) clearTimeout(cloudPushTimer);
-  cloudPushTimer = setTimeout(doCloudPush, 800);
+  cloudPushTimer = setTimeout(() => { cloudPushTimer = null; doCloudPush(); }, 800);
 }
 async function doCloudPush() {
   if (!cloudUrl || cloudBusy) return;
@@ -1036,8 +1036,10 @@ async function doCloudPush() {
 }
 
 // サーバーから最新を取得。自分のリビジョンより新しければ反映。
+// 送信待ち（デバウンス中）または送信中は取得しない：先に自分の変更を確実に送ってから取得することで、
+// 削除・更新直後に古いサーバーデータで上書きされてしまう競合を防ぐ。
 async function cloudPull() {
-  if (!cloudUrl || cloudBusy) return;
+  if (!cloudUrl || cloudBusy || cloudPushTimer) return;
   try {
     const res = await fetch(cloudGetUrl("action=get&rev=" + lastSyncedRev + "&_t=" + Date.now()), { method: "GET" });
     const j = await res.json();
