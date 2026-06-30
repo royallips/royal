@@ -2242,21 +2242,28 @@ function renderRoomsList() {
   if (!anyDay) dayBlocks = `<div class="empty-msg">表示できる日がありません。</div>`;
   if (needSave) save();
 
+  const prevScroller = $("view-roomslist").querySelector(".lf-scroll");
+  const savedScrollLeft = prevScroller ? prevScroller.scrollLeft : -1;
+
   $("view-roomslist").innerHTML =
     `<div class="panel">
       <div class="lf-scroll">${dayBlocks}</div>
     </div>`;
-  // 横スクロール位置：指定日（チップからのジャンプ）優先、なければ当日へ
-  const targetDay = (roomsListScrollTarget != null) ? roomsListScrollTarget : todayD;
-  if (targetDay > 0) {
-    const scroller = $("view-roomslist").querySelector(".lf-scroll");
-    const card = $("view-roomslist").querySelector(`.lf-day[data-day="${targetDay}"]`);
-    if (scroller && card) {
-      scroller.scrollLeft = Math.max(0, card.offsetLeft - 12);
-      if (roomsListScrollTarget != null) {
+  // 横スクロール位置：明示的なジャンプ優先、既存位置があれば復元、なければ当日へ
+  const scroller = $("view-roomslist").querySelector(".lf-scroll");
+  if (scroller) {
+    if (roomsListScrollTarget != null && roomsListScrollTarget > 0) {
+      const card = $("view-roomslist").querySelector(`.lf-day[data-day="${roomsListScrollTarget}"]`);
+      if (card) {
+        scroller.scrollLeft = Math.max(0, card.offsetLeft - 12);
         card.classList.add("flash");
         setTimeout(() => card.classList.remove("flash"), 1200);
       }
+    } else if (savedScrollLeft > 0) {
+      scroller.scrollLeft = savedScrollLeft;
+    } else if (todayD > 0) {
+      const card = $("view-roomslist").querySelector(`.lf-day[data-day="${todayD}"]`);
+      if (card) scroller.scrollLeft = Math.max(0, card.offsetLeft - 12);
     }
   }
   roomsListScrollTarget = null;
