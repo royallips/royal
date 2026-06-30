@@ -19,7 +19,7 @@
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;background:var(--bg);color:var(--ink);line-height:1.45;padding:14px}
   .wrap{max-width:none;width:100%;margin:0 auto}
-  h1{font-size:19px;letter-spacing:.03em;display:flex;align-items:center;gap:8px}
+  .top-bar{display:flex;align-items:center;gap:8px;position:sticky;top:0;z-index:100;background:#fff;border-bottom:2px solid var(--line);padding:4px 0;margin-bottom:10px}
   h1::before{content:"";width:7px;height:22px;background:var(--pink);border-radius:4px}
   .bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:14px 0}
   button,select,input{font-family:inherit;font-size:14px}
@@ -45,8 +45,8 @@
   .month-nav button:hover{background:var(--pink-soft)}
   select,input[type=date]{padding:8px 10px;border:1.5px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
 
-.tabs{display:flex;gap:4px;border-bottom:2px solid var(--line);margin-bottom:14px;flex-wrap:wrap;position:sticky;top:0;z-index:100;background:#fff}
-  .tab{padding:10px 16px;cursor:pointer;font-weight:700;color:var(--ink-soft);border:none;background:none;border-bottom:3px solid transparent;margin-bottom:-2px}
+.tabs{display:flex;gap:2px;flex-wrap:nowrap;flex:1}
+  .tab{padding:6px 14px;cursor:pointer;font-weight:700;color:var(--ink-soft);border:none;background:none;border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap}
   .tab.active{color:var(--pink);border-bottom-color:var(--pink)}
   .subtabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
   .subtab{padding:7px 18px;cursor:pointer;font-weight:700;font-size:13px;border:1.5px solid var(--line);background:#fff;color:var(--ink-soft);border-radius:20px}
@@ -152,6 +152,11 @@
   .soukei-item.kakunin{background:#fff;color:#157180;border-color:#1f8a9c;border-style:dashed;cursor:pointer}
   .soukei-item.need{background:#e0492a;color:#fff;border-color:#b5391f;cursor:pointer}
   .soukei-item.noneed{background:#f0f0f0;color:#999;border-color:#ddd;cursor:pointer;text-decoration:line-through}
+  .soukei-inline{display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap}
+  .soukei-inline .sk-mini-label{font-size:11px;font-weight:800;color:#157180}
+  .soukei-inline .soukei-item{padding:1px 7px;font-size:10px;margin:0;gap:3px}
+  .soukei-inline .soukei-item small{font-size:8px}
+  .soukei-inline .btn.sm{padding:2px 8px;font-size:10px}
 
   .panel{background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:14px;margin-bottom:16px;overflow:auto}
   .sec-title{font-weight:800;font-size:15px;margin:4px 0 10px;display:flex;align-items:center;gap:8px}
@@ -608,17 +613,15 @@
 <body>
 <button class="ss-exit" onclick="exitSSMode()">✕ 戻る</button>
 <div class="wrap">
-  <h1>ロイヤル利用管理</h1>
-  <div class="bar">
+  <div class="top-bar">
     <div class="month-nav"><button id="prevM">‹</button><span id="monthLabel"></span><button id="nextM">›</button></div>
-  </div>
-
-  <div class="tabs" id="tabsBar">
-    <button class="tab active" data-tab="rooms">部屋割り</button>
-    <button class="tab" data-tab="roomslist">リスピラ</button>
-    <button class="tab" data-tab="calendar">利用表</button>
-    <button class="tab" data-tab="manage">キャスト管理</button>
-    <button class="tab" data-tab="settings">設定</button>
+    <div class="tabs" id="tabsBar">
+      <button class="tab active" data-tab="rooms">部屋割り</button>
+      <button class="tab" data-tab="roomslist">リスピラ</button>
+      <button class="tab" data-tab="calendar">利用表</button>
+      <button class="tab" data-tab="manage">キャスト管理</button>
+      <button class="tab" data-tab="settings">設定</button>
+    </div>
   </div>
 
   <div class="cards" id="statCards"></div>
@@ -1563,7 +1566,7 @@ function renderRooms() {
     });
     if (soukeiList.length) {
       const stMap = (state.soukeiStatus && state.soukeiStatus[dkey(roomDay)]) || {};
-      soukeiHtml = `<div class="soukei-zone"><div class="sk-title">本日の送迎（${soukeiList.length}名）<button class="btn sm" id="soukeiReqBtn" style="margin-left:auto">依頼を作成</button></div>` +
+      soukeiHtml = `<span class="soukei-inline"><span class="sk-mini-label">🚗送迎</span>` +
         soukeiList.map(c => {
           if (c.soukei === "ari") {
             return `<span class="soukei-item ari">${c.name}</span>`;
@@ -1573,7 +1576,7 @@ function renderRooms() {
           const label = st === "hitsuyou" ? "必要" : st === "fuyou" ? "不要" : "要確認";
           const klass = st === "hitsuyou" ? "need" : st === "fuyou" ? "noneed" : "kakunin";
           return `<span class="soukei-item ${klass}" onclick="cycleSoukei('${c.id}')">${c.name}<small>${label}</small></span>`;
-        }).join("") + `</div>`;
+        }).join("") + `<button class="btn sm" id="soukeiReqBtn">依頼を作成</button></span>`;
     }
   }
 
@@ -1608,7 +1611,7 @@ function renderRooms() {
         <button class="lock-toggle ${locked ? 'on' : 'off'}" id="lockBtn">${locked ? '🔒 確定済み' : '🔓 未確定'}</button>
         <div class="roomday-nav"><button onclick="changeRoomDay(-1)">‹</button>
           <input type="date" id="roomDateInput" value="${dateStr}"><button onclick="changeRoomDay(1)">›</button></div>
-        <span style="font-weight:800">${m + 1}/${roomDay}（${WK[new Date(y, m, roomDay).getDay()]}）　利用${total}名</span>${eventTag}
+        <span style="font-weight:800">${m + 1}/${roomDay}（${WK[new Date(y, m, roomDay).getDay()]}）　利用${total}名</span>${eventTag}${soukeiHtml}
         <span style="font-size:12px;font-weight:700"><span class="tag hiru">昼 ${hiruN}名</span> <span class="tag yoru">夜 ${yoruN}名</span></span>
         <button class="btn sm" id="optimizeBtn" ${locked ? "disabled" : ""} style="margin-left:auto">最適に並べ替え</button>
         <button class="btn ghost sm" id="undoBtn" ${(canUndo() && !locked) ? "" : "disabled"}>前に戻す</button>
@@ -1620,7 +1623,7 @@ function renderRooms() {
       ${absentHtml}
       ${roomViewMode === 'sheet' ? buildRoomsSheet(memo) : `<div class="lend-row">${lendHtml}${borrowHtml}</div><div class="rt-wrap ${locked ? 'locked' : ''}"><div class="rt"><div class="rt-axis"><div></div>${dnLabel}</div><div class="rt-axis"><div></div><div class="ax">${axis}</div></div>${roomRows}<div class="hint" style="padding-left:54px"></div></div></div>`}
       ${roomViewMode !== 'sheet'
-        ? `<label style="font-weight:700;font-size:12px;color:var(--ink-soft);display:block;margin-top:14px">メモ</label><textarea class="memo-box" id="dayMemo" rows="5" placeholder="">${memo}</textarea>${soukeiHtml}`
+        ? `<label style="font-weight:700;font-size:12px;color:var(--ink-soft);display:block;margin-top:14px">メモ</label><textarea class="memo-box" id="dayMemo" rows="5" placeholder="">${memo}</textarea>`
         : ``}
     </div>`;
 
