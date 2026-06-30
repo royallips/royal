@@ -374,7 +374,7 @@
   .empty-msg{text-align:center;color:var(--ink-soft);padding:20px;font-size:13px}
   /* シート表示 */
   .sheet-view{padding:8px 4px}
-  .sheet-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .sheet-header{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:4px}
   .sheet-date{font-size:18px;font-weight:900;color:var(--ink);white-space:nowrap}
   .sheet-kake-row{display:flex;gap:6px;flex:1;flex-wrap:wrap;align-items:center}
   .sh-kake-zone{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;padding:2px 6px;border-radius:6px;white-space:nowrap}
@@ -558,9 +558,9 @@
     /* ヘッダー */
     .ss-btn { display: none !important; }
     .ss-exit { display: none !important; }
-    .sheet-header { margin-bottom: 1.5mm; justify-content: flex-start; gap: 4pt; }
+    .sheet-header { margin-bottom: 1mm; justify-content: center; gap: 6pt; }
     .sheet-date { font-size: 13pt; font-weight: 900; white-space: nowrap; }
-    .sheet-kake-row { display: flex !important; flex: 1; gap: 3pt; flex-wrap: nowrap; align-items: center; }
+    .sheet-kake-row { display: flex !important; gap: 3pt; flex-wrap: nowrap; align-items: center; margin-bottom: 1mm; }
     .sh-kake-zone { display: inline-flex !important; font-size: 7pt; padding: 1pt 4pt; border-radius: 3pt; }
     .sh-kake-label { font-size: 7pt; }
     .sh-kake-item { font-size: 6.5pt; padding: 0 3pt; }
@@ -1412,9 +1412,9 @@ function buildRoomsSheet() {
   return `<div class="sheet-view">
     <div class="sheet-header">
       <span class="sheet-date">${m+1}月${roomDay}日（${wd}）</span>
-      <div class="sheet-kake-row">${lendZone}${borrowZone}${overZone}</div>
       <button class="ss-btn" onclick="enterSSMode()">印刷</button>
     </div>
+    <div class="sheet-kake-row">${lendZone}${borrowZone}${overZone}</div>
     <div class="sheet-cols">
       <div class="sheet-col hiru">
         <div class="sheet-col-head">昼の部</div>
