@@ -199,7 +199,7 @@
   .cal td.eventcell{background:#fff}
   .cal th.bookcol{background:#e8def5;color:#6b3fa0;cursor:pointer}
   .cal th.bookcol .bookmk{display:inline-block;font-size:8px;background:#6b3fa0;color:#fff;border-radius:6px;padding:0 4px;font-weight:800;white-space:nowrap}
-  .cal td.bookcell{background:#fff;box-shadow:inset 2px 0 0 #b79be0,inset -2px 0 0 #b79be0}
+  .cal td.bookcell{background:#fff}
   .cal th{cursor:pointer}
   .cal .name-col .gmk{display:inline-block;font-size:9px;font-weight:800;color:#fff;border-radius:5px;padding:0 4px;margin-right:4px}
   .cal .name-col .gmk.hiru{background:var(--hiru-bar)}
@@ -1585,6 +1585,8 @@ function renderRooms() {
   $("view-rooms").innerHTML =
     `<div class="panel">
       <div class="bar" style="margin:0 0 10px">
+        ${roomViewMode === 'sheet' ? `<button class="lock-toggle off" onclick="enterSSMode()" style="background:#4caf50;border-color:#4caf50;color:#fff">🖨 印刷</button>` : ''}
+        <button class="lock-toggle ${locked ? 'on' : 'off'}" id="lockBtn">${locked ? '🔒 確定済み' : '🔓 未確定'}</button>
         <div class="roomday-nav"><button onclick="changeRoomDay(-1)">‹</button>
           <input type="date" id="roomDateInput" value="${dateStr}"><button onclick="changeRoomDay(1)">›</button></div>
         <span style="font-weight:800">${m + 1}/${roomDay}（${WK[new Date(y, m, roomDay).getDay()]}）　利用${total}名</span>${eventTag}
@@ -1593,8 +1595,6 @@ function renderRooms() {
         <button class="btn ghost sm" id="undoBtn" ${(canUndo() && !locked) ? "" : "disabled"}>前に戻す</button>
         <button class="btn ghost sm" id="addNewcomerBtn" ${locked ? "disabled" : ""}>＋入店予定</button>
         <button class="view-toggle-btn${roomViewMode === 'sheet' ? ' active' : ''}" id="viewToggleBtn">切り替え</button>
-        ${roomViewMode === 'sheet' ? `<button class="lock-toggle off" onclick="enterSSMode()" style="background:#4caf50;border-color:#4caf50;color:#fff">🖨 印刷</button>` : ''}
-        <button class="lock-toggle ${locked ? 'on' : 'off'}" id="lockBtn">${locked ? '🔒 確定済み' : '🔓 未確定'}</button>
       </div>
       ${lockBanner}
       ${overBanner}
