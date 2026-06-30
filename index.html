@@ -530,47 +530,48 @@
     .status-grid{grid-template-columns:1fr 1fr}
   }
   @media print {
-    @page { size: B5 landscape; margin: 5mm 7mm; }
+    @page { size: B5 landscape; margin: 4mm 6mm; }
     html, body { height: 100%; margin: 0; padding: 0; background: #fff !important; }
     h1, .tabs, nav, #calSelBar, dialog, .btn, .bar, .wrap > .bar,
     .absent-zone, .soukei-zone, .lend-row, .over-banner, .lock-banner,
     .freebar, .rt-wrap, .lend-zone, .memo-box, label,
     #view-roomslist, #view-cal, #view-manage, #view-settings, #statCards { display: none !important; }
-    .wrap { padding: 0 !important; }
-    #view-rooms { display: flex !important; flex-direction: column; height: 100%; }
+    .wrap { padding: 0 !important; height: 100%; }
+    #view-rooms { display: block !important; height: 100%; }
+    #view-rooms .panel { padding: 0; box-shadow: none; border: none; background: none; height: 100%; display: flex; flex-direction: column; }
     #view-rooms .panel > *:not(.sheet-view):not(.sheet-extra) { display: none !important; }
-    .sheet-extra { display: block !important; margin-top: 4mm; }
-    .sheet-extra .lend-row { display: flex !important; gap: 8px; flex-wrap: wrap; }
-    .sheet-extra .lend-zone { display: block !important; flex: 1; min-width: 120pt; padding: 4pt 8pt; font-size: 9pt; }
-    .sheet-extra .lend-zone .lz-title { font-size: 10pt; margin-bottom: 3pt; }
-    .sheet-extra .lend-item { font-size: 9pt; }
-    .sheet-extra label { display: block !important; font-weight: 700; font-size: 9pt; margin-top: 4pt; }
-    .sheet-extra .memo-box { display: block !important; width: 100%; font-size: 9pt; border: 1pt solid #bbb; padding: 3pt; box-sizing: border-box; resize: none; }
-    #view-rooms .panel { padding: 0; box-shadow: none; border: none; background: none; flex: 1; display: flex; flex-direction: column; }
-    .sheet-view { padding: 0; flex: 1; display: flex; flex-direction: column; }
+    /* シート本体 */
+    .sheet-view { padding: 0; flex: 1; min-height: 0; display: flex; flex-direction: column; }
     .ss-btn { display: none !important; }
     .ss-exit { display: none !important; }
-    /* ヘッダー */
-    .sheet-header { margin-bottom: 2mm; justify-content: center; flex-shrink: 0; }
-    .sheet-date { font-size: 17pt; font-weight: 900; letter-spacing: .05em; }
-    /* 2列 */
-    .sheet-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; max-width: none; margin: 0; flex: 1; min-height: 0; }
+    .sheet-header { margin-bottom: 1.5mm; justify-content: center; flex-shrink: 0; }
+    .sheet-date { font-size: 14pt; font-weight: 900; letter-spacing: .05em; }
+    .sheet-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; max-width: none; margin: 0; flex: 1; min-height: 0; }
     .sheet-col { display: flex; flex-direction: column; height: 100%; }
-    .sheet-col-head { font-size: 14pt; font-weight: 900; padding: 3px 0; letter-spacing: .15em; flex-shrink: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .sheet-col-head { font-size: 11pt; font-weight: 900; padding: 2px 0; letter-spacing: .15em; flex-shrink: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .sheet-col.hiru .sheet-col-head { background: #fff0cc !important; color: #8a5a00; border: 1pt solid #c8a040; }
     .sheet-col.yoru .sheet-col-head { background: #e0eaff !important; color: #1a3a80; border: 1pt solid #7090d0; }
-    /* テーブル */
     .sheet-table { flex: 1; width: 100%; border-collapse: collapse; table-layout: fixed; height: 100%; }
     .sheet-table tbody { height: 100%; }
-    .sh-rno { font-size: 14pt; font-weight: 900; text-align: center; padding: 2px 2px; border: 1pt solid #bbb; width: 22pt; color: #c03060; vertical-align: middle; white-space: nowrap; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .sh-rno { font-size: 11pt; font-weight: 900; text-align: center; padding: 1px 2px; border: 1pt solid #bbb; width: 18pt; color: #c03060; vertical-align: middle; white-space: nowrap; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .sh-names { padding: 0; border: 1pt solid #bbb; border-left: none; vertical-align: middle; overflow: hidden; }
-    .sh-inner { display: flex; align-items: center; gap: 3pt; padding: 2px 4px; height: 100%; }
+    .sh-inner { display: flex; align-items: center; gap: 2pt; padding: 1px 3px; height: 100%; }
     .sh-side-l { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-align: left; }
     .sh-side-r { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-align: right; }
     .sh-side-r-only { margin-left: auto; flex: 1; text-align: right; }
-    .sh-name { font-size: 12pt; font-weight: 900; display: inline; white-space: nowrap; color: #000; }
-    .sh-name+.sh-name { margin-left: 4pt; }
-    .sh-name small { font-size: .78em; font-weight: 700; color: #333; margin-left: 1pt; }
+    .sh-name { font-size: 10pt; font-weight: 900; display: inline; white-space: nowrap; color: #000; }
+    .sh-name+.sh-name { margin-left: 3pt; }
+    .sh-name small { font-size: .75em; font-weight: 700; color: #333; margin-left: 1pt; }
+    /* 溢れ・他店・掛け持ち・メモ */
+    .sheet-extra { flex: 0 0 auto; margin-top: 2mm; display: block !important; }
+    .sheet-extra .lend-row { display: flex !important; gap: 4pt; flex-wrap: nowrap; }
+    .sheet-extra .lend-zone { display: block !important; flex: 1; padding: 2pt 5pt; font-size: 7.5pt; border-width: 1pt; border-radius: 4pt; }
+    .sheet-extra .lend-zone .lz-title { font-size: 8pt; margin-bottom: 2pt; }
+    .sheet-extra .lend-item { font-size: 7.5pt; padding: 0 4pt; margin: 1pt; }
+    .sheet-extra .lend-item .store { min-width: 14pt; height: 14pt; font-size: 7pt; }
+    .sheet-extra .lend-item.over { padding: 1pt 4pt; }
+    .sheet-extra label { display: block !important; font-weight: 700; font-size: 7.5pt; margin-top: 2pt; margin-bottom: 1pt; }
+    .sheet-extra .memo-box { display: block !important; width: 100%; font-size: 7.5pt; border: 1pt solid #bbb; padding: 2pt 4pt; box-sizing: border-box; resize: none; height: 14mm; }
   }
 </style>
 </head>
