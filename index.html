@@ -953,6 +953,8 @@ function normalize(d) {
   d.borrows = d.borrows || {};
   d.events = d.events || {};
   if (!d.askLabels || typeof d.askLabels.l1 === "string") d.askLabels = {};
+  d.calAsk = d.calAsk || {};
+  d.calAvail = d.calAvail || {};
   d.newcomers = d.newcomers || {};
   d.locks = d.locks || {};
   d.roomLocks = d.roomLocks || {};
@@ -975,7 +977,7 @@ function load() {
       { id: id(), name: "るあ", group: "yoru", availDates: "", canAsk: "", canAsk2: "" }
     ],
     records: {}, memos: {}, assign: {}, lends: {}, borrows: {},
-    events: {}, askLabels: {}, newcomers: {}, locks: {}, soukeiStatus: {}
+    events: {}, askLabels: {}, calAsk: {}, calAvail: {}, newcomers: {}, locks: {}, soukeiStatus: {}
   };
 }
 function save() {
@@ -1372,7 +1374,7 @@ function renderStats() {
     : '<span class="none">対象日なし</span>';
 
   // 本日利用を確認（確認日=今日に設定されたキャスト・当月のみ）
-  const askToday = isCur ? state.casts.filter(c => String(c.availDates) === String(today.getDate())).sort(byName) : [];
+  const askToday = isCur ? state.casts.filter(c => String((state.calAvail && state.calAvail[ym(cur) + "_" + c.id]) || "") === String(today.getDate())).sort(byName) : [];
   const askHtml = askToday.length ? askToday.map(c => nameSpan(c, "")).join("") : '<span class="none">なし</span>';
 
   const todayCards = isCur ?
@@ -2395,6 +2397,8 @@ function cellInner(rc) {
 }
 function askMark(v) { return v === "o" ? "○" : v === "t" ? "△" : v === "x" ? "✕" : "−"; }
 function nextAsk(v) { return v === "o" ? "t" : v === "t" ? "x" : v === "x" ? "" : "o"; }
+function getCalAsk(cid, col) { return (state.calAsk && state.calAsk[ym(cur) + "_" + cid + "_" + col]) || ""; }
+function getCalAvail(cid) { return (state.calAvail && state.calAvail[ym(cur) + "_" + cid]) || ""; }
 
 function calTable(group) {
   const dim = daysIn(cur), y = cur.getFullYear(), m = cur.getMonth();
@@ -2451,10 +2455,11 @@ function calTable(group) {
     );
     let r = `<td class='name-col' onclick="openStat('${c.id}')">${gmark}${c.name}${!hasWork ? '<span class="mitei-badge">未定</span>' : ''}</td>`;
     let dayOpts = `<option value="">−</option>`;
-    for (let dd = 1; dd <= dim; dd++) dayOpts += `<option value="${dd}" ${String(c.availDates) === String(dd) ? "selected" : ""}>${dd}日</option>`;
+    const _avail = getCalAvail(c.id);
+    for (let dd = 1; dd <= dim; dd++) dayOpts += `<option value="${dd}" ${String(_avail) === String(dd) ? "selected" : ""}>${dd}日</option>`;
     r += `<td class='avail-col'><select class="availin" onchange="setAvail('${c.id}',this.value)" onclick="event.stopPropagation()">${dayOpts}</select></td>`;
-    r += `<td class='canask-col'><span class="askbtn" onclick="cycleAsk('${c.id}',1)">${askMark(c.canAsk)}</span></td>`;
-    r += `<td class='canask-col'><span class="askbtn" onclick="cycleAsk('${c.id}',2)">${askMark(c.canAsk2)}</span></td>`;
+    r += `<td class='canask-col'><span class="askbtn" onclick="cycleAsk('${c.id}',1)">${askMark(getCalAsk(c.id, 1))}</span></td>`;
+    r += `<td class='canask-col'><span class="askbtn" onclick="cycleAsk('${c.id}',2)">${askMark(getCalAsk(c.id, 2))}</span></td>`;
     let tot = 0;
     for (let d = 1; d <= dim; d++) {
       const w = new Date(y, m, d).getDay();
@@ -2482,11 +2487,15 @@ function calTable(group) {
   });
   return `<table class="cal"><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table>`;
 }
-function setAvail(cid, v) { const c = state.casts.find(x => x.id === cid); if (c) { c.availDates = v; save(); } }
+function setAvail(cid, v) {
+  if (!state.calAvail) state.calAvail = {};
+  state.calAvail[ym(cur) + "_" + cid] = v;
+  save();
+}
 function cycleAsk(cid, col) {
-  const c = state.casts.find(x => x.id === cid);
-  if (!c) return;
-  if (col === 2) c.canAsk2 = nextAsk(c.canAsk2 || ""); else c.canAsk = nextAsk(c.canAsk || "");
+  if (!state.calAsk) state.calAsk = {};
+  const k = ym(cur) + "_" + cid + "_" + col;
+  state.calAsk[k] = nextAsk(state.calAsk[k] || "");
   save();
   scrollPreserve(refreshCalendar);
 }
@@ -3399,7 +3408,7 @@ function _merge(server,client){
   });
   out.casts=Object.keys(castMap).map(function(id){return castMap[id];});
   // 各マップはキー単位で統合。クライアント側の値を優先しつつ、サーバーにしか無いキーも残す。
-  ['records','assign','lends','borrows','memos','events','newcomers','locks','soukeiStatus'].forEach(function(f){
+  ['records','assign','lends','borrows','memos','events','newcomers','locks','soukeiStatus','calAsk','calAvail'].forEach(function(f){
     var s=server[f]||{}, c=client[f]||{}, m={};
     for(var k in s){m[k]=s[k];}
     for(var k in c){m[k]=c[k];}
