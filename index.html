@@ -1282,12 +1282,17 @@ function computeAssignmentByKey(dk, useListAssign = false) {
     if (typeof ri === "number" && ri >= 0 && ri < ROOMS) { rooms[ri].push(w); placed.add(w); }
     else forcedOver.push(w);
   });
-  // 溢れ指定（手動OVER または 自動溢れ）のものを最初に確保（中抜け2回目も同じ扱い）
-  workers.forEach(w => { if (isForcedOver(w.cid)) { forcedOver.push(w); placed.add(w); } });
+  // 溢れ指定（手動OVER または 自動溢れ）のものを最初に確保
+  workers.forEach(w => {
+    const fk = w.seg2 ? w.cid + ":nk2" : w.cid;
+    const fOver = force[fk] === "OVER" || (autoOverSet.has(w.cid) && typeof force[fk] !== "number");
+    if (fOver) { forcedOver.push(w); placed.add(w); }
+  });
   // ① 手動で部屋番号を指定されたキャストを先に部屋へ入れて占有を確保
   workers.forEach(w => {
-    if (placed.has(w) || w.seg2) return;
-    const ri = force[w.cid];
+    if (placed.has(w)) return;
+    const fk = w.seg2 ? w.cid + ":nk2" : w.cid;
+    const ri = force[fk];
     if (typeof ri === "number" && ri >= 0 && ri < ROOMS) { rooms[ri].push(w); placed.add(w); }
   });
   // ② 残り（自動配置対象）を、被らない部屋に詰める
@@ -1515,7 +1520,7 @@ function renderRooms() {
         return `<div class="rt-bar bw${rankCls} store-${w.store||''} ${w.clash ? 'clash' : ''} ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${left}%;width:${width}%" title="${w.name} ${fmtSp(w.sp)}（掛け持ち）" onclick="openMove('${w.cid}',event)">${ov}<span class="rt-barlabel${nameCls}">${w.name}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
       if (w.newcomer)
         return `<div class="rt-bar newcomer${rankCls} ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${left}%;width:${width}%" title="入店予定 ${fmtSp(w.sp)}" onclick="openMove('${w.cid}',event)"><span class="rt-barlabel">入店予定</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
-      return `<div class="rt-bar ${k % 2 ? 'b2' : 'b1'}${rankCls}${w.r && w.r.hideNet ? ' has-hidenet' : ''} ${w.clash ? 'clash' : ''} ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${left}%;width:${width}%" title="${tip}" onclick="openMove('${w.cid}',event)">${ov}<span class="rt-barlabel${nameCls}">${w.name}${w.r && w.r.hideNet ? '<span class="hidenet-bar">非掲載</span>' : ''}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
+      return `<div class="rt-bar ${k % 2 ? 'b2' : 'b1'}${rankCls}${w.r && w.r.hideNet ? ' has-hidenet' : ''} ${w.clash ? 'clash' : ''} ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}"${w.seg2 ? ' data-nk2="1"' : ''} style="left:${left}%;width:${width}%" title="${tip}" onclick="openMove('${w.cid}',event)">${ov}<span class="rt-barlabel${nameCls}">${w.name}${w.r && w.r.hideNet ? '<span class="hidenet-bar">非掲載</span>' : ''}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
     }).join("");
   }
 
@@ -1941,8 +1946,9 @@ function pinCurrentRooms(day) {
   const force = state.assign[dk];
   rooms.forEach((room, ri) => {
     room.forEach(w => {
-      if (w.cid.startsWith("bw:") || w.cid.startsWith("nc:") || w.seg2) return;
-      if (typeof force[w.cid] !== "number") force[w.cid] = ri;
+      if (w.cid.startsWith("bw:") || w.cid.startsWith("nc:")) return;
+      const fk = w.seg2 ? w.cid + ":nk2" : w.cid;
+      if (typeof force[fk] !== "number") force[fk] = ri;
     });
   });
 }
@@ -1957,12 +1963,13 @@ function assignRoom(cid, ri) {
 
 /* --- ドラッグ＆ドロップで部屋移動 --- */
 // ri に number（部屋番号）または "OVER"（溢れ）を渡して移動。ダイアログは閉じない。
-function moveCidToRoom(cid, ri) {
+function moveCidToRoom(cid, ri, isNk2) {
   if (isLocked(roomDay)) return;
   pushUndo(roomDay);
   pinCurrentRooms(roomDay);
   if (!state.assign[dkey(roomDay)]) state.assign[dkey(roomDay)] = {};
-  state.assign[dkey(roomDay)][cid] = (ri === "OVER") ? "OVER" : Number(ri);
+  const assignKey = isNk2 ? cid + ":nk2" : cid;
+  state.assign[dkey(roomDay)][assignKey] = (ri === "OVER") ? "OVER" : Number(ri);
   save(); selBar = null;
   scrollPreserve(renderAll);
 }
@@ -1982,7 +1989,7 @@ function moveCidToRoomDay(cid, ri, day) {
   const newScroller = document.querySelector("#view-roomslist .lf-scroll");
   if (newScroller) newScroller.scrollLeft = savedLeft;
 }
-let dragCid = null, dragMoved = false, dragDay = null;
+let dragCid = null, dragMoved = false, dragDay = null, dragIsNk2 = false;
 let lendTargetDay = null; // openLend が対象とする日（null=roomDay）
 document.addEventListener("dragstart", e => {
   const rtBar = e.target.closest(".rt-bar[draggable=true]");
@@ -2000,7 +2007,7 @@ document.addEventListener("dragstart", e => {
     dragDay = srcTrack ? parseInt(srcTrack.dataset.day) : null;
     if (!dragDay || isLocked(dragDay)) { e.preventDefault(); return; }
   }
-  dragCid = bar.dataset.cid; dragMoved = true;
+  dragCid = bar.dataset.cid; dragMoved = true; dragIsNk2 = bar.dataset.nk2 === "1";
   bar.classList.add("dragging");
   if (e.dataTransfer) { e.dataTransfer.effectAllowed = "move"; try { e.dataTransfer.setData("text/plain", dragCid); } catch (_) {} }
 });
@@ -2008,7 +2015,7 @@ document.addEventListener("dragend", e => {
   const bar = e.target.closest(".rt-bar,.lf-bar");
   if (bar) bar.classList.remove("dragging");
   document.querySelectorAll(".rt-track.dropok,.lf-track.dropok").forEach(t => t.classList.remove("dropok"));
-  dragCid = null; dragDay = null;
+  dragCid = null; dragDay = null; dragIsNk2 = false;
   setTimeout(() => { dragMoved = false; }, 0); // 直後のclick抑止
 });
 document.addEventListener("dragover", e => {
@@ -2056,7 +2063,7 @@ document.addEventListener("drop", e => {
     e.preventDefault();
     const ri = track.dataset.ri;
     if (ri && ri !== "OVER" && isRoomLocked(roomDay, ri)) return;
-    moveCidToRoom(cid, ri);
+    moveCidToRoom(cid, ri, dragIsNk2);
   }
 });
 $("moveForceOver").onclick = () => {
@@ -2835,11 +2842,12 @@ $("castSave").onclick = () => {
   const furyo = $("castFuryo").checked;
   const soukei = $("castSoukeiAri").checked ? "ari" : ($("castSoukeiKakunin").checked ? "kakunin" : "");
   const soukeiPlace = soukei ? val("castSoukeiPlace") : "";
+  const now = Date.now();
   if (editCastId) {
     const c = state.casts.find(x => x.id === editCastId);
-    if (c) { c.name = n; c.group = castGroup; c.autoOver = ao; c.soukei = soukei; c.soukeiPlace = soukeiPlace; c.furyo = furyo; c.rank = castRank; }
+    if (c) { c.name = n; c.group = castGroup; c.autoOver = ao; c.soukei = soukei; c.soukeiPlace = soukeiPlace; c.furyo = furyo; c.rank = castRank; c._updatedAt = now; }
   } else {
-    state.casts.push({ id: id(), name: n, group: castGroup, availDates: "", canAsk: "", canAsk2: "", autoOver: ao, soukei: soukei, soukeiPlace: soukeiPlace, furyo: furyo, rank: castRank });
+    state.casts.push({ id: id(), name: n, group: castGroup, availDates: "", canAsk: "", canAsk2: "", autoOver: ao, soukei: soukei, soukeiPlace: soukeiPlace, furyo: furyo, rank: castRank, _updatedAt: now });
   }
   save(); dlgClose("castDlg"); renderAll();
 };
@@ -3374,8 +3382,20 @@ function doPost(e){
 // サーバーとクライアントをフィールド単位で統合（両者の入力を極力残す）
 function _merge(server,client){
   var out={};
-  // casts はクライアント優先（追加・削除を反映）
-  out.casts = client.casts || server.casts || [];
+  // casts: IDベースで更新日時（_updatedAt）が新しい方を採用。タイムスタンプ未設定はクライアント優先。
+  var castMap={};
+  (server.casts||[]).forEach(function(c){ castMap[c.id]=c; });
+  (client.casts||[]).forEach(function(c){
+    var existing=castMap[c.id];
+    if(!existing){
+      castMap[c.id]=c; // クライアントのみ→追加
+    } else {
+      var sT=existing._updatedAt||0, cT=c._updatedAt||0;
+      if(cT>=sT) castMap[c.id]=c; // クライアントが新しいか同じ→クライアント優先
+      // サーバーが新しい場合はサーバー版をそのまま保持
+    }
+  });
+  out.casts=Object.keys(castMap).map(function(id){return castMap[id];});
   // 各マップはキー単位で統合。クライアント側の値を優先しつつ、サーバーにしか無いキーも残す。
   ['records','assign','lends','borrows','memos','events','newcomers','locks','soukeiStatus'].forEach(function(f){
     var s=server[f]||{}, c=client[f]||{}, m={};
