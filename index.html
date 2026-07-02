@@ -952,7 +952,7 @@ function normalize(d) {
   d.lends = d.lends || {};
   d.borrows = d.borrows || {};
   d.events = d.events || {};
-  d.askLabels = d.askLabels || { l1: "", l2: "" };
+  if (!d.askLabels || typeof d.askLabels.l1 === "string") d.askLabels = {};
   d.newcomers = d.newcomers || {};
   d.locks = d.locks || {};
   d.roomLocks = d.roomLocks || {};
@@ -975,7 +975,7 @@ function load() {
       { id: id(), name: "るあ", group: "yoru", availDates: "", canAsk: "", canAsk2: "" }
     ],
     records: {}, memos: {}, assign: {}, lends: {}, borrows: {},
-    events: {}, askLabels: { l1: "", l2: "" }, newcomers: {}, locks: {}, soukeiStatus: {}
+    events: {}, askLabels: {}, newcomers: {}, locks: {}, soukeiStatus: {}
   };
 }
 function save() {
@@ -2414,8 +2414,9 @@ function calTable(group) {
   if (casts.length === 0)
     return `<div class="empty-msg">${calSearch ? `「${calSearch}」に一致するキャストがいません` : "この部のキャスト未登録"}</div>`;
 
-  const al1 = (state.askLabels && state.askLabels.l1) ? state.askLabels.l1 : "";
-  const al2 = (state.askLabels && state.askLabels.l2) ? state.askLabels.l2 : "";
+  const _alCur = (state.askLabels && state.askLabels[ym(cur)]) || {};
+  const al1 = _alCur.l1 || "";
+  const al2 = _alCur.l2 || "";
   let head = "<th class='name-col'>キャスト</th><th class='avail-col'><small>確認</small></th>" +
     `<th class='canask-col' onclick="editAskLabel(1)"><small>${al1}</small></th>` +
     `<th class='canask-col' onclick="editAskLabel(2)"><small>${al2}</small></th>`;
@@ -2491,15 +2492,16 @@ function cycleAsk(cid, col) {
 }
 function editAskLabel(col) {
   askLabelCol = col;
-  const cur0 = col === 2 ? (state.askLabels.l2 || "") : (state.askLabels.l1 || "");
+  const cur0 = ((state.askLabels[ym(cur)] || {})[col === 2 ? "l2" : "l1"]) || "";
   $("askLabelTitle").textContent = `${col}列目の名前`;
   $("askLabelInput").value = cur0;
   dlgOpen("askLabelDlg");
   setTimeout(() => $("askLabelInput").focus(), 50);
 }
 function saveAskLabel(v) {
-  if (askLabelCol === 2) state.askLabels.l2 = (v || "").trim();
-  else state.askLabels.l1 = (v || "").trim();
+  if (!state.askLabels[ym(cur)]) state.askLabels[ym(cur)] = {};
+  if (askLabelCol === 2) state.askLabels[ym(cur)].l2 = (v || "").trim();
+  else state.askLabels[ym(cur)].l1 = (v || "").trim();
   save(); dlgClose("askLabelDlg");
   scrollPreserve(refreshCalendar);
 }
@@ -3403,7 +3405,10 @@ function _merge(server,client){
     for(var k in c){m[k]=c[k];}
     out[f]=m;
   });
-  out.askLabels = client.askLabels || server.askLabels || {l1:'',l2:''};
+  var alS=server.askLabels||{},alC=client.askLabels||{},alM={};
+  for(var k in alS){alM[k]=alS[k];}
+  for(var k in alC){alM[k]=alC[k];}
+  out.askLabels=alM;
   return out;
 }`;
 (function initCloudUI() {
