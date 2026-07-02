@@ -963,6 +963,9 @@ function normalize(d) {
     if (c.availDates == null) c.availDates = "";
     if (c.canAsk == null) c.canAsk = "";
     if (c.canAsk2 == null) c.canAsk2 = "";
+    if (c.canAskMon == null) c.canAskMon = "";
+    if (c.canAsk2Mon == null) c.canAsk2Mon = "";
+    if (c.availDatesMon == null) c.availDatesMon = "";
   });
   return d;
 }
@@ -1374,7 +1377,7 @@ function renderStats() {
     : '<span class="none">対象日なし</span>';
 
   // 本日利用を確認（確認日=今日に設定されたキャスト・当月のみ）
-  const askToday = isCur ? state.casts.filter(c => String((state.calAvail && state.calAvail[ym(cur) + "_" + c.id]) || "") === String(today.getDate())).sort(byName) : [];
+  const askToday = isCur ? state.casts.filter(c => c.availDatesMon === ym(cur) && String(c.availDates) === String(today.getDate())).sort(byName) : [];
   const askHtml = askToday.length ? askToday.map(c => nameSpan(c, "")).join("") : '<span class="none">なし</span>';
 
   const todayCards = isCur ?
@@ -2397,8 +2400,15 @@ function cellInner(rc) {
 }
 function askMark(v) { return v === "o" ? "○" : v === "t" ? "△" : v === "x" ? "✕" : "−"; }
 function nextAsk(v) { return v === "o" ? "t" : v === "t" ? "x" : v === "x" ? "" : "o"; }
-function getCalAsk(cid, col) { return (state.calAsk && state.calAsk[ym(cur) + "_" + cid + "_" + col]) || ""; }
-function getCalAvail(cid) { return (state.calAvail && state.calAvail[ym(cur) + "_" + cid]) || ""; }
+function getCalAsk(cid, col) {
+  const c = state.casts.find(x => x.id === cid); if (!c) return "";
+  if (col === 2) return (c.canAsk2Mon === ym(cur)) ? (c.canAsk2 || "") : "";
+  return (c.canAskMon === ym(cur)) ? (c.canAsk || "") : "";
+}
+function getCalAvail(cid) {
+  const c = state.casts.find(x => x.id === cid); if (!c) return "";
+  return (c.availDatesMon === ym(cur)) ? (c.availDates || "") : "";
+}
 
 function calTable(group) {
   const dim = daysIn(cur), y = cur.getFullYear(), m = cur.getMonth();
@@ -2488,14 +2498,19 @@ function calTable(group) {
   return `<table class="cal"><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table>`;
 }
 function setAvail(cid, v) {
-  if (!state.calAvail) state.calAvail = {};
-  state.calAvail[ym(cur) + "_" + cid] = v;
+  const c = state.casts.find(x => x.id === cid); if (!c) return;
+  c.availDates = v; c.availDatesMon = ym(cur);
   save();
 }
 function cycleAsk(cid, col) {
-  if (!state.calAsk) state.calAsk = {};
-  const k = ym(cur) + "_" + cid + "_" + col;
-  state.calAsk[k] = nextAsk(state.calAsk[k] || "");
+  const c = state.casts.find(x => x.id === cid); if (!c) return;
+  if (col === 2) {
+    c.canAsk2 = nextAsk((c.canAsk2Mon === ym(cur)) ? (c.canAsk2 || "") : "");
+    c.canAsk2Mon = ym(cur);
+  } else {
+    c.canAsk = nextAsk((c.canAskMon === ym(cur)) ? (c.canAsk || "") : "");
+    c.canAskMon = ym(cur);
+  }
   save();
   scrollPreserve(refreshCalendar);
 }
@@ -3408,7 +3423,7 @@ function _merge(server,client){
   });
   out.casts=Object.keys(castMap).map(function(id){return castMap[id];});
   // 各マップはキー単位で統合。クライアント側の値を優先しつつ、サーバーにしか無いキーも残す。
-  ['records','assign','lends','borrows','memos','events','newcomers','locks','soukeiStatus','calAsk','calAvail'].forEach(function(f){
+  ['records','assign','lends','borrows','memos','events','newcomers','locks','soukeiStatus'].forEach(function(f){
     var s=server[f]||{}, c=client[f]||{}, m={};
     for(var k in s){m[k]=s[k];}
     for(var k in c){m[k]=c[k];}
