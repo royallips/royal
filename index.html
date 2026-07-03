@@ -623,7 +623,7 @@
 <div class="wrap">
   <div class="top-bar">
     <div class="month-nav"><button id="prevM">‹</button><span id="monthLabel"></span><button id="nextM">›</button></div>
-    <div style="font-size:9px;color:var(--ink-soft);text-align:right;line-height:1">v20260703c</div>
+    <div style="font-size:9px;color:var(--ink-soft);text-align:right;line-height:1">v20260703d</div>
     <div class="tabs" id="tabsBar">
       <button class="tab active" data-tab="rooms">部屋割り</button>
       <button class="tab" data-tab="roomslist">リスピラ</button>
@@ -949,6 +949,7 @@ let roomsListScrollTarget = null;            // リスピラ一覧で次回ス�
 function normalize(d) {
   d.memos = d.memos || {};
   d.assign = d.assign || {};
+  d.assignTs = d.assignTs || {};
   d.assignList = d.assignList || {};
   d.lends = d.lends || {};
   d.borrows = d.borrows || {};
@@ -980,7 +981,7 @@ function load() {
       { id: id(), name: "あおい", group: "hiru", availDates: "", canAsk: "", canAsk2: "" },
       { id: id(), name: "るあ", group: "yoru", availDates: "", canAsk: "", canAsk2: "" }
     ],
-    records: {}, memos: {}, assign: {}, lends: {}, borrows: {},
+    records: {}, memos: {}, assign: {}, assignTs: {}, lends: {}, borrows: {},
     events: {}, askLabels: {}, calAsk: {}, calAvail: {}, newcomers: {}, locks: {}, soukeiStatus: {}
   };
 }
@@ -1832,7 +1833,11 @@ function optimizeRooms() {
   order.forEach((o, newIdx) => o.arr.forEach(it => { newForce[it.cid] = availRooms[newIdx]; }));
   autoOverSet.forEach(cid => { newForce[cid] = "OVER"; });
 
-  state.assign[dkey(day)] = newForce; save(); selBar = null;
+  const _autoArDk = dkey(day); const _autoArNow = Date.now();
+  state.assign[_autoArDk] = newForce;
+  if (!state.assignTs) state.assignTs = {};
+  Object.keys(newForce).forEach(cid => { state.assignTs[_autoArDk + "~" + cid] = _autoArNow; });
+  save(); selBar = null;
   scrollPreserve(renderAll);
 }
 function changeRoomDay(delta) {
@@ -1936,8 +1941,7 @@ function openMove(cid, ev) {
         if (!rr || !isUse(rr.status)) { alert("利用時間が未入力です"); return; }
         pushUndo(roomDay);
         addLend("lends", { cid, store: st, start: rr.start, end: rr.end || "L" });
-        if (!state.assign[dkey(roomDay)]) state.assign[dkey(roomDay)] = {};
-        state.assign[dkey(roomDay)][cid] = "OVER"; save();
+        setAssign(dkey(roomDay), cid, "OVER"); save();
         dlgClose("moveDlg"); selBar = null; renderAll();
       };
     });
@@ -1948,13 +1952,13 @@ function openMove(cid, ev) {
 function pinCurrentRooms(day) {
   const dk = dkey(day);
   const { rooms } = computeAssignment(day);
-  if (!state.assign[dk]) state.assign[dk] = {};
-  const force = state.assign[dk];
   rooms.forEach((room, ri) => {
     room.forEach(w => {
       if (w.cid.startsWith("bw:") || w.cid.startsWith("nc:")) return;
       const fk = w.seg2 ? w.cid + ":nk2" : w.cid;
-      if (typeof force[fk] !== "number") force[fk] = ri;
+      if (!state.assign[dk] || typeof state.assign[dk][fk] !== "number") {
+        setAssign(dk, fk, ri);
+      }
     });
   });
 }
@@ -1962,8 +1966,7 @@ function pinCurrentRooms(day) {
 function assignRoom(cid, ri) {
   pushUndo(roomDay);
   pinCurrentRooms(roomDay);
-  if (!state.assign[dkey(roomDay)]) state.assign[dkey(roomDay)] = {};
-  state.assign[dkey(roomDay)][cid] = ri; save();
+  setAssign(dkey(roomDay), cid, ri); save();
   dlgClose("moveDlg"); selBar = null; renderAll();
 }
 
@@ -1973,9 +1976,8 @@ function moveCidToRoom(cid, ri, isNk2) {
   if (isLocked(roomDay)) return;
   pushUndo(roomDay);
   pinCurrentRooms(roomDay);
-  if (!state.assign[dkey(roomDay)]) state.assign[dkey(roomDay)] = {};
   const assignKey = isNk2 ? cid + ":nk2" : cid;
-  state.assign[dkey(roomDay)][assignKey] = (ri === "OVER") ? "OVER" : Number(ri);
+  setAssign(dkey(roomDay), assignKey, (ri === "OVER") ? "OVER" : Number(ri));
   save(); selBar = null;
   scrollPreserve(renderAll);
 }
@@ -2075,8 +2077,7 @@ document.addEventListener("drop", e => {
 $("moveForceOver").onclick = () => {
   if (!moveTarget) return;
   pushUndo(moveTarget.day);
-  if (!state.assign[dkey(moveTarget.day)]) state.assign[dkey(moveTarget.day)] = {};
-  state.assign[dkey(moveTarget.day)][moveTarget.cid] = "OVER"; save();
+  setAssign(dkey(moveTarget.day), moveTarget.cid, "OVER"); save();
   dlgClose("moveDlg"); selBar = null; renderAll();
 };
 $("moveAuto").onclick = () => {
@@ -2944,6 +2945,12 @@ function setRec(k, v) {
   if (!v) { delete state.records[k]; return; }
   state.records[k] = Object.assign({}, v, { _t: Date.now() });
 }
+function setAssign(dk, cid, val) {
+  if (!state.assign[dk]) state.assign[dk] = {};
+  state.assign[dk][cid] = val;
+  if (!state.assignTs) state.assignTs = {};
+  state.assignTs[dk + "~" + cid] = Date.now();
+}
 function applyRecordToDay(cid, d, rec) {
   const k = recKey(cid, d);
   if (!rec) {
@@ -2954,8 +2961,7 @@ function applyRecordToDay(cid, d, rec) {
   setRec(k, rec);
   const cobj = state.casts.find(x => x.id === cid);
   if ((rec.status === "work" || rec.status === "furikae") && cobj && cobj.autoOver) {
-    if (!state.assign[dkey(d)]) state.assign[dkey(d)] = {};
-    state.assign[dkey(d)][cid] = "OVER";
+    setAssign(dkey(d), cid, "OVER");
   } else {
     if (state.assign[dkey(d)]) delete state.assign[dkey(d)][cid];
   }
@@ -3437,8 +3443,42 @@ function _merge(server,client){
     else{var sT=(rM[k]&&rM[k]._t)||0,cT=(rC[k]&&rC[k]._t)||0;if(cT>sT)rM[k]=rC[k];}
   }
   out.records=rM;
+  // assign: キャスト単位でタイムスタンプ（assignTs）比較。新しい方を採用。
+  var aS=server.assign||{},aC=client.assign||{};
+  var tS=server.assignTs||{},tC=client.assignTs||{};
+  var aM={},tM={};
+  var days={};
+  for(var dk in aS)days[dk]=true;
+  for(var dk in aC)days[dk]=true;
+  for(var dk in days){
+    var sDay=aS[dk]||{},cDay=aC[dk]||{},mDay={};
+    var cids={};
+    for(var cid in sDay)cids[cid]=true;
+    for(var cid in cDay)cids[cid]=true;
+    for(var cid in cids){
+      var fk=dk+"~"+cid;
+      var sT=tS[fk]||0,cT=tC[fk]||0;
+      if(sT===0&&cT===0){
+        // タイムスタンプなし→クライアント優先（旧互換）
+        if(cDay.hasOwnProperty(cid))mDay[cid]=cDay[cid];
+        else if(sDay.hasOwnProperty(cid))mDay[cid]=sDay[cid];
+      }else if(cT>=sT){
+        // クライアントが新しい→クライアントの状態を採用
+        if(cDay.hasOwnProperty(cid))mDay[cid]=cDay[cid];
+        // else: クライアントで削除済み→mDayに追加しない
+        tM[fk]=cT;
+      }else{
+        // サーバーが新しい→サーバーの状態を採用
+        if(sDay.hasOwnProperty(cid))mDay[cid]=sDay[cid];
+        tM[fk]=sT;
+      }
+    }
+    if(Object.keys(mDay).length>0)aM[dk]=mDay;
+  }
+  out.assign=aM;
+  out.assignTs=tM;
   // 各マップはキー単位で統合。クライアント側の値を優先しつつ、サーバーにしか無いキーも残す。
-  ['assign','lends','borrows','memos','events','newcomers','locks','soukeiStatus'].forEach(function(f){
+  ['lends','borrows','memos','events','newcomers','locks','soukeiStatus'].forEach(function(f){
     var s=server[f]||{}, c=client[f]||{}, m={};
     for(var k in s){m[k]=s[k];}
     for(var k in c){m[k]=c[k];}
