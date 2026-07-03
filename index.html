@@ -623,7 +623,7 @@
 <div class="wrap">
   <div class="top-bar">
     <div class="month-nav"><button id="prevM">‹</button><span id="monthLabel"></span><button id="nextM">›</button></div>
-    <div style="font-size:9px;color:var(--ink-soft);text-align:right;line-height:1">v20260703i</div>
+    <div style="font-size:9px;color:var(--ink-soft);text-align:right;line-height:1">v20260703j</div>
     <div class="tabs" id="tabsBar">
       <button class="tab active" data-tab="rooms">部屋割り</button>
       <button class="tab" data-tab="roomslist">リスピラ</button>
@@ -1958,21 +1958,27 @@ function openMove(cid, ev, isNk2 = false) {
   dlgOpen("moveDlg"); renderRooms();
 }
 // 手動移動前に自動配置されているキャストの現在部屋をピン留め（上詰め防止）
-// dragCid/dragIsNk2 を指定すると、中抜けの反対スパンはスキップして自動配置に委ねる
+// dragCid/dragIsNk2 を渡すと中抜け反対スパンが溢れにいる場合も OVER にピン固定する
 function pinCurrentRooms(day, dragCid = null, dragIsNk2 = false) {
   const dk = dkey(day);
-  const { rooms } = computeAssignment(day);
-  const skipFk = dragCid ? (dragIsNk2 ? dragCid : dragCid + ":nk2") : null;
+  const { rooms, overRooms } = computeAssignment(day);
   rooms.forEach((room, ri) => {
     room.forEach(w => {
       if (w.cid.startsWith("bw:") || w.cid.startsWith("nc:")) return;
       const fk = w.seg2 ? w.cid + ":nk2" : w.cid;
-      if (fk === skipFk) return;
       if (!state.assign[dk] || typeof state.assign[dk][fk] !== "number") {
         setAssign(dk, fk, ri);
       }
     });
   });
+  // 中抜けドラッグ時: 反対スパンが溢れにある場合も OVER にピン固定（ドラッグで部屋が空いても動かない）
+  if (dragCid) {
+    const counterFk = dragIsNk2 ? dragCid : dragCid + ":nk2";
+    const inOver = overRooms.some(row => row.some(w => (w.seg2 ? w.cid + ":nk2" : w.cid) === counterFk));
+    if (inOver && (!state.assign[dk] || state.assign[dk][counterFk] !== "OVER")) {
+      setAssign(dk, counterFk, "OVER");
+    }
+  }
 }
 
 function assignRoom(cid, ri, isNk2 = false) {
