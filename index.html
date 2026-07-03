@@ -623,7 +623,7 @@
 <div class="wrap">
   <div class="top-bar">
     <div class="month-nav"><button id="prevM">‹</button><span id="monthLabel"></span><button id="nextM">›</button></div>
-    <div style="font-size:9px;color:var(--ink-soft);text-align:right;line-height:1">v20260703f</div>
+    <div style="font-size:9px;color:var(--ink-soft);text-align:right;line-height:1">v20260703g</div>
     <div class="tabs" id="tabsBar">
       <button class="tab active" data-tab="rooms">部屋割り</button>
       <button class="tab" data-tab="roomslist">リスピラ</button>
@@ -1533,7 +1533,7 @@ function renderRooms() {
         return `<div class="rt-bar bw${rankCls} store-${w.store||''} ${w.clash ? 'clash' : ''} ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${left}%;width:${width}%" title="${w.name} ${fmtSp(w.sp)}（掛け持ち）" onclick="openMove('${w.cid}',event)">${ov}<span class="rt-barlabel${nameCls}">${w.name}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
       if (w.newcomer)
         return `<div class="rt-bar newcomer${rankCls} ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${left}%;width:${width}%" title="入店予定 ${fmtSp(w.sp)}" onclick="openMove('${w.cid}',event)"><span class="rt-barlabel">入店予定</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
-      return `<div class="rt-bar ${k % 2 ? 'b2' : 'b1'}${rankCls}${w.r && w.r.hideNet ? ' has-hidenet' : ''} ${w.clash ? 'clash' : ''} ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}"${w.seg2 ? ' data-nk2="1"' : ''} style="left:${left}%;width:${width}%" title="${tip}" onclick="openMove('${w.cid}',event)">${ov}<span class="rt-barlabel${nameCls}">${w.name}${w.r && w.r.hideNet ? '<span class="hidenet-bar">非掲載</span>' : ''}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
+      return `<div class="rt-bar ${k % 2 ? 'b2' : 'b1'}${rankCls}${w.r && w.r.hideNet ? ' has-hidenet' : ''} ${w.clash ? 'clash' : ''} ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}"${w.seg2 ? ' data-nk2="1"' : ''} style="left:${left}%;width:${width}%" title="${tip}" onclick="openMove('${w.cid}',event${w.seg2 ? ',true' : ''})">${ov}<span class="rt-barlabel${nameCls}">${w.name}${w.r && w.r.hideNet ? '<span class="hidenet-bar">非掲載</span>' : ''}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
     }).join("");
   }
 
@@ -1904,34 +1904,37 @@ $("soukeiReqCopy").onclick = () => {
 };
 
 /* ===== 9. 部屋移動・掛け持ち ======================================== */
-function openMove(cid, ev) {
+function openMove(cid, ev, isNk2 = false) {
   if (ev) ev.stopPropagation();
   if (dragMoved) return; // ドラッグ直後のクリックは無視
   if (isLocked(roomDay)) { alert("部屋割りが確定（ロック）されています。解除してから移動してください。"); return; }
-  moveTarget = { cid, day: roomDay }; selBar = cid;
+  moveTarget = { cid, day: roomDay, isNk2 }; selBar = cid;
   const isNc = String(cid).startsWith("nc:");
   const isBw = String(cid).startsWith("bw:");
   const isSpecial = isNc || isBw;
   const { rooms, overRooms } = computeAssignment(roomDay);
   let target = null;
-  rooms.forEach(rm => rm.forEach(w => { if (w.cid === cid) target = w; }));
+  rooms.forEach(rm => rm.forEach(w => { if (w.cid === cid && (isNk2 ? w.seg2 : !w.seg2)) target = w; }));
+  if (!target) rooms.forEach(rm => rm.forEach(w => { if (w.cid === cid) target = w; }));
   if (!target) overRooms.forEach(rm => rm.forEach(w => { if (w.cid === cid) target = w; }));
   const c = isSpecial ? null : state.casts.find(x => x.id === cid);
   const r = isSpecial ? null : rec(cid, roomDay);
-  const sp = isSpecial ? (target ? target.sp : null) : span(r);
+  const sp = isSpecial ? (target ? target.sp : null) : (isNk2 ? (target ? target.sp : null) : span(r));
   const nm = isNc ? "入店予定" : isBw ? (target ? target.name + "（掛け持ち）" : "掛け持ち") : (c ? c.name : "");
+  const nkLabel = isNk2 ? "（中抜け後半）" : "";
 
-  $("moveTitle").textContent = `${nm} の部屋`;
-  $("moveInfo").innerHTML = `時間：<b>${isSpecial ? fmtSp(sp) : fmtTime(r)}</b>　部屋を選んで移動／溢れ送りができます。`;
+  $("moveTitle").textContent = `${nm}${nkLabel} の部屋`;
+  $("moveInfo").innerHTML = `時間：<b>${sp ? fmtSp(sp) : (isSpecial ? "" : fmtTime(r))}</b>　部屋を選んで移動／溢れ送りができます。`;
   let curRoom = -1;
-  rooms.forEach((rm, ri) => { if (rm.some(w => w.cid === cid)) curRoom = ri; });
+  rooms.forEach((rm, ri) => { if (rm.some(w => w.cid === cid && (isNk2 ? w.seg2 : !w.seg2))) curRoom = ri; });
+  if (curRoom < 0) rooms.forEach((rm, ri) => { if (rm.some(w => w.cid === cid)) curRoom = ri; });
   if (curRoom >= 0 && isRoomLocked(roomDay, curRoom)) return; // ロック中の部屋は移動不可
   let btns = "";
   for (let ri = 0; ri < ROOMS; ri++) {
-    const others = rooms[ri].filter(w => w.cid !== cid);
+    const others = rooms[ri].filter(w => !(w.cid === cid && (isNk2 ? w.seg2 : !w.seg2)));
     const free = sp ? others.every(w => !overlap(w.sp, sp)) : true;
     const isCur = ri === curRoom;
-    btns += `<button class="${isCur ? 'cur' : ''} ${free ? '' : 'clashbtn'}" onclick="assignRoom('${cid}',${ri})">${roomLabel(ri)}${isCur ? "(現)" : (free ? "" : "⚠")}</button>`;
+    btns += `<button class="${isCur ? 'cur' : ''} ${free ? '' : 'clashbtn'}" onclick="assignRoom('${cid}',${ri},${isNk2})">${roomLabel(ri)}${isCur ? "(現)" : (free ? "" : "⚠")}</button>`;
   }
   $("moveList").innerHTML = btns;
   $("moveHint").textContent = "⚠＝時間が被る部屋。選ぶと被ったまま同じ部屋に入り、被る時間帯が赤く表示されます。";
@@ -1969,10 +1972,11 @@ function pinCurrentRooms(day) {
   });
 }
 
-function assignRoom(cid, ri) {
+function assignRoom(cid, ri, isNk2 = false) {
   pushUndo(roomDay);
   pinCurrentRooms(roomDay);
-  setAssign(dkey(roomDay), cid, ri); save();
+  const assignKey = isNk2 ? cid + ":nk2" : cid;
+  setAssign(dkey(roomDay), assignKey, ri); save();
   dlgClose("moveDlg"); selBar = null; renderAll();
 }
 
@@ -2083,13 +2087,15 @@ document.addEventListener("drop", e => {
 $("moveForceOver").onclick = () => {
   if (!moveTarget) return;
   pushUndo(moveTarget.day);
-  setAssign(dkey(moveTarget.day), moveTarget.cid, "OVER"); save();
+  const _mtKey = moveTarget.isNk2 ? moveTarget.cid + ":nk2" : moveTarget.cid;
+  setAssign(dkey(moveTarget.day), _mtKey, "OVER"); save();
   dlgClose("moveDlg"); selBar = null; renderAll();
 };
 $("moveAuto").onclick = () => {
   if (moveTarget) {
     pushUndo(moveTarget.day);
-    const a = state.assign[dkey(moveTarget.day)]; if (a) delete a[moveTarget.cid]; save();
+    const _maKey = moveTarget.isNk2 ? moveTarget.cid + ":nk2" : moveTarget.cid;
+    const a = state.assign[dkey(moveTarget.day)]; if (a) delete a[_maKey]; save();
   }
   dlgClose("moveDlg"); selBar = null; renderAll();
 };
