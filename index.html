@@ -624,7 +624,7 @@
 <div class="wrap">
   <div class="top-bar">
     <div class="month-nav"><button id="prevM">‹</button><span id="monthLabel"></span><button id="nextM">›</button></div>
-    <div style="font-size:9px;color:var(--ink-soft);text-align:right;line-height:1">v20260704a</div>
+    <div style="font-size:9px;color:var(--ink-soft);text-align:right;line-height:1">v20260704b</div>
     <div class="tabs" id="tabsBar">
       <button class="tab active" data-tab="rooms">部屋割り</button>
       <button class="tab" data-tab="roomslist">リスピラ</button>
@@ -1049,7 +1049,10 @@ async function doCloudPush() {
     if (j && j.ok) {
       if (j.merged && !cloudPushTimer) { // サーバーが他者の変更とマージした最新を返してきた
         // 次のpushが pending の場合は適用を保留（ローカルの未送信変更が消えるのを防ぐ）
+        // assignListはGASマージ非対応のため、マージ時はローカルを維持して上書きを防ぐ
+        const _savedAssignList = state.assignList;
         suppressPush = true; applyCloudData(j.data); suppressPush = false;
+        if (_savedAssignList) state.assignList = _savedAssignList;
         persistLocal();
       }
       lastSyncedRev = j.rev; localStorage.setItem(CLOUD_REV_KEY, lastSyncedRev); cloudStatus("同期済み ✓", "#2d8a4a");
@@ -1088,9 +1091,7 @@ async function cloudPull() {
 }
 function applyCloudData(d) {
   if (!d || !d.casts) return;
-  const prevAssignList = state.assignList; // assignListはクラウドマージ未対応のためローカルを保持
   state = normalize(d);
-  if (prevAssignList) state.assignList = prevAssignList;
 }
 function startCloudSync() {
   if (!cloudUrl) return;
