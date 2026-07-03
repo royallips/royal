@@ -624,7 +624,7 @@
 <div class="wrap">
   <div class="top-bar">
     <div class="month-nav"><button id="prevM">‹</button><span id="monthLabel"></span><button id="nextM">›</button></div>
-    <div style="font-size:9px;color:var(--ink-soft);text-align:right;line-height:1">v20260703m</div>
+    <div style="font-size:9px;color:var(--ink-soft);text-align:right;line-height:1">v20260704a</div>
     <div class="tabs" id="tabsBar">
       <button class="tab active" data-tab="rooms">部屋割り</button>
       <button class="tab" data-tab="roomslist">リスピラ</button>
@@ -1088,7 +1088,9 @@ async function cloudPull() {
 }
 function applyCloudData(d) {
   if (!d || !d.casts) return;
+  const prevAssignList = state.assignList; // assignListはクラウドマージ未対応のためローカルを保持
   state = normalize(d);
+  if (prevAssignList) state.assignList = prevAssignList;
 }
 function startCloudSync() {
   if (!cloudUrl) return;
@@ -2976,8 +2978,11 @@ function applyRecordToDay(cid, d, rec) {
     if (state.assign[dkey(d)]) delete state.assign[dkey(d)][cid];
     return;
   }
-  setRec(k, rec);
   const cobj = state.casts.find(x => x.id === cid);
+  if ((rec.status === "work" || rec.status === "furikae") && !(cobj && cobj.autoOver)) {
+    pinCurrentRooms(d); // まとめて入力でも既存キャストの現在位置を固定
+  }
+  setRec(k, rec);
   if ((rec.status === "work" || rec.status === "furikae") && cobj && cobj.autoOver) {
     setAssign(dkey(d), cid, "OVER");
   } else if (rec.status === "work" || rec.status === "furikae") {
@@ -3174,6 +3179,7 @@ $("dlgSave").onclick = () => {
       if (s2) { if (!e2) e2 = "L"; rec0.start2 = s2; rec0.end2 = e2; }
     }
     if (pickStatus === "work" && $("hideNetChk").checked) rec0.hideNet = true;
+    pinCurrentRooms(day); // 新規追加時に既存キャストの現在位置を固定（自動詰め直し防止）
     setRec(k, rec0);
     // 自動溢れキャストは溢れに、手動配置済みはそのまま、未配置のみ自動配置に戻す
     const cobj = state.casts.find(x => x.id === cid);
@@ -3500,7 +3506,7 @@ function _merge(server,client){
   out.assign=aM;
   out.assignTs=tM;
   // 各マップはキー単位で統合。クライアント側の値を優先しつつ、サーバーにしか無いキーも残す。
-  ['lends','borrows','memos','events','newcomers','locks','soukeiStatus'].forEach(function(f){
+  ['lends','borrows','memos','events','newcomers','locks','soukeiStatus','assignList'].forEach(function(f){
     var s=server[f]||{}, c=client[f]||{}, m={};
     for(var k in s){m[k]=s[k];}
     for(var k in c){m[k]=c[k];}
