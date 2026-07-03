@@ -624,7 +624,7 @@
 <div class="wrap">
   <div class="top-bar">
     <div class="month-nav"><button id="prevM">‹</button><span id="monthLabel"></span><button id="nextM">›</button></div>
-    <div style="font-size:9px;color:var(--ink-soft);text-align:right;line-height:1">v20260704b</div>
+    <div style="font-size:9px;color:var(--ink-soft);text-align:right;line-height:1">v20260704c</div>
     <div class="tabs" id="tabsBar">
       <button class="tab active" data-tab="rooms">部屋割り</button>
       <button class="tab" data-tab="roomslist">リスピラ</button>
@@ -1049,11 +1049,19 @@ async function doCloudPush() {
     if (j && j.ok) {
       if (j.merged && !cloudPushTimer) { // サーバーが他者の変更とマージした最新を返してきた
         // 次のpushが pending の場合は適用を保留（ローカルの未送信変更が消えるのを防ぐ）
-        // assignListはGASマージ非対応のため、マージ時はローカルを維持して上書きを防ぐ
-        const _savedAssignList = state.assignList;
+        const _localAL = state.assignList;
         suppressPush = true; applyCloudData(j.data); suppressPush = false;
-        if (_savedAssignList) state.assignList = _savedAssignList;
+        // assignListはマージデータ+ローカルの和集合。ローカル位置を優先して上書き。
+        if (_localAL) {
+          const mergedAL = state.assignList || {};
+          Object.keys(_localAL).forEach(dk => {
+            if (!mergedAL[dk]) mergedAL[dk] = {};
+            Object.assign(mergedAL[dk], _localAL[dk]);
+          });
+          state.assignList = mergedAL;
+        }
         persistLocal();
+        scrollPreserve(renderAll);
       }
       lastSyncedRev = j.rev; localStorage.setItem(CLOUD_REV_KEY, lastSyncedRev); cloudStatus("同期済み ✓", "#2d8a4a");
     } else if (j && j.error === "auth") {
@@ -2980,9 +2988,6 @@ function applyRecordToDay(cid, d, rec) {
     return;
   }
   const cobj = state.casts.find(x => x.id === cid);
-  if ((rec.status === "work" || rec.status === "furikae") && !(cobj && cobj.autoOver)) {
-    pinCurrentRooms(d); // まとめて入力でも既存キャストの現在位置を固定
-  }
   setRec(k, rec);
   if ((rec.status === "work" || rec.status === "furikae") && cobj && cobj.autoOver) {
     setAssign(dkey(d), cid, "OVER");
@@ -3236,7 +3241,11 @@ $("dlgSave").onclick = () => {
   } else {
     applyOverlay(k);
   }
-  // 繰り返し/まとめて入力を適用
+  // 繰り返し/まとめて入力を適用：対象日ごとに1回だけ部屋固定（ループ外で一括）
+  if (pickStatus === "work" || pickStatus === "furikae") {
+    const extraDays = new Set(extraTargets.map(({ day: td }) => td));
+    extraDays.forEach(d => pinCurrentRooms(d));
+  }
   const primaryRec = state.records[k] || null;
   extraTargets.forEach(({ cid: tc, day: td }) => {
     const rk2 = recKey(tc, td);
