@@ -623,7 +623,7 @@
 <div class="wrap">
   <div class="top-bar">
     <div class="month-nav"><button id="prevM">‹</button><span id="monthLabel"></span><button id="nextM">›</button></div>
-    <div style="font-size:9px;color:var(--ink-soft);text-align:right;line-height:1">v20260703d</div>
+    <div style="font-size:9px;color:var(--ink-soft);text-align:right;line-height:1">v20260703e</div>
     <div class="tabs" id="tabsBar">
       <button class="tab active" data-tab="rooms">部屋割り</button>
       <button class="tab" data-tab="roomslist">リスピラ</button>
@@ -1028,7 +1028,12 @@ function cloudPush() {
   cloudPushTimer = setTimeout(() => { cloudPushTimer = null; doCloudPush(); }, 800);
 }
 async function doCloudPush() {
-  if (!cloudUrl || cloudBusy) return;
+  if (!cloudUrl) return;
+  if (cloudBusy) {
+    // 送信中に再度タイマーが発火した場合、完了後に再送する
+    cloudPushTimer = setTimeout(() => { cloudPushTimer = null; doCloudPush(); }, 1000);
+    return;
+  }
   cloudBusy = true; cloudStatus("保存中…", "#c77");
   try {
     // undefined値のレコードを送信前に除去
