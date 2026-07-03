@@ -623,7 +623,7 @@
 <div class="wrap">
   <div class="top-bar">
     <div class="month-nav"><button id="prevM">‹</button><span id="monthLabel"></span><button id="nextM">›</button></div>
-    <div style="font-size:9px;color:var(--ink-soft);text-align:right;line-height:1">v20260703b</div>
+    <div style="font-size:9px;color:var(--ink-soft);text-align:right;line-height:1">v20260703c</div>
     <div class="tabs" id="tabsBar">
       <button class="tab active" data-tab="rooms">部屋割り</button>
       <button class="tab" data-tab="roomslist">リスピラ</button>
@@ -2940,6 +2940,10 @@ makeTimeSelect("lendEnd", "end");       // 掛け持ち：終了
 // 値設定の共通ショートカット
 function setTime(prefix, v) { if (timeSelects[prefix]) timeSelects[prefix].set(v); }
 
+function setRec(k, v) {
+  if (!v) { delete state.records[k]; return; }
+  state.records[k] = Object.assign({}, v, { _t: Date.now() });
+}
 function applyRecordToDay(cid, d, rec) {
   const k = recKey(cid, d);
   if (!rec) {
@@ -2947,7 +2951,7 @@ function applyRecordToDay(cid, d, rec) {
     if (state.assign[dkey(d)]) delete state.assign[dkey(d)][cid];
     return;
   }
-  state.records[k] = Object.assign({}, rec);
+  setRec(k, rec);
   const cobj = state.casts.find(x => x.id === cid);
   if ((rec.status === "work" || rec.status === "furikae") && cobj && cobj.autoOver) {
     if (!state.assign[dkey(d)]) state.assign[dkey(d)] = {};
@@ -3120,14 +3124,14 @@ $("dlgSave").onclick = () => {
   // マーカーのみ（入力ステータス未選択）
   if (pickStatus === "none") {
     if (pickOverlay) {
-      state.records[k] = { stayBg: pickOverlay, note };
+      setRec(k, { stayBg: pickOverlay, note });
     } else if (state.records[k]) {
       delete state.records[k];
       if (state.assign[dkey(day)]) delete state.assign[dkey(day)][cid];
     }
     extraTargets.forEach(({ cid: tc, day: td }) => {
       const rk = recKey(tc, td);
-      if (pickOverlay) state.records[rk] = { stayBg: pickOverlay, note };
+      if (pickOverlay) setRec(rk, { stayBg: pickOverlay, note });
       else if (state.records[rk]) delete state.records[rk];
     });
     if (hadSelApply) exitCalSelMode();
@@ -3143,7 +3147,7 @@ $("dlgSave").onclick = () => {
       if (s2) { if (!e2) e2 = "L"; rec0.start2 = s2; rec0.end2 = e2; }
     }
     if (pickStatus === "work" && $("hideNetChk").checked) rec0.hideNet = true;
-    state.records[k] = rec0;
+    setRec(k, rec0);
     // 自動溢れキャストは溢れに、それ以外は手動配置を解除して自動配置に
     const cobj = state.casts.find(x => x.id === cid);
     if (cobj && cobj.autoOver) {
@@ -3154,13 +3158,14 @@ $("dlgSave").onclick = () => {
     }
   } else if (pickStatus === "absent") {
     if (s && !e) e = "L";
-    state.records[k] = { status: "absent", start: s, end: e, note };
+    setRec(k, { status: "absent", start: s, end: e, note });
     if (state.assign[dkey(day)]) delete state.assign[dkey(day)][cid];
   } else if (pickStatus === "off") {
     // 非破壊：既存データ（利用時間・マーカー等）を保持し status だけ上書き
     const ex = state.records[k] || {};
-    state.records[k] = { ...ex, status: "off", note };
-    if (s) { state.records[k].start = s; state.records[k].end = e || "L"; }
+    const offRec = { ...ex, status: "off", note };
+    if (s) { offRec.start = s; offRec.end = e || "L"; }
+    setRec(k, offRec);
     if (state.assign[dkey(day)]) delete state.assign[dkey(day)][cid];
   } else if (pickStatus === "mitei") {
     const selDays = [...($("multiDayGrid") || document.createElement("div")).querySelectorAll(".mday-btn.mday-sel")].map(b => parseInt(b.dataset.d));
@@ -3171,15 +3176,15 @@ $("dlgSave").onclick = () => {
         if (!confirm(msg)) return;
       }
       selDays.forEach(d => {
-        state.records[recKey(cid, d)] = { status: "mitei", note: (d === day ? note : "") };
+        setRec(recKey(cid, d), { status: "mitei", note: (d === day ? note : "") });
         if (state.assign[dkey(d)]) delete state.assign[dkey(d)][cid];
       });
     } else {
-      state.records[recKey(cid, day)] = { status: "mitei", note };
+      setRec(recKey(cid, day), { status: "mitei", note });
       if (state.assign[dkey(day)]) delete state.assign[dkey(day)][cid];
     }
   } else {
-    state.records[k] = { status: pickStatus, note };
+    setRec(k, { status: pickStatus, note });
     if (state.assign[dkey(day)]) delete state.assign[dkey(day)][cid];
   }
   // マーカー（pickOverlay）を stayBg として保存対象レコードに適用
@@ -3187,6 +3192,7 @@ $("dlgSave").onclick = () => {
     if (!state.records[rk]) return;
     if (pickOverlay) state.records[rk].stayBg = pickOverlay;
     else delete state.records[rk].stayBg;
+    state.records[rk]._t = Date.now();
   };
   // mitei の multiDay 複数日にも適用
   if (pickStatus === "mitei") {
@@ -3202,12 +3208,12 @@ $("dlgSave").onclick = () => {
     if (pickStatus === "off") {
       // 非破壊：各セル自身のデータを保持して status だけ off に
       const exT = state.records[rk2] || {};
-      state.records[rk2] = { ...exT, status: "off", note };
+      setRec(rk2, { ...exT, status: "off", note });
       if (state.assign[dkey(td)]) delete state.assign[dkey(td)][tc];
     } else {
       applyRecordToDay(tc, td, primaryRec);
     }
-    if (state.records[rk2]) state.records[rk2].note = note;
+    if (state.records[rk2]) { state.records[rk2].note = note; state.records[rk2]._t = Date.now(); }
     applyOverlay(rk2);
   });
   if (hadSelApply) exitCalSelMode();
@@ -3423,8 +3429,16 @@ function _merge(server,client){
     }
   });
   out.casts=Object.keys(castMap).map(function(id){return castMap[id];});
+  // records: タイムスタンプ（_t）が新しい方を採用。未設定はクライアント優先。
+  var rS=server.records||{}, rC=client.records||{}, rM={};
+  for(var k in rS){rM[k]=rS[k];}
+  for(var k in rC){
+    if(!rM.hasOwnProperty(k)){rM[k]=rC[k];}
+    else{var sT=(rM[k]&&rM[k]._t)||0,cT=(rC[k]&&rC[k]._t)||0;if(cT>sT)rM[k]=rC[k];}
+  }
+  out.records=rM;
   // 各マップはキー単位で統合。クライアント側の値を優先しつつ、サーバーにしか無いキーも残す。
-  ['records','assign','lends','borrows','memos','events','newcomers','locks','soukeiStatus'].forEach(function(f){
+  ['assign','lends','borrows','memos','events','newcomers','locks','soukeiStatus'].forEach(function(f){
     var s=server[f]||{}, c=client[f]||{}, m={};
     for(var k in s){m[k]=s[k];}
     for(var k in c){m[k]=c[k];}
