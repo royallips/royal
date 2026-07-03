@@ -623,7 +623,7 @@
 <div class="wrap">
   <div class="top-bar">
     <div class="month-nav"><button id="prevM">‹</button><span id="monthLabel"></span><button id="nextM">›</button></div>
-    <div style="font-size:9px;color:var(--ink-soft);text-align:right;line-height:1">v20260703g</div>
+    <div style="font-size:9px;color:var(--ink-soft);text-align:right;line-height:1">v20260703h</div>
     <div class="tabs" id="tabsBar">
       <button class="tab active" data-tab="rooms">部屋割り</button>
       <button class="tab" data-tab="roomslist">リスピラ</button>
@@ -2974,6 +2974,9 @@ function applyRecordToDay(cid, d, rec) {
   const cobj = state.casts.find(x => x.id === cid);
   if ((rec.status === "work" || rec.status === "furikae") && cobj && cobj.autoOver) {
     setAssign(dkey(d), cid, "OVER");
+  } else if (rec.status === "work" || rec.status === "furikae") {
+    const _hasPinTs = state.assignTs && (state.assignTs[dkey(d) + "~" + cid] > 0);
+    if (!_hasPinTs && state.assign[dkey(d)]) delete state.assign[dkey(d)][cid];
   } else {
     if (state.assign[dkey(d)]) delete state.assign[dkey(d)][cid];
   }
@@ -3166,13 +3169,14 @@ $("dlgSave").onclick = () => {
     }
     if (pickStatus === "work" && $("hideNetChk").checked) rec0.hideNet = true;
     setRec(k, rec0);
-    // 自動溢れキャストは溢れに、それ以外は手動配置を解除して自動配置に
+    // 自動溢れキャストは溢れに、手動配置済みはそのまま、未配置のみ自動配置に戻す
     const cobj = state.casts.find(x => x.id === cid);
     if (cobj && cobj.autoOver) {
-      if (!state.assign[dkey(day)]) state.assign[dkey(day)] = {};
-      state.assign[dkey(day)][cid] = "OVER";
+      setAssign(dkey(day), cid, "OVER");
     } else if (state.assign[dkey(day)]) {
-      delete state.assign[dkey(day)][cid];
+      const _hasPinTs = state.assignTs && (state.assignTs[dkey(day) + "~" + cid] > 0);
+      if (!_hasPinTs) delete state.assign[dkey(day)][cid]; // 手動配置なし→自動配置へ戻す
+      // 手動配置あり（_hasPinTs=true）→位置を維持
     }
   } else if (pickStatus === "absent") {
     if (s && !e) e = "L";
