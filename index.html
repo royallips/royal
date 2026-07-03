@@ -623,7 +623,7 @@
 <div class="wrap">
   <div class="top-bar">
     <div class="month-nav"><button id="prevM">‹</button><span id="monthLabel"></span><button id="nextM">›</button></div>
-    <div style="font-size:9px;color:var(--ink-soft);text-align:right;line-height:1">v20260703e</div>
+    <div style="font-size:9px;color:var(--ink-soft);text-align:right;line-height:1">v20260703f</div>
     <div class="tabs" id="tabsBar">
       <button class="tab active" data-tab="rooms">部屋割り</button>
       <button class="tab" data-tab="roomslist">リスピラ</button>
@@ -1046,7 +1046,8 @@ async function doCloudPush() {
     });
     const j = await res.json();
     if (j && j.ok) {
-      if (j.merged) { // サーバーが他者の変更とマージした最新を返してきた
+      if (j.merged && !cloudPushTimer) { // サーバーが他者の変更とマージした最新を返してきた
+        // 次のpushが pending の場合は適用を保留（ローカルの未送信変更が消えるのを防ぐ）
         suppressPush = true; applyCloudData(j.data); suppressPush = false;
         persistLocal();
       }
