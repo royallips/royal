@@ -623,7 +623,7 @@
 <div class="wrap">
   <div class="top-bar">
     <div class="month-nav"><button id="prevM">‹</button><span id="monthLabel"></span><button id="nextM">›</button></div>
-    <div style="font-size:9px;color:var(--ink-soft);text-align:right;line-height:1">v20260703j</div>
+    <div style="font-size:9px;color:var(--ink-soft);text-align:right;line-height:1">v20260703l</div>
     <div class="tabs" id="tabsBar">
       <button class="tab active" data-tab="rooms">部屋割り</button>
       <button class="tab" data-tab="roomslist">リスピラ</button>
@@ -1958,10 +1958,9 @@ function openMove(cid, ev, isNk2 = false) {
   dlgOpen("moveDlg"); renderRooms();
 }
 // 手動移動前に自動配置されているキャストの現在部屋をピン留め（上詰め防止）
-// dragCid/dragIsNk2 を渡すと中抜け反対スパンが溢れにいる場合も OVER にピン固定する
-function pinCurrentRooms(day, dragCid = null, dragIsNk2 = false) {
+function pinCurrentRooms(day) {
   const dk = dkey(day);
-  const { rooms, overRooms } = computeAssignment(day);
+  const { rooms } = computeAssignment(day);
   rooms.forEach((room, ri) => {
     room.forEach(w => {
       if (w.cid.startsWith("bw:") || w.cid.startsWith("nc:")) return;
@@ -1971,19 +1970,11 @@ function pinCurrentRooms(day, dragCid = null, dragIsNk2 = false) {
       }
     });
   });
-  // 中抜けドラッグ時: 反対スパンが溢れにある場合も OVER にピン固定（ドラッグで部屋が空いても動かない）
-  if (dragCid) {
-    const counterFk = dragIsNk2 ? dragCid : dragCid + ":nk2";
-    const inOver = overRooms.some(row => row.some(w => (w.seg2 ? w.cid + ":nk2" : w.cid) === counterFk));
-    if (inOver && (!state.assign[dk] || state.assign[dk][counterFk] !== "OVER")) {
-      setAssign(dk, counterFk, "OVER");
-    }
-  }
 }
 
 function assignRoom(cid, ri, isNk2 = false) {
   pushUndo(roomDay);
-  pinCurrentRooms(roomDay, cid, isNk2);
+  pinCurrentRooms(roomDay);
   const assignKey = isNk2 ? cid + ":nk2" : cid;
   setAssign(dkey(roomDay), assignKey, ri); save();
   dlgClose("moveDlg"); selBar = null; renderAll();
@@ -1994,7 +1985,7 @@ function assignRoom(cid, ri, isNk2 = false) {
 function moveCidToRoom(cid, ri, isNk2) {
   if (isLocked(roomDay)) return;
   pushUndo(roomDay);
-  pinCurrentRooms(roomDay, cid, isNk2);
+  pinCurrentRooms(roomDay);
   const assignKey = isNk2 ? cid + ":nk2" : cid;
   setAssign(dkey(roomDay), assignKey, (ri === "OVER") ? "OVER" : Number(ri));
   save(); selBar = null;
@@ -2096,6 +2087,7 @@ document.addEventListener("drop", e => {
 $("moveForceOver").onclick = () => {
   if (!moveTarget) return;
   pushUndo(moveTarget.day);
+  pinCurrentRooms(moveTarget.day); // 相手スパンを現在の部屋にピン固定してから溢れ送り
   const _mtKey = moveTarget.isNk2 ? moveTarget.cid + ":nk2" : moveTarget.cid;
   setAssign(dkey(moveTarget.day), _mtKey, "OVER"); save();
   dlgClose("moveDlg"); selBar = null; renderAll();
@@ -2103,6 +2095,7 @@ $("moveForceOver").onclick = () => {
 $("moveAuto").onclick = () => {
   if (moveTarget) {
     pushUndo(moveTarget.day);
+    pinCurrentRooms(moveTarget.day); // 相手スパンを現在の部屋にピン固定してから自動配置へ戻す
     const _maKey = moveTarget.isNk2 ? moveTarget.cid + ":nk2" : moveTarget.cid;
     const a = state.assign[dkey(moveTarget.day)]; if (a) delete a[_maKey]; save();
   }
