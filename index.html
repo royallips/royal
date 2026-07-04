@@ -595,23 +595,23 @@
     .sh-kake-zone.soukei .sh-kake-item { font-size: 8pt; }
     .sh-kake-label { font-size: 10pt; }
     .sh-kake-item { font-size: 12pt; padding: 0 5pt; }
-    /* シート本体: 高さ固定でテーブルを収める */
-    .sheet-view { padding: 0; display: flex; flex-direction: column; height: 166mm; overflow: hidden; width: 100%; box-sizing: border-box; }
-    .sheet-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; max-width: 100%; width: 100%; margin: 0; flex: 1; min-height: 0; overflow: hidden; box-sizing: border-box; }
-    .sheet-col { display: flex; flex-direction: column; overflow: hidden; }
+    /* シート本体: 行高さを固定mmで指定し、モバイル印刷でも1ページに収まるようにする */
+    .sheet-view { padding: 0; display: flex; flex-direction: column; height: auto; overflow: visible; width: 100%; box-sizing: border-box; }
+    .sheet-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; max-width: 100%; width: 100%; margin: 0; overflow: visible; box-sizing: border-box; break-inside: avoid; page-break-inside: avoid; }
+    .sheet-col { display: flex; flex-direction: column; overflow: visible; }
     .sheet-col-head { font-size: 11pt; font-weight: 900; padding: 2px 0; letter-spacing: .1em; flex-shrink: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .sheet-col.hiru .sheet-col-head { background: #fff0cc !important; color: #8a5a00; border: 1pt solid #c8a040; }
     .sheet-col.yoru .sheet-col-head { background: #e0eaff !important; color: #1a3a80; border: 1pt solid #7090d0; }
-    .sheet-table { flex: 1; width: 100%; height: 100%; border-collapse: collapse; table-layout: fixed; }
-    .sheet-table tbody { height: 100%; }
-    .sheet-table tbody tr { height: calc(100% / 13); overflow: hidden; }
+    .sheet-table { width: 100%; height: auto; border-collapse: collapse; table-layout: fixed; }
+    .sheet-table tbody { height: auto; }
+    .sheet-table tbody tr { height: 9mm; overflow: hidden; }
     .sh-rno { font-size: 11pt; font-weight: 900; text-align: center; padding: 0; border: 1pt solid #bbb; width: 18pt; color: #c03060; vertical-align: middle; white-space: nowrap; overflow: hidden; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .sh-names { padding: 0; border: 1pt solid #bbb; border-left: none; vertical-align: middle; overflow: hidden; max-height: calc(100% / 13); }
+    .sh-names { padding: 0; border: 1pt solid #bbb; border-left: none; vertical-align: middle; overflow: hidden; max-height: 9mm; }
     .sh-inner { display: flex; align-items: center; gap: 2pt; padding: 0; height: 100%; }
     .sh-side-l { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-align: left; }
     .sh-side-r { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-align: right; }
     .sh-side-r-only { margin-left: auto; flex: 1; text-align: right; }
-    .sh-name { font-size: 20pt; font-weight: 900; display: inline; white-space: nowrap; color: #000; line-height: 1; }
+    .sh-name { font-size: 17pt; font-weight: 900; display: inline; white-space: nowrap; color: #000; line-height: 1; }
     .sh-vip { font-size: 6pt; font-weight: 900; color: #8a6a00; background: #fbf1d2 !important; border: 0.5pt solid #f5c800; border-radius: 2pt; padding: 0 2pt; margin-left: 0; vertical-align: middle; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .sh-bousui { font-size: 6pt; font-weight: 900; color: #1565c0; background: #e3f2fd !important; border: 0.5pt solid #90caf9; border-radius: 2pt; padding: 0 2pt; margin-left: 0; vertical-align: middle; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .sh-badge-stack { display: inline-flex; flex-direction: column; gap: 0.3pt; vertical-align: middle; margin-left: 1pt; }
@@ -628,7 +628,7 @@
 <div class="wrap">
   <div class="top-bar">
     <div class="month-nav"><button id="prevM">‹</button><span id="monthLabel"></span><button id="nextM">›</button></div>
-    <div style="font-size:9px;color:var(--ink-soft);text-align:right;line-height:1">v20260704d</div>
+    <div style="font-size:9px;color:var(--ink-soft);text-align:right;line-height:1">v20260705b</div>
     <div class="tabs" id="tabsBar">
       <button class="tab active" data-tab="rooms">部屋割り</button>
       <button class="tab" data-tab="roomslist">リスピラ</button>
