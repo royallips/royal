@@ -423,6 +423,7 @@
   .sh-name small{font-size:.78em;color:var(--ink-soft);margin-left:1px;font-weight:600}
   .sh-name.over{color:var(--over)}
   .sh-vip{font-size:8px;font-weight:900;color:#8a6a00;background:#fbf1d2;border:1px solid #f5c800;border-radius:3px;padding:0 3px;margin-left:2px;vertical-align:middle;line-height:1.3}
+  .sh-bousui{font-size:8px;font-weight:900;color:#1565c0;background:#e3f2fd;border:1px solid #90caf9;border-radius:3px;padding:0 3px;margin-left:2px;vertical-align:middle;line-height:1.3}
   .view-toggle-btn{font-size:11px;padding:4px 10px;border-radius:8px;border:1.5px solid var(--pink);background:#fff;color:var(--pink);cursor:pointer;font-weight:700}
   .view-toggle-btn.active{background:var(--pink);color:#fff}
   /* スクショモード */
@@ -733,6 +734,8 @@
       <div class="seg" id="castSeg"><button data-g="hiru">昼の部</button><button data-g="yoru">夜の部</button></div></div>
     <div class="field"><label>ランク</label>
       <div class="seg" id="castRankSeg"><button data-r="">ロイヤル</button><button data-r="premier">プレミア</button><button data-r="vip">VIP</button></div></div>
+    <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--ink-soft);margin-top:6px">
+      <input type="checkbox" id="castBousui" style="width:auto"> 防水シート</label>
     <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--ink-soft);margin-top:6px">
       <input type="checkbox" id="castAutoOver" style="width:auto"> 不安定</label>
     <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--ink-soft);margin-top:6px">
@@ -1438,13 +1441,17 @@ function buildRoomsSheet(memo) {
     const c = state.casts.find(x => x.id === w.cid);
     return c && c.rank === "vip" ? `<span class="sh-vip">VIP</span>` : "";
   }
+  function bousuiTag(w) {
+    const c = state.casts.find(x => x.id === w.cid);
+    return c && c.bousui ? `<span class="sh-bousui">防水</span>` : "";
+  }
   function nameTagH(w, over) {
     const t = fmtHiru(w.sp);
-    return `<span class="sh-name${over ? ' over' : ''}">${w.name}さん${vipTag(w)}${t ? `<small>(${t})</small>` : ""}</span>`;
+    return `<span class="sh-name${over ? ' over' : ''}">${w.name}さん${vipTag(w)}${bousuiTag(w)}${t ? `<small>(${t})</small>` : ""}</span>`;
   }
   function nameTagY(w, over) {
     const t = fmtYoru(w.sp);
-    return `<span class="sh-name${over ? ' over' : ''}">${w.name}さん${vipTag(w)}${t ? `<small>(${t})</small>` : ""}</span>`;
+    return `<span class="sh-name${over ? ' over' : ''}">${w.name}さん${vipTag(w)}${bousuiTag(w)}${t ? `<small>(${t})</small>` : ""}</span>`;
   }
   let hiruRows = "", yoruRows = "";
   for (let ri = 0; ri < ROOMS; ri++) {
@@ -2847,6 +2854,7 @@ function openCastDlg(cid) {
     if (!c) return;
     $("castDlgTitle").textContent = "キャスト編集";
     $("castName").value = c.name; castGroup = c.group; castRank = c.rank || "";
+    $("castBousui").checked = !!c.bousui;
     $("castAutoOver").checked = !!c.autoOver;
     $("castSoukeiAri").checked = c.soukei === "ari";
     $("castSoukeiKakunin").checked = c.soukei === "kakunin";
@@ -2858,6 +2866,7 @@ function openCastDlg(cid) {
     castGroup = "hiru"; castRank = ""; $("castName").value = ""; $("castAutoOver").checked = false;
     $("castSoukeiAri").checked = false; $("castSoukeiKakunin").checked = false;
     $("castSoukeiPlace").value = "";
+    $("castBousui").checked = false;
     $("castFuryo").checked = false;
     $("castDelete").style.display = "none";
   }
@@ -2896,14 +2905,15 @@ $("castSave").onclick = () => {
   if (!n) { alert("名前を入力してください"); return; }
   const ao = $("castAutoOver").checked;
   const furyo = $("castFuryo").checked;
+  const bousui = $("castBousui").checked;
   const soukei = $("castSoukeiAri").checked ? "ari" : ($("castSoukeiKakunin").checked ? "kakunin" : "");
   const soukeiPlace = soukei ? val("castSoukeiPlace") : "";
   const now = Date.now();
   if (editCastId) {
     const c = state.casts.find(x => x.id === editCastId);
-    if (c) { c.name = n; c.group = castGroup; c.autoOver = ao; c.soukei = soukei; c.soukeiPlace = soukeiPlace; c.furyo = furyo; c.rank = castRank; c._updatedAt = now; }
+    if (c) { c.name = n; c.group = castGroup; c.autoOver = ao; c.soukei = soukei; c.soukeiPlace = soukeiPlace; c.furyo = furyo; c.bousui = bousui; c.rank = castRank; c._updatedAt = now; }
   } else {
-    state.casts.push({ id: id(), name: n, group: castGroup, availDates: "", canAsk: "", canAsk2: "", autoOver: ao, soukei: soukei, soukeiPlace: soukeiPlace, furyo: furyo, rank: castRank, _updatedAt: now });
+    state.casts.push({ id: id(), name: n, group: castGroup, availDates: "", canAsk: "", canAsk2: "", autoOver: ao, soukei: soukei, soukeiPlace: soukeiPlace, furyo: furyo, bousui: bousui, rank: castRank, _updatedAt: now });
   }
   save(); dlgClose("castDlg"); renderAll();
 };
