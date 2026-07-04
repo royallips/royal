@@ -624,7 +624,7 @@
 <div class="wrap">
   <div class="top-bar">
     <div class="month-nav"><button id="prevM">‹</button><span id="monthLabel"></span><button id="nextM">›</button></div>
-    <div style="font-size:9px;color:var(--ink-soft);text-align:right;line-height:1">v20260704c</div>
+    <div style="font-size:9px;color:var(--ink-soft);text-align:right;line-height:1">v20260704d</div>
     <div class="tabs" id="tabsBar">
       <button class="tab active" data-tab="rooms">部屋割り</button>
       <button class="tab" data-tab="roomslist">リスピラ</button>
@@ -1598,12 +1598,10 @@ function renderRooms() {
       absentList.map(c => { const t = fmtTime(rec(c.id, roomDay)); return `<span class="absent-item">${c.name}${t ? `<small>${t}</small>` : ""}</span>`; }).join("") + `</div>`
     : "";
 
-  // 本日の送迎（当日のみ。送迎設定があり、利用が24時(L)までのキャスト）
-  const tdy0 = new Date();
-  const isToday0 = tdy0.getFullYear() === cur.getFullYear() && tdy0.getMonth() === cur.getMonth() && tdy0.getDate() === roomDay;
-  let soukeiSbBody = `<span style="font-size:11px;color:var(--ink-soft)">本日は対象なし</span>`;
+  // 送迎（送迎設定があり、利用が24時(L)までのキャスト）
+  let soukeiSbBody = `<span style="font-size:11px;color:var(--ink-soft)">対象なし</span>`;
   let soukeiReqBtn = "";
-  if (isToday0) {
+  {
     const soukeiList = state.casts.filter(c => {
       if (c.soukei !== "ari" && c.soukei !== "kakunin") return false;
       const r = rec(c.id, roomDay);
