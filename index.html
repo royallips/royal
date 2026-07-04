@@ -2019,8 +2019,8 @@ function moveCidToRoomDay(cid, ri, day) {
   if (!state.assignList[dk]) state.assignList[dk] = {};
   // 移動前に全キャストの現在位置を固定（自動詰めを防ぐ）
   const { rooms, overRooms } = computeAssignmentByKey(dk, true);
-  rooms.forEach((arr, rIdx) => arr.forEach(w => { if (state.assignList[dk][w.cid] == null) state.assignList[dk][w.cid] = rIdx; }));
-  (overRooms || []).forEach(arr => arr.forEach(w => { if (state.assignList[dk][w.cid] == null) state.assignList[dk][w.cid] = "OVER"; }));
+  rooms.forEach((arr, rIdx) => arr.forEach(w => { const fk = w.seg2 ? w.cid + ":nk2" : w.cid; if (state.assignList[dk][fk] == null) state.assignList[dk][fk] = rIdx; }));
+  (overRooms || []).forEach(arr => arr.forEach(w => { const fk = w.seg2 ? w.cid + ":nk2" : w.cid; if (state.assignList[dk][fk] == null) state.assignList[dk][fk] = "OVER"; }));
   state.assignList[dk][cid] = (ri === "OVER") ? "OVER" : Number(ri);
   save();
   const scroller = document.querySelector("#view-roomslist .lf-scroll");
@@ -2208,10 +2208,12 @@ function renderRoomsList() {
     const dk2 = dkey(d);
     if (!state.assignList[dk2]) state.assignList[dk2] = {};
     rooms.forEach((arr, rIdx) => arr.forEach(w => {
-      if (!w.borrow && state.assignList[dk2][w.cid] == null) { state.assignList[dk2][w.cid] = rIdx; needSave = true; }
+      const fk = w.seg2 ? w.cid + ":nk2" : w.cid;
+      if (!w.borrow && state.assignList[dk2][fk] == null) { state.assignList[dk2][fk] = rIdx; needSave = true; }
     }));
     (overRooms || []).forEach(arr => arr.forEach(w => {
-      if (!w.borrow && state.assignList[dk2][w.cid] == null) { state.assignList[dk2][w.cid] = "OVER"; needSave = true; }
+      const fk = w.seg2 ? w.cid + ":nk2" : w.cid;
+      if (!w.borrow && state.assignList[dk2][fk] == null) { state.assignList[dk2][fk] = "OVER"; needSave = true; }
     }));
     const borrows = (state.borrows && state.borrows[dkey(d)]) ? state.borrows[dkey(d)] : [];
 
