@@ -2013,7 +2013,7 @@ function moveCidToRoom(cid, ri, isNk2) {
   save(); selBar = null;
   scrollPreserve(renderAll);
 }
-function moveCidToRoomDay(cid, ri, day) {
+function moveCidToRoomDay(cid, ri, day, isNk2 = false) {
   if (isLocked(day)) return;
   const dk = dkey(day);
   if (!state.assignList[dk]) state.assignList[dk] = {};
@@ -2021,7 +2021,8 @@ function moveCidToRoomDay(cid, ri, day) {
   const { rooms, overRooms } = computeAssignmentByKey(dk, true);
   rooms.forEach((arr, rIdx) => arr.forEach(w => { const fk = w.seg2 ? w.cid + ":nk2" : w.cid; if (state.assignList[dk][fk] == null) state.assignList[dk][fk] = rIdx; }));
   (overRooms || []).forEach(arr => arr.forEach(w => { const fk = w.seg2 ? w.cid + ":nk2" : w.cid; if (state.assignList[dk][fk] == null) state.assignList[dk][fk] = "OVER"; }));
-  state.assignList[dk][cid] = (ri === "OVER") ? "OVER" : Number(ri);
+  const assignKey = isNk2 ? cid + ":nk2" : cid;
+  state.assignList[dk][assignKey] = (ri === "OVER") ? "OVER" : Number(ri);
   save();
   const scroller = document.querySelector("#view-roomslist .lf-scroll");
   const savedLeft = scroller ? scroller.scrollLeft : 0;
@@ -2095,7 +2096,7 @@ document.addEventListener("drop", e => {
     const ri = track.dataset.ri;
     dragDay = null;
     e.preventDefault();
-    moveCidToRoomDay(cid, ri, day);
+    moveCidToRoomDay(cid, ri, day, dragIsNk2);
   } else {
     const track = e.target.closest(".rt-track[data-ri]");
     document.querySelectorAll(".rt-track.dropok").forEach(t => t.classList.remove("dropok"));
