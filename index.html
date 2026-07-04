@@ -213,7 +213,7 @@
   .cell.nakanuke{background:#fff}
   .cell.nakanuke .timeunder{font-size:9px;line-height:1.2;font-weight:800;text-align:center}
   .cell.nakanuke .nk-label{display:block;font-size:8px;font-weight:900;color:#e07800;letter-spacing:.5px}
-  .cell .note{display:block;font-size:9px;color:#b3679a;font-weight:700;margin-top:1px;white-space:normal;line-height:1.05}
+  .cell .note{display:block;font-size:9px;color:#b3679a;font-weight:700;margin-top:1px;white-space:nowrap;line-height:1.05;overflow:hidden}
   .cell .xmark{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;pointer-events:none}
   .cell .xmark.red{color:#e8253c;font-size:26px;text-shadow:0 0 1px #e8253c}
   .cell .xmark.black{display:block;font-size:0;width:40%;height:2px;background:#222;border-radius:1px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}
@@ -1440,11 +1440,11 @@ function buildRoomsSheet(memo) {
   }
   function nameTagH(w, over) {
     const t = fmtHiru(w.sp);
-    return `<span class="sh-name${over ? ' over' : ''}">${w.name}${vipTag(w)}${t ? `<small>(${t})</small>` : ""}</span>`;
+    return `<span class="sh-name${over ? ' over' : ''}">${w.name}さん${vipTag(w)}${t ? `<small>(${t})</small>` : ""}</span>`;
   }
   function nameTagY(w, over) {
     const t = fmtYoru(w.sp);
-    return `<span class="sh-name${over ? ' over' : ''}">${w.name}${vipTag(w)}${t ? `<small>(${t})</small>` : ""}</span>`;
+    return `<span class="sh-name${over ? ' over' : ''}">${w.name}さん${vipTag(w)}${t ? `<small>(${t})</small>` : ""}</span>`;
   }
   let hiruRows = "", yoruRows = "";
   for (let ri = 0; ri < ROOMS; ri++) {
@@ -2567,6 +2567,7 @@ function renderCalendarTable() {
   const st = $("calSubtabs"); if (st) st.style.cssText = calSearch ? "opacity:.4;pointer-events:none" : "";
   const note = $("calSearchNote"); if (note) note.textContent = calSearch ? `「${calSearch}」の検索結果` : "";
   updateCalSelUI();
+  setTimeout(fitCellContent, 0);
 }
 function renderCalendar() {
   $("view-calendar").innerHTML =
@@ -3324,6 +3325,22 @@ document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
 $("prevM").onclick = () => { cur.setMonth(cur.getMonth() - 1); roomDay = null; calUndoStack = []; exitCalSelMode(); renderAll(); };
 $("nextM").onclick = () => { cur.setMonth(cur.getMonth() + 1); roomDay = null; calUndoStack = []; exitCalSelMode(); renderAll(); };
 
+function fitCellContent() {
+  document.querySelectorAll(".cal .cell").forEach(cell => {
+    const tu = cell.querySelector(".timeunder");
+    if (tu) {
+      tu.style.fontSize = "";
+      let fs = 11.5;
+      while (tu.scrollWidth > tu.clientWidth + 1 && fs > 7) { fs -= 0.5; tu.style.fontSize = fs + "px"; }
+    }
+    const nt = cell.querySelector(".note");
+    if (nt) {
+      nt.style.fontSize = "";
+      let fs = 9;
+      while (nt.scrollWidth > nt.clientWidth + 1 && fs > 6) { fs -= 0.5; nt.style.fontSize = fs + "px"; }
+    }
+  });
+}
 function fitBarLabels() {
   document.querySelectorAll("#view-roomslist .lf-bar").forEach(bar => {
     const lbl = bar.querySelector(".lf-barlabel");
