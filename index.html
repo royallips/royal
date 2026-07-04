@@ -424,6 +424,7 @@
   .sh-name.over{color:var(--over)}
   .sh-vip{font-size:8px;font-weight:900;color:#8a6a00;background:#fbf1d2;border:1px solid #f5c800;border-radius:3px;padding:0 3px;margin-left:2px;vertical-align:middle;line-height:1.3}
   .sh-bousui{font-size:8px;font-weight:900;color:#1565c0;background:#e3f2fd;border:1px solid #90caf9;border-radius:3px;padding:0 3px;margin-left:2px;vertical-align:middle;line-height:1.3}
+  .sh-badge-stack{display:inline-flex;flex-direction:column;gap:1px;vertical-align:middle;margin-left:2px}
   .view-toggle-btn{font-size:11px;padding:4px 10px;border-radius:8px;border:1.5px solid var(--pink);background:#fff;color:var(--pink);cursor:pointer;font-weight:700}
   .view-toggle-btn.active{background:var(--pink);color:#fff}
   /* スクショモード */
@@ -603,15 +604,17 @@
     .sheet-col.yoru .sheet-col-head { background: #e0eaff !important; color: #1a3a80; border: 1pt solid #7090d0; }
     .sheet-table { flex: 1; width: 100%; height: 100%; border-collapse: collapse; table-layout: fixed; }
     .sheet-table tbody { height: 100%; }
-    .sheet-table tbody tr { height: 1px; }
-    .sh-rno { font-size: 11pt; font-weight: 900; text-align: center; padding: 0; border: 1pt solid #bbb; width: 18pt; color: #c03060; vertical-align: middle; white-space: nowrap; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .sh-names { padding: 0; border: 1pt solid #bbb; border-left: none; vertical-align: middle; }
+    .sheet-table tbody tr { height: calc(100% / 13); overflow: hidden; }
+    .sh-rno { font-size: 11pt; font-weight: 900; text-align: center; padding: 0; border: 1pt solid #bbb; width: 18pt; color: #c03060; vertical-align: middle; white-space: nowrap; overflow: hidden; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .sh-names { padding: 0; border: 1pt solid #bbb; border-left: none; vertical-align: middle; overflow: hidden; max-height: calc(100% / 13); }
     .sh-inner { display: flex; align-items: center; gap: 2pt; padding: 0; height: 100%; }
     .sh-side-l { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-align: left; }
     .sh-side-r { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-align: right; }
     .sh-side-r-only { margin-left: auto; flex: 1; text-align: right; }
     .sh-name { font-size: 20pt; font-weight: 900; display: inline; white-space: nowrap; color: #000; line-height: 1; }
-    .sh-vip { font-size: 6pt; font-weight: 900; color: #8a6a00; background: #fbf1d2 !important; border: 0.5pt solid #f5c800; border-radius: 2pt; padding: 0 2pt; margin-left: 1pt; vertical-align: middle; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .sh-vip { font-size: 6pt; font-weight: 900; color: #8a6a00; background: #fbf1d2 !important; border: 0.5pt solid #f5c800; border-radius: 2pt; padding: 0 2pt; margin-left: 0; vertical-align: middle; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .sh-bousui { font-size: 6pt; font-weight: 900; color: #1565c0; background: #e3f2fd !important; border: 0.5pt solid #90caf9; border-radius: 2pt; padding: 0 2pt; margin-left: 0; vertical-align: middle; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .sh-badge-stack { display: inline-flex; flex-direction: column; gap: 0.3pt; vertical-align: middle; margin-left: 1pt; }
     .sh-name+.sh-name { margin-left: 3pt; }
     .sh-name small { font-size: .75em; font-weight: 700; color: #333; margin-left: 1pt; }
     .sheet-memo-row { flex-shrink: 0; margin-top: 1mm; }
@@ -1437,21 +1440,20 @@ function buildRoomsSheet(memo) {
     if (!sp) return "";
     return `${fH(sp[0])}-${fH(sp[1])}`;
   }
-  function vipTag(w) {
+  function badgeStack(w) {
     const c = state.casts.find(x => x.id === w.cid);
-    return c && c.rank === "vip" ? `<span class="sh-vip">VIP</span>` : "";
-  }
-  function bousuiTag(w) {
-    const c = state.casts.find(x => x.id === w.cid);
-    return c && c.bousui ? `<span class="sh-bousui">防水</span>` : "";
+    const v = c && c.rank === "vip" ? `<span class="sh-vip">VIP</span>` : "";
+    const b = c && c.bousui ? `<span class="sh-bousui">防水</span>` : "";
+    if (v && b) return `<span class="sh-badge-stack">${v}${b}</span>`;
+    return v + b;
   }
   function nameTagH(w, over) {
     const t = fmtHiru(w.sp);
-    return `<span class="sh-name${over ? ' over' : ''}">${w.name}さん${vipTag(w)}${bousuiTag(w)}${t ? `<small>(${t})</small>` : ""}</span>`;
+    return `<span class="sh-name${over ? ' over' : ''}">${w.name}${badgeStack(w)}${t ? `<small>(${t})</small>` : ""}</span>`;
   }
   function nameTagY(w, over) {
     const t = fmtYoru(w.sp);
-    return `<span class="sh-name${over ? ' over' : ''}">${w.name}さん${vipTag(w)}${bousuiTag(w)}${t ? `<small>(${t})</small>` : ""}</span>`;
+    return `<span class="sh-name${over ? ' over' : ''}">${w.name}${badgeStack(w)}${t ? `<small>(${t})</small>` : ""}</span>`;
   }
   let hiruRows = "", yoruRows = "";
   for (let ri = 0; ri < ROOMS; ri++) {
