@@ -628,7 +628,7 @@
 <div class="wrap">
   <div class="top-bar">
     <div class="month-nav"><button id="prevM">‹</button><span id="monthLabel"></span><button id="nextM">›</button></div>
-    <div style="font-size:9px;color:var(--ink-soft);text-align:right;line-height:1">v20260705c</div>
+    <div style="font-size:9px;color:var(--ink-soft);text-align:right;line-height:1">v20260705d</div>
     <div class="tabs" id="tabsBar">
       <button class="tab active" data-tab="rooms">部屋割り</button>
       <button class="tab" data-tab="roomslist">リスピラ</button>
@@ -2014,7 +2014,6 @@ function moveCidToRoom(cid, ri, isNk2) {
   scrollPreserve(renderAll);
 }
 function moveCidToRoomDay(cid, ri, day, isNk2 = false) {
-  if (isLocked(day)) return;
   const dk = dkey(day);
   if (!state.assignList[dk]) state.assignList[dk] = {};
   // 移動前に全キャストの現在位置を固定（自動詰めを防ぐ）
@@ -2046,7 +2045,7 @@ document.addEventListener("dragstart", e => {
   } else {
     const srcTrack = bar.closest(".lf-track[data-day]");
     dragDay = srcTrack ? parseInt(srcTrack.dataset.day) : null;
-    if (!dragDay || isLocked(dragDay)) { e.preventDefault(); return; }
+    if (!dragDay) { e.preventDefault(); return; }
   }
   dragCid = bar.dataset.cid; dragMoved = true; dragIsNk2 = bar.dataset.nk2 === "1";
   bar.classList.add("dragging");
