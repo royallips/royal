@@ -655,6 +655,10 @@
         <button class="btn ghost" id="cloudPullBtn">今すぐ最新を取得</button>
         <button class="btn ghost" id="cloudHelpBtn">使い方</button>
       </div>
+      <div style="margin-top:10px;padding-top:10px;border-top:1px solid #eee">
+        <div style="font-size:11px;color:#888;margin-bottom:6px">⚠ 緊急時のみ：この端末のデータをサーバーへ強制送信（サーバー側のデータを上書きします）</div>
+        <button class="btn" id="cloudForcePushBtn" style="background:#d97706;border-color:#b45309">この端末のデータをサーバーへ強制送信</button>
+      </div>
       <div id="cloudStatus" style="margin-top:8px;font-size:12px;font-weight:700"></div>
     </div>
   </div>
@@ -1112,6 +1116,28 @@ async function connectCloud() {
         cloudStatus("この端末のデータを初期登録しました ✓", "#2d8a4a");
       }
       startCloudSync();
+    } else {
+      cloudStatus("接続失敗", "#d12");
+    }
+  } catch (e) {
+    cloudStatus("オフライン（接続できません）", "#d12");
+  }
+}
+
+async function forceCloudPush() {
+  if (!cloudUrl || !cloudPass) { alert("URLとパスワードを先に入力してください"); return; }
+  if (!confirm("この端末のデータをサーバーへ強制送信します。\nサーバー側のデータは上書きされます。\n本当に実行しますか？")) return;
+  cloudStatus("サーバーの状態を確認中…", "#c77");
+  try {
+    const res = await fetch(cloudGetUrl("action=get&rev=0&_t=" + Date.now()), { method: "GET" });
+    const j = await res.json();
+    if (j && j.error === "auth") { cloudStatus("合言葉が違います（送信できません）", "#d12"); return; }
+    if (j && j.ok) {
+      lastSyncedRev = j.rev || 0;
+      localStorage.setItem(CLOUD_REV_KEY, lastSyncedRev);
+      await doCloudPush();
+      startCloudSync();
+      cloudStatus("この端末のデータをサーバーへ送信しました ✓", "#2d8a4a");
     } else {
       cloudStatus("接続失敗", "#d12");
     }
@@ -2694,6 +2720,12 @@ function renderSettings() {
   if (cp) cp.onclick = () => { if (cloudUrl) { lastSyncedRev = 0; cloudPull(); } else alert("先にURLを設定してください"); };
   const ch = $("cloudHelpBtn");
   if (ch) ch.onclick = () => dlgOpen("cloudHelpDlg");
+  const cf = $("cloudForcePushBtn");
+  if (cf) cf.onclick = () => {
+    setCloudUrl(val("cloudUrlInput"));
+    setCloudPass(val("cloudPassInput"));
+    forceCloudPush();
+  };
 }
 document.addEventListener("click", e => {
   const t = e.target.closest(".del");
