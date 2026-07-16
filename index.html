@@ -628,7 +628,7 @@
 <div class="wrap">
   <div class="top-bar">
     <div class="month-nav"><button id="prevM">‹</button><span id="monthLabel"></span><button id="nextM">›</button></div>
-    <div style="font-size:9px;color:var(--ink-soft);text-align:right;line-height:1">v20260705d</div>
+    <div style="font-size:9px;color:var(--ink-soft);text-align:right;line-height:1">v20260705e</div>
     <div class="tabs" id="tabsBar">
       <button class="tab active" data-tab="rooms">部屋割り</button>
       <button class="tab" data-tab="roomslist">リスピラ</button>
@@ -2060,7 +2060,7 @@ function addLend(bucket, obj, day) {
 }
 function removeLend(bucket, i, day) {
   const d = day != null ? day : roomDay;
-  if (isLocked(d)) { alert("部屋割りが確定（ロック）されています。解除してから操作してください。"); return; }
+  if (day == null && isLocked(d)) { alert("部屋割りが確定（ロック）されています。解除してから操作してください。"); return; }
   const k = dkey(d);
   if (state[bucket][k]) { state[bucket][k].splice(i, 1); save(); renderAll(); }
 }
@@ -2076,7 +2076,7 @@ function setLendType(type) {
 }
 function openLend(mode, day) {
   lendTargetDay = day != null ? day : roomDay;
-  if (isLocked(lendTargetDay)) { alert("部屋割りが確定（ロック）されています。解除してから操作してください。"); return; }
+  if (day == null && isLocked(lendTargetDay)) { alert("部屋割りが確定（ロック）されています。解除してから操作してください。"); return; }
   lendMode = mode; lendStore = null; lendIsNewcomer = false;
   const isLend = mode === "lend";
   $("lendTitle").textContent = isLend ? "他店部屋抑え" : "掛け持ちor入店";
