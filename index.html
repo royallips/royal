@@ -628,7 +628,7 @@
 <div class="wrap">
   <div class="top-bar">
     <div class="month-nav"><button id="prevM">‹</button><span id="monthLabel"></span><button id="nextM">›</button></div>
-    <div style="font-size:9px;color:var(--ink-soft);text-align:right;line-height:1">v20260716b</div>
+    <div style="font-size:9px;color:var(--ink-soft);text-align:right;line-height:1">v20260716c</div>
     <div class="tabs" id="tabsBar">
       <button class="tab active" data-tab="rooms">部屋割り</button>
       <button class="tab" data-tab="roomslist">リスピラ</button>
@@ -796,6 +796,7 @@
       <button data-st="M">M</button><button data-st="T">T</button><button data-st="E">E</button><button data-st="L">L</button><button data-st="MR">MR</button><button data-st="F">F</button>
     </div>
     <div class="field" id="lendNameField" style="margin-top:8px"><label id="lendNameLabel">名前（わかる場合のみ）</label><input id="lendName" placeholder="例 あおい"></div>
+    <div class="field" id="lendMemoField" style="margin-top:8px;display:none"><label>メモ（任意）</label><input id="lendMemo" placeholder="例 外国人、2名など"></div>
     <div class="time-row" style="margin-top:8px">
       <div class="field"><label>開始</label>
         <div style="display:flex;gap:6px">
@@ -1457,7 +1458,7 @@ function buildRoomsSheet(memo) {
     return `<span class="sh-kake-zone ${cls}"><span class="sh-kake-label">${label}</span>${itemsHtml}</span>`;
   }
   const lendZone = shZone("他店部屋", shLends.map(l => `${l.store} ${tL(l.start)}-${tL(l.end)}`), "lend");
-  const borrowZone = shZone("掛け持ちor入店", shBorrows.map(l => l.newcomer ? `入店予定 ${l.name || ""} ${tL(l.start)}-${tL(l.end)}` : `${l.store}${l.name ? " "+l.name : ""} ${tL(l.start)}-${tL(l.end)}`), "borrow");
+  const borrowZone = shZone("掛け持ちor入店", shBorrows.map(l => l.newcomer ? `入店予定${l.name ? ' '+l.name : ''} ${tL(l.start)}-${tL(l.end)}` : `${l.store}${l.name ? " "+l.name : ""} ${tL(l.start)}-${tL(l.end)}`), "borrow");
   const overZone = shZone("溢れ", shOverWorkers.map(w => `${w.name} ${fmtSp(w.sp)}`), "over");
   // 送迎
   const stMap = (state.soukeiStatus && state.soukeiStatus[dk]) || {};
@@ -1610,7 +1611,7 @@ function renderRooms() {
   const lendSbItems = lends.map((l, i) => { const c = l.cid ? state.casts.find(x => x.id === l.cid) : null; const nm = c ? c.name : (l.name || "");
     return `<span class="lf-hi-item">${l.store}${nm ? " "+nm : ""} ${tL(l.start)}-${tL(l.end)}<span class="del" onclick="removeLend('lends',${i})">×</span></span>`; }).join("");
   const borrowSbItems = borrows.map((l, i) => l.newcomer
-    ? `<span class="lf-hi-item" style="background:rgba(42,154,74,.1);color:#1a7a3a">入店 ${esc(l.name)} ${tL(l.start)}-${tL(l.end)}<span class="del" onclick="removeLend('borrows',${i})">×</span></span>`
+    ? `<span class="lf-hi-item" style="background:rgba(42,154,74,.1);color:#1a7a3a">入店予定${l.name ? ' '+esc(l.name) : ''} ${tL(l.start)}-${tL(l.end)}<span class="del" onclick="removeLend('borrows',${i})">×</span></span>`
     : `<span class="lf-hi-item borrow">${l.store}${l.name ? " "+esc(l.name) : ""} ${tL(l.start)}-${tL(l.end)}<span class="del" onclick="removeLend('borrows',${i})">×</span></span>`).join("");
 
   const overWorkers = overRooms.flatMap(arr => arr.filter(w => !w.borrow));
@@ -2054,7 +2055,8 @@ function setLendType(type) {
   $("lendTypeNewcomer").className = "btn " + (lendIsNewcomer ? "borrow" : "ghost");
   $("lendStoreLabel").style.display = lendIsNewcomer ? "none" : "";
   $("lendStoreGrid").style.display = lendIsNewcomer ? "none" : "";
-  $("lendNameLabel").textContent = lendIsNewcomer ? "名前" : "名前（わかる場合のみ）";
+  $("lendNameField").style.display = lendIsNewcomer ? "none" : "";
+  $("lendMemoField").style.display = lendIsNewcomer ? "" : "none";
   if (lendIsNewcomer) { lendStore = null; document.querySelectorAll("#lendStoreGrid button").forEach(x => x.classList.remove("sel")); }
 }
 function openLend(mode, day) {
@@ -2074,7 +2076,7 @@ function openLend(mode, day) {
     };
   });
   const saveBtn = $("lendSave"); saveBtn.className = "btn " + (isLend ? "lend" : "borrow");
-  $("lendName").value = "";
+  $("lendName").value = ""; $("lendMemo").value = "";
   setTime("lendStart", ""); setTime("lendEnd", "");
   dlgOpen("lendDlg");
 }
@@ -2083,13 +2085,13 @@ $("lendSave").onclick = () => {
   const s = val("lendStart"); if (!s) { alert("開始時間を入力してください"); return; }
   const e = val("lendEnd") || "L";
   const nm = val("lendName");
+  const memo = val("lendMemo");
   if (lendMode === "lend") {
     if (!lendStore) { alert("加盟店を選んでください"); return; }
     addLend("lends", { store: lendStore, start: s, end: e, name: nm }, td);
     save();
   } else if (lendIsNewcomer) {
-    if (!nm) { alert("名前を入力してください"); return; }
-    addLend("borrows", { store: null, start: s, end: e, name: nm, newcomer: true }, td);
+    addLend("borrows", { store: null, start: s, end: e, name: memo, newcomer: true }, td);
   } else {
     if (!lendStore) { alert("加盟店を選んでください"); return; }
     addLend("borrows", { store: lendStore, start: s, end: e, name: nm }, td);
@@ -2199,7 +2201,7 @@ function renderRoomsList() {
     const lendItems = dLends.map((l, i) => { const c = l.cid ? state.casts.find(x => x.id === l.cid) : null; const nm = c ? c.name : (l.name || l.store);
       return `<span class="lf-hi-item">${nm} ${tL(l.start)}-${tL(l.end)}<span class="del" onclick="event.stopPropagation();removeLend('lends',${i},${d})">×</span></span>`; }).join("");
     const borrowItems = dBorrows.map((l, i) => l.newcomer
-      ? `<span class="lf-hi-item" style="background:rgba(42,154,74,.1);color:#1a7a3a">入店 ${esc(l.name)} ${tL(l.start)}-${tL(l.end)}<span class="del" onclick="event.stopPropagation();removeLend('borrows',${i},${d})">×</span></span>`
+      ? `<span class="lf-hi-item" style="background:rgba(42,154,74,.1);color:#1a7a3a">入店予定${l.name ? ' '+esc(l.name) : ''} ${tL(l.start)}-${tL(l.end)}<span class="del" onclick="event.stopPropagation();removeLend('borrows',${i},${d})">×</span></span>`
       : `<span class="lf-hi-item borrow">${l.name ? esc(l.name) : l.store} ${tL(l.start)}-${tL(l.end)}<span class="del" onclick="event.stopPropagation();removeLend('borrows',${i},${d})">×</span></span>`).join("");
     const lendHead = `<span class="lf-head-kake lend" onclick="event.stopPropagation()"><span class="lf-kake-label">他店部屋</span>${lendItems}<button class="lf-hi-add lend" onclick="openLend('lend',${d})">＋</button></span>`;
     const borrowHead = `<span class="lf-head-kake borrow" onclick="event.stopPropagation()"><span class="lf-kake-label">掛け持ちor入店</span>${borrowItems}<button class="lf-hi-add borrow" onclick="openLend('borrow',${d})">＋</button></span>`;
