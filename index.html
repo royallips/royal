@@ -2444,8 +2444,8 @@ function cellInner(rc) {
       return { inner: "", cls: "" };
   }
 }
-function askMark(v) { return v === "o" ? "○" : v === "t" ? "△" : v === "x" ? "✕" : v === "k" ? "交" : "−"; }
-function nextAsk(v) { return v === "o" ? "t" : v === "t" ? "x" : v === "x" ? "k" : v === "k" ? "" : "o"; }
+function askMark(v) { return v === "o" ? "○" : v === "t" ? "△" : v === "x" ? "✕" : "−"; }
+function nextAsk(v) { return v === "o" ? "t" : v === "t" ? "x" : v === "x" ? "" : "o"; }
 function getCalAsk(cid, col) {
   const c = state.casts.find(x => x.id === cid); if (!c) return "";
   if (col === 2) return (c.canAsk2Mon === ym(cur)) ? (c.canAsk2 || "") : "";
