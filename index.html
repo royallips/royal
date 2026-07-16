@@ -655,10 +655,6 @@
         <button class="btn ghost" id="cloudPullBtn">今すぐ最新を取得</button>
         <button class="btn ghost" id="cloudHelpBtn">使い方</button>
       </div>
-      <div style="margin-top:10px;padding-top:10px;border-top:1px solid #eee">
-        <div style="font-size:11px;color:#888;margin-bottom:6px">⚠ 緊急時のみ：この端末のデータをサーバーへ強制送信（サーバー側のデータを上書きします）</div>
-        <button class="btn" id="cloudForcePushBtn" style="background:#d97706;border-color:#b45309">この端末のデータをサーバーへ強制送信</button>
-      </div>
       <div id="cloudStatus" style="margin-top:8px;font-size:12px;font-weight:700"></div>
     </div>
   </div>
@@ -1124,41 +1120,6 @@ async function connectCloud() {
   }
 }
 
-async function forceCloudPush() {
-  if (!cloudUrl || !cloudPass) { alert("URLとパスワードを先に入力してください"); return; }
-  if (!confirm("この端末のデータをサーバーへ強制送信します。\nサーバー側のデータは上書きされます。\n本当に実行しますか？")) return;
-  cloudStatus("サーバーの状態を確認中…", "#c77");
-  try {
-    // サーバーの現在のrevを取得（データは適用しない）
-    const getRes = await fetch(cloudGetUrl("action=get&rev=0&_t=" + Date.now()), { method: "GET" });
-    const getJ = await getRes.json();
-    if (getJ && getJ.error === "auth") { cloudStatus("合言葉が違います（送信できません）", "#d12"); return; }
-    if (!getJ || !getJ.ok) { cloudStatus("接続失敗", "#d12"); return; }
-    // ローカルデータをそのままPOST（doCloudPushを使わず直接送信してマージ上書きを防ぐ）
-    cloudStatus("送信中…", "#c77");
-    for (const k in state.records) { if (state.records[k] === undefined) delete state.records[k]; }
-    const body = { action: "save", rev: getJ.rev || 0, data: state, ts: Date.now(), pass: cloudPass };
-    const pushRes = await fetch(cloudUrl, {
-      method: "POST",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify(body)
-    });
-    const pushJ = await pushRes.json();
-    if (pushJ && pushJ.ok) {
-      // マージ応答は無視してローカルデータを維持
-      lastSyncedRev = pushJ.rev;
-      localStorage.setItem(CLOUD_REV_KEY, lastSyncedRev);
-      startCloudSync();
-      cloudStatus("この端末のデータをサーバーへ送信しました ✓", "#2d8a4a");
-    } else if (pushJ && pushJ.error === "auth") {
-      cloudStatus("合言葉が違います（送信できません）", "#d12");
-    } else {
-      cloudStatus("送信失敗: " + JSON.stringify(pushJ), "#d12");
-    }
-  } catch (e) {
-    cloudStatus("エラー: " + (e && e.message ? e.message : String(e)), "#d12");
-  }
-}
 
 /* ===== 4. 汎用ヘルパー =============================================== */
 function id() { return Math.random().toString(36).slice(2, 9); }
@@ -2734,12 +2695,6 @@ function renderSettings() {
   if (cp) cp.onclick = () => { if (cloudUrl) { lastSyncedRev = 0; cloudPull(); } else alert("先にURLを設定してください"); };
   const ch = $("cloudHelpBtn");
   if (ch) ch.onclick = () => dlgOpen("cloudHelpDlg");
-  const cf = $("cloudForcePushBtn");
-  if (cf) cf.onclick = () => {
-    setCloudUrl(val("cloudUrlInput"));
-    setCloudPass(val("cloudPassInput"));
-    forceCloudPush();
-  };
 }
 document.addEventListener("click", e => {
   const t = e.target.closest(".del");
