@@ -628,7 +628,7 @@
 <div class="wrap">
   <div class="top-bar">
     <div class="month-nav"><button id="prevM">‹</button><span id="monthLabel"></span><button id="nextM">›</button></div>
-    <div style="font-size:9px;color:var(--ink-soft);text-align:right;line-height:1">v20260705e</div>
+    <div style="font-size:9px;color:var(--ink-soft);text-align:right;line-height:1">v20260716a</div>
     <div class="tabs" id="tabsBar">
       <button class="tab active" data-tab="rooms">部屋割り</button>
       <button class="tab" data-tab="roomslist">リスピラ</button>
@@ -1564,8 +1564,8 @@ function renderRooms() {
   let hiruN = 0, yoruN = 0, total = 0;
   state.casts.forEach(c => { if (span(rec(c.id, roomDay))) { total++; if (c.group === "hiru") hiruN++; else yoruN++; } });
   const overBanner = "";
-  const locked = isLocked(roomDay);
-  const lockBanner = locked ? `<div class="lock-banner">🔒 部屋割り確定済みです。お部屋の移動はロックされています。</div>` : "";
+  const locked = false;
+  const lockBanner = "";
   const dayEvent = state.events[dkey(roomDay)] || "";
   const eventTag = dayEvent ? `<span class="rt-event">${esc(dayEvent)}</span>` : "";
 
@@ -1623,13 +1623,12 @@ function renderRooms() {
     `<div class="panel">
       <div class="bar" style="margin:0 0 10px">
         ${roomViewMode === 'sheet' ? `<button class="lock-toggle off" onclick="enterSSMode()" style="background:#4caf50;border-color:#4caf50;color:#fff">🖨 印刷</button>` : ''}
-        <button class="lock-toggle ${locked ? 'on' : 'off'}" id="lockBtn">${locked ? '🔒 確定済み' : '🔓 未確定'}</button>
         <div class="roomday-nav"><button onclick="changeRoomDay(-1)">‹</button>
           <input type="date" id="roomDateInput" value="${dateStr}"><button onclick="changeRoomDay(1)">›</button></div>
         <span style="font-weight:800">${m + 1}/${roomDay}（${WK[new Date(y, m, roomDay).getDay()]}）　利用${total}名</span>${eventTag}
         <span style="font-size:12px;font-weight:700"><span class="tag hiru">昼 ${hiruN}名</span> <span class="tag yoru">夜 ${yoruN}名</span></span>
-        <button class="btn sm" id="optimizeBtn" ${locked ? "disabled" : ""} style="margin-left:auto">最適に並べ替え</button>
-        <button class="btn ghost sm" id="undoBtn" ${(canUndo() && !locked) ? "" : "disabled"}>前に戻す</button>
+        <button class="btn sm" id="optimizeBtn" style="margin-left:auto">最適に並べ替え</button>
+        <button class="btn ghost sm" id="undoBtn" ${canUndo() ? "" : "disabled"}>前に戻す</button>
         <button class="view-toggle-btn${roomViewMode === 'sheet' ? ' active' : ''}" id="viewToggleBtn">切り替え</button>
       </div>
       ${lockBanner}
@@ -1652,9 +1651,8 @@ function renderRooms() {
     cur = new Date(d.getFullYear(), d.getMonth(), 1); roomDay = d.getDate(); renderAll();
   };
   const dm = $("dayMemo"); if (dm) dm.onchange = e => { state.memos[dkey(roomDay)] = e.target.value; save(); };
-  const ob = $("optimizeBtn"); if (ob) ob.onclick = () => { if (!isLocked(roomDay)) optimizeRooms(); };
-  const ub = $("undoBtn"); if (ub) ub.onclick = () => { if (!isLocked(roomDay)) doUndo(); };
-  const lb = $("lockBtn"); if (lb) lb.onclick = () => toggleLock(roomDay);
+  const ob = $("optimizeBtn"); if (ob) ob.onclick = () => optimizeRooms();
+  const ub = $("undoBtn"); if (ub) ub.onclick = () => doUndo();
   const srb = $("soukeiReqBtn"); if (srb) srb.onclick = () => buildSoukeiRequest();
   const vtb = $("viewToggleBtn"); if (vtb) vtb.onclick = () => { roomViewMode = roomViewMode === "timeline" ? "sheet" : "timeline"; renderRooms(); };
   if (roomViewMode === "sheet") setTimeout(fitSheetNames, 80);
@@ -1675,25 +1673,14 @@ function adjustBarFontSizes() {
   });
 }
 
-// --- 部屋割り確定（ロック） ---
-function isLocked(day) { return !!(state.locks && state.locks[dkey(day)]); }
 function isRoomLocked(day, ri) { return !!(state.roomLocks && state.roomLocks[dkey(day)] && state.roomLocks[dkey(day)][String(ri)]); }
 function toggleRoomLock(ri) {
-  if (isLocked(roomDay)) return; // 日全体ロック中は部屋ロック操作不可
   const k = dkey(roomDay);
   if (!state.roomLocks[k]) state.roomLocks[k] = {};
   if (state.roomLocks[k][String(ri)]) delete state.roomLocks[k][String(ri)];
   else state.roomLocks[k][String(ri)] = true;
   save(); scrollPreserve(renderRooms);
 }
-function toggleLock(day) {
-  if (!state.locks) state.locks = {};
-  if (state.locks[dkey(day)]) delete state.locks[dkey(day)];
-  else state.locks[dkey(day)] = true;
-  save(); selBar = null;
-  scrollPreserve(renderAll);
-}
-
 // --- 送迎（要確認の必要/不要切り替え・依頼作成） ---
 // 要確認 → 必要 → 不要 → 要確認 を循環（日ごと）
 function cycleSoukei(cid) {
@@ -1855,7 +1842,6 @@ $("soukeiReqCopy").onclick = () => {
 function openMove(cid, ev, isNk2 = false) {
   if (ev) ev.stopPropagation();
   if (dragMoved) return; // ドラッグ直後のクリックは無視
-  if (isLocked(roomDay)) { alert("部屋割りが確定（ロック）されています。解除してから移動してください。"); return; }
   moveTarget = { cid, day: roomDay, isNk2 }; selBar = cid;
   const isBw = String(cid).startsWith("bw:");
   const isSpecial = isBw;
@@ -1933,7 +1919,6 @@ function assignRoom(cid, ri, isNk2 = false) {
 /* --- ドラッグ＆ドロップで部屋移動 --- */
 // ri に number（部屋番号）または "OVER"（溢れ）を渡して移動。ダイアログは閉じない。
 function moveCidToRoom(cid, ri, isNk2) {
-  if (isLocked(roomDay)) return;
   pushUndo(roomDay);
   pinCurrentRooms(roomDay);
   const assignKey = isNk2 ? cid + ":nk2" : cid;
@@ -1965,7 +1950,6 @@ document.addEventListener("dragstart", e => {
   const bar = rtBar || lfBar;
   if (!bar || !bar.dataset.cid) return;
   if (rtBar) {
-    if (isLocked(roomDay)) { e.preventDefault(); return; }
     const srcTrack = bar.closest(".rt-track[data-ri]");
     const srcRi = srcTrack?.dataset.ri;
     if (srcRi && srcRi !== "OVER" && isRoomLocked(roomDay, srcRi)) { e.preventDefault(); return; }
@@ -2060,7 +2044,6 @@ function addLend(bucket, obj, day) {
 }
 function removeLend(bucket, i, day) {
   const d = day != null ? day : roomDay;
-  if (day == null && isLocked(d)) { alert("部屋割りが確定（ロック）されています。解除してから操作してください。"); return; }
   const k = dkey(d);
   if (state[bucket][k]) { state[bucket][k].splice(i, 1); save(); renderAll(); }
 }
@@ -2076,7 +2059,6 @@ function setLendType(type) {
 }
 function openLend(mode, day) {
   lendTargetDay = day != null ? day : roomDay;
-  if (day == null && isLocked(lendTargetDay)) { alert("部屋割りが確定（ロック）されています。解除してから操作してください。"); return; }
   lendMode = mode; lendStore = null; lendIsNewcomer = false;
   const isLend = mode === "lend";
   $("lendTitle").textContent = isLend ? "他店部屋抑え" : "掛け持ちor入店";
