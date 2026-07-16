@@ -628,7 +628,7 @@
 <div class="wrap">
   <div class="top-bar">
     <div class="month-nav"><button id="prevM">‹</button><span id="monthLabel"></span><button id="nextM">›</button></div>
-    <div style="font-size:9px;color:var(--ink-soft);text-align:right;line-height:1">v20260716d</div>
+    <div style="font-size:9px;color:var(--ink-soft);text-align:right;line-height:1">v20260716e</div>
     <div class="tabs" id="tabsBar">
       <button class="tab active" data-tab="rooms">部屋割り</button>
       <button class="tab" data-tab="roomslist">リスピラ</button>
@@ -1458,7 +1458,7 @@ function buildRoomsSheet(memo) {
     return `<span class="sh-kake-zone ${cls}"><span class="sh-kake-label">${label}</span>${itemsHtml}</span>`;
   }
   const lendZone = shZone("他店部屋", shLends.map(l => `${l.store} ${tL(l.start)}-${tL(l.end)}`), "lend");
-  const borrowZone = shZone("掛け持ちor入店", shBorrows.map(l => l.newcomer ? `入店予定${l.name ? ' '+l.name : ''} ${tL(l.start)}-${tL(l.end)}` : `${l.store}${l.name ? " "+l.name : ""} ${tL(l.start)}-${tL(l.end)}`), "borrow");
+  const borrowZone = shZone("掛け持ちor入店", shBorrows.map(l => l.newcomer ? `${l.name ? l.name+' ' : ''}入店予定 ${tL(l.start)}-${tL(l.end)}` : `${l.store}${l.name ? " "+l.name : ""} ${tL(l.start)}-${tL(l.end)}`), "borrow");
   const overZone = shZone("溢れ", shOverWorkers.map(w => `${w.name} ${fmtSp(w.sp)}`), "over");
   // 送迎
   const stMap = (state.soukeiStatus && state.soukeiStatus[dk]) || {};
@@ -1611,7 +1611,7 @@ function renderRooms() {
   const lendSbItems = lends.map((l, i) => { const c = l.cid ? state.casts.find(x => x.id === l.cid) : null; const nm = c ? c.name : (l.name || "");
     return `<span class="lf-hi-item">${l.store}${nm ? " "+nm : ""} ${tL(l.start)}-${tL(l.end)}<span class="del" onclick="removeLend('lends',${i})">×</span></span>`; }).join("");
   const borrowSbItems = borrows.map((l, i) => l.newcomer
-    ? `<span class="lf-hi-item" style="background:rgba(42,154,74,.1);color:#1a7a3a">入店予定${l.name ? ' '+esc(l.name) : ''} ${tL(l.start)}-${tL(l.end)}<span class="del" onclick="removeLend('borrows',${i})">×</span></span>`
+    ? `<span class="lf-hi-item" style="background:rgba(42,154,74,.1);color:#1a7a3a">${l.name ? esc(l.name)+' ' : ''}入店予定 ${tL(l.start)}-${tL(l.end)}<span class="del" onclick="removeLend('borrows',${i})">×</span></span>`
     : `<span class="lf-hi-item borrow">${l.store}${l.name ? " "+esc(l.name) : ""} ${tL(l.start)}-${tL(l.end)}<span class="del" onclick="removeLend('borrows',${i})">×</span></span>`).join("");
 
   const overWorkers = overRooms.flatMap(arr => arr.filter(w => !w.borrow));
@@ -2160,7 +2160,7 @@ function renderRoomsList() {
         const rankCls = cobj && cobj.rank === "premier" ? " rank-premier" : cobj && cobj.rank === "vip" ? " rank-vip" : "";
         const nameCls = cobj && (cobj.furyo || cobj.autoOver) ? " furyo-name" : "";
         if (w.borrow && w.newcomer)
-          return `<div class="lf-bar newcomer${rankCls}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name} ${fmtSp(w.sp)}（入店予定）"><span class="lf-barlabel">${w.name}<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
+          return `<div class="lf-bar newcomer${rankCls}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name ? w.name+' ' : ''}入店予定 ${fmtSp(w.sp)}"><span class="lf-barlabel">${w.name ? w.name+' ' : ''}入店予定<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
         if (w.borrow)
           return `<div class="lf-bar bw${rankCls} store-${w.store||''}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name} ${fmtSp(w.sp)}（掛け持ち）"><span class="lf-barlabel${nameCls}">${w.name}<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
         return `<div class="lf-bar ${k % 2 ? 'b2' : 'b1'}${rankCls}${w.r && w.r.hideNet ? ' has-hidenet' : ''} ${w.clash ? 'clash' : ''}" draggable="true" data-cid="${w.cid}"${w.seg2 ? ' data-nk2="1"' : ''} style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name} ${fmtSp(w.sp)}${w.r && w.r.hideNet ? ' 非掲載' : ''}${w.seg2 ? '（中抜け後半）' : ''}">${ov}<span class="lf-barlabel${nameCls}">${w.name}<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
@@ -2177,7 +2177,7 @@ function renderRoomsList() {
         const rankCls = cobj && cobj.rank === "premier" ? " rank-premier" : cobj && cobj.rank === "vip" ? " rank-vip" : "";
         const nameCls = cobj && (cobj.furyo || cobj.autoOver) ? " furyo-name" : "";
         if (w.borrow && w.newcomer)
-          return `<div class="lf-bar newcomer${rankCls}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name} ${fmtSp(w.sp)}（入店予定）"><span class="lf-barlabel">${w.name}<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
+          return `<div class="lf-bar newcomer${rankCls}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name ? w.name+' ' : ''}入店予定 ${fmtSp(w.sp)}"><span class="lf-barlabel">${w.name ? w.name+' ' : ''}入店予定<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
         if (w.borrow)
           return `<div class="lf-bar bw${rankCls} store-${w.store||''}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name} ${fmtSp(w.sp)}（掛け持ち）"><span class="lf-barlabel${nameCls}">${w.name}<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
         return `<div class="lf-bar ov${rankCls}" draggable="true" data-cid="${w.cid}"${w.seg2 ? ' data-nk2="1"' : ''} style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name} ${fmtSp(w.sp)}${w.seg2 ? '（中抜け後半）' : ''}"><span class="lf-barlabel${nameCls}">${w.name}<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
@@ -2201,7 +2201,7 @@ function renderRoomsList() {
     const lendItems = dLends.map((l, i) => { const c = l.cid ? state.casts.find(x => x.id === l.cid) : null; const nm = c ? c.name : (l.name || l.store);
       return `<span class="lf-hi-item">${nm} ${tL(l.start)}-${tL(l.end)}<span class="del" onclick="event.stopPropagation();removeLend('lends',${i},${d})">×</span></span>`; }).join("");
     const borrowItems = dBorrows.map((l, i) => l.newcomer
-      ? `<span class="lf-hi-item" style="background:rgba(42,154,74,.1);color:#1a7a3a">入店予定${l.name ? ' '+esc(l.name) : ''} ${tL(l.start)}-${tL(l.end)}<span class="del" onclick="event.stopPropagation();removeLend('borrows',${i},${d})">×</span></span>`
+      ? `<span class="lf-hi-item" style="background:rgba(42,154,74,.1);color:#1a7a3a">${l.name ? esc(l.name)+' ' : ''}入店予定 ${tL(l.start)}-${tL(l.end)}<span class="del" onclick="event.stopPropagation();removeLend('borrows',${i},${d})">×</span></span>`
       : `<span class="lf-hi-item borrow">${l.name ? esc(l.name) : l.store} ${tL(l.start)}-${tL(l.end)}<span class="del" onclick="event.stopPropagation();removeLend('borrows',${i},${d})">×</span></span>`).join("");
     const lendHead = `<span class="lf-head-kake lend" onclick="event.stopPropagation()"><span class="lf-kake-label">他店部屋</span>${lendItems}<button class="lf-hi-add lend" onclick="openLend('lend',${d})">＋</button></span>`;
     const borrowHead = `<span class="lf-head-kake borrow" onclick="event.stopPropagation()"><span class="lf-kake-label">掛け持ちor入店</span>${borrowItems}<button class="lf-hi-add borrow" onclick="openLend('borrow',${d})">＋</button></span>`;
