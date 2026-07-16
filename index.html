@@ -764,30 +764,6 @@
   <div class="dlg-foot"><button class="btn ghost" id="soukeiReqClose" style="flex:1">閉じる</button><button class="btn" id="soukeiReqCopy" style="flex:1">コピー</button></div>
 </dialog>
 
-<dialog id="newcomerDlg">
-  <div class="dlg-head"><span>入店予定を追加</span><span class="x" id="newcomerX">×</span></div>
-  <div class="dlg-body">
-    <div class="time-row">
-      <div class="field"><label>開始時間</label>
-        <div style="display:flex;gap:6px">
-          <select id="ncStartHour" style="flex:1"></select>
-          <select id="ncStartMin" style="width:84px"><option value="0">:00</option><option value="0.5">.5</option></select>
-        </div>
-        <input type="hidden" id="ncStart">
-      </div>
-      <div class="field"><label>終了時間（空欄=L）</label>
-        <div style="display:flex;gap:6px">
-          <select id="ncEndHour" style="flex:1"></select>
-          <select id="ncEndMin" style="width:84px"><option value="0">:00</option><option value="0.5">.5</option></select>
-        </div>
-        <input type="hidden" id="ncEnd">
-      </div>
-    </div>
-    <div id="ncList" style="margin-top:10px"></div>
-  </div>
-  <div class="dlg-foot"><button class="btn" id="ncSave" style="flex:1">追加</button></div>
-</dialog>
-
 <dialog id="moveDlg">
   <div class="dlg-head"><span id="moveTitle">部屋を移動</span><span class="x" id="moveX">×</span></div>
   <div class="dlg-body">
@@ -1290,11 +1266,6 @@ function computeAssignmentByKey(dk, useListAssign = false) {
       if (sp2) workers.push({ cid: c.id, name: c.name, sp: sp2, r, seg2: true, group: c.group });
     }
   });
-  // 入店予定（新人・仮）を追加
-  ((state.newcomers && state.newcomers[dk]) || []).forEach(nc => {
-    const sp = spanRaw(nc.start, nc.end);
-    if (sp) workers.push({ cid: "nc:" + nc.id, name: "入店予定", sp, r: null, newcomer: true });
-  });
   // ロイヤルに掛け持ち（借り）は溢れに表示する。名前があれば「店舗名 名前」
   const borrowWorkers = [];
   ((state.borrows && state.borrows[dk]) || []).forEach((b, bi) => {
@@ -1552,8 +1523,6 @@ function renderRooms() {
         return `<div class="rt-bar newcomer${rankCls} ${w.clash ? 'clash' : ''} ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${left}%;width:${width}%" title="${w.name} ${fmtSp(w.sp)}（入店予定）" onclick="openMove('${w.cid}',event)">${ov}<span class="rt-barlabel">${w.name}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
       if (w.borrow)
         return `<div class="rt-bar bw${rankCls} store-${w.store||''} ${w.clash ? 'clash' : ''} ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${left}%;width:${width}%" title="${w.name} ${fmtSp(w.sp)}（掛け持ち）" onclick="openMove('${w.cid}',event)">${ov}<span class="rt-barlabel${nameCls}">${w.name}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
-      if (w.newcomer)
-        return `<div class="rt-bar newcomer${rankCls} ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${left}%;width:${width}%" title="入店予定 ${fmtSp(w.sp)}" onclick="openMove('${w.cid}',event)"><span class="rt-barlabel">入店予定</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
       return `<div class="rt-bar ${k % 2 ? 'b2' : 'b1'}${rankCls}${w.r && w.r.hideNet ? ' has-hidenet' : ''} ${w.clash ? 'clash' : ''} ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}"${w.seg2 ? ' data-nk2="1"' : ''} style="left:${left}%;width:${width}%" title="${tip}" onclick="openMove('${w.cid}',event${w.seg2 ? ',true' : ''})">${ov}<span class="rt-barlabel${nameCls}">${w.name}${w.r && w.r.hideNet ? '<span class="hidenet-bar">非掲載</span>' : ''}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
     }).join("");
   }
@@ -1575,8 +1544,6 @@ function renderRooms() {
         return `<div class="rt-bar newcomer ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name} ${fmtSp(w.sp)}（入店予定）" onclick="openMove('${w.cid}',event)"><span class="rt-barlabel">${w.name}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
       if (w.borrow)
         return `<div class="rt-bar bw store-${w.store||''} ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name} ${fmtSp(w.sp)}（掛け持ち）" onclick="openMove('${w.cid}',event)"><span class="rt-barlabel${nameCls}">${w.name}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
-      if (w.newcomer)
-        return `<div class="rt-bar ov newcomer ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="入店予定 ${fmtSp(w.sp)}" onclick="openMove('${w.cid}',event)"><span class="rt-barlabel">入店予定</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
       return `<div class="rt-bar ov ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}"${w.seg2 ? ' data-nk2="1"' : ''} style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name} ${fmtSp(w.sp)}" onclick="openMove('${w.cid}',event${w.seg2 ? ',true' : ''})">${w.seg2 ? '<span class="rt-nklabel">後半</span>' : ''}<span class="rt-barlabel${nameCls}">${w.name}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
     }).join("");
     const hasCast = arr.some(w => !w.borrow);
@@ -1663,7 +1630,6 @@ function renderRooms() {
         <span style="font-size:12px;font-weight:700"><span class="tag hiru">昼 ${hiruN}名</span> <span class="tag yoru">夜 ${yoruN}名</span></span>
         <button class="btn sm" id="optimizeBtn" ${locked ? "disabled" : ""} style="margin-left:auto">最適に並べ替え</button>
         <button class="btn ghost sm" id="undoBtn" ${(canUndo() && !locked) ? "" : "disabled"}>前に戻す</button>
-        <button class="btn ghost sm" id="addNewcomerBtn" ${locked ? "disabled" : ""}>＋入店予定</button>
         <button class="view-toggle-btn${roomViewMode === 'sheet' ? ' active' : ''}" id="viewToggleBtn">切り替え</button>
       </div>
       ${lockBanner}
@@ -1687,7 +1653,6 @@ function renderRooms() {
   };
   const dm = $("dayMemo"); if (dm) dm.onchange = e => { state.memos[dkey(roomDay)] = e.target.value; save(); };
   const ob = $("optimizeBtn"); if (ob) ob.onclick = () => { if (!isLocked(roomDay)) optimizeRooms(); };
-  const anb = $("addNewcomerBtn"); if (anb) anb.onclick = () => { if (!isLocked(roomDay)) openNewcomerDlg(); };
   const ub = $("undoBtn"); if (ub) ub.onclick = () => { if (!isLocked(roomDay)) doUndo(); };
   const lb = $("lockBtn"); if (lb) lb.onclick = () => toggleLock(roomDay);
   const srb = $("soukeiReqBtn"); if (srb) srb.onclick = () => buildSoukeiRequest();
@@ -1875,44 +1840,6 @@ function changeRoomDay(delta) {
   selBar = null; renderAll();
 }
 
-// --- 入店予定（新人・仮） ---
-function ncListHtml() {
-  const ncs = (state.newcomers && state.newcomers[dkey(roomDay)]) || [];
-  if (!ncs.length) return '<div class="hint">この日の入店予定はまだありません。</div>';
-  return '<div style="font-size:12px;font-weight:700;margin-bottom:4px">この日の入店予定</div>' +
-    ncs.map(nc => `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--line)"><span style="flex:1">入店予定 ${nc.start}-${nc.end || 'L'}</span><button class="btn ghost sm" onclick="delNewcomer('${nc.id}')">削除</button></div>`).join("");
-}
-function openNewcomerDlg() {
-  setTime("ncStart", ""); setTime("ncEnd", "");
-  $("ncList").innerHTML = ncListHtml();
-  dlgOpen("newcomerDlg");
-}
-function openNewcomerEdit(cid, ev) { if (ev) ev.stopPropagation(); openNewcomerDlg(); }
-function delNewcomer(ncid) {
-  const k = dkey(roomDay);
-  if (!state.newcomers[k]) return;
-  state.newcomers[k] = state.newcomers[k].filter(x => x.id !== ncid);
-  if (!state.newcomers[k].length) delete state.newcomers[k];
-  save(); $("ncList").innerHTML = ncListHtml();
-  scrollPreserve(renderAll);
-}
-$("ncSave").onclick = () => {
-  const s = val("ncStart"); let e = val("ncEnd");
-  if (!s) { alert("開始時間を入力してください"); return; }
-  if (!e) e = "L";
-  const k = dkey(roomDay);
-  if (!state.newcomers[k]) state.newcomers[k] = [];
-  state.newcomers[k].push({ id: id(), start: s, end: e });
-  save(); setTime("ncStart", ""); setTime("ncEnd", "");
-  dlgClose("newcomerDlg");
-  // リスピラタブを表示してその日を再描画
-  document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
-  const rt = document.querySelector('.tab[data-tab="rooms"]'); if (rt) rt.classList.add("active");
-  ["rooms", "roomslist", "calendar", "manage"].forEach(v =>
-    $("view-" + v).style.display = v === "rooms" ? "block" : "none");
-  scrollPreserve(renderAll);
-};
-$("newcomerX").onclick = () => dlgClose("newcomerDlg");
 $("soukeiReqX").onclick = () => dlgClose("soukeiReqDlg");
 $("soukeiReqClose").onclick = () => dlgClose("soukeiReqDlg");
 $("soukeiReqCopy").onclick = () => {
@@ -1930,9 +1857,8 @@ function openMove(cid, ev, isNk2 = false) {
   if (dragMoved) return; // ドラッグ直後のクリックは無視
   if (isLocked(roomDay)) { alert("部屋割りが確定（ロック）されています。解除してから移動してください。"); return; }
   moveTarget = { cid, day: roomDay, isNk2 }; selBar = cid;
-  const isNc = String(cid).startsWith("nc:");
   const isBw = String(cid).startsWith("bw:");
-  const isSpecial = isNc || isBw;
+  const isSpecial = isBw;
   const { rooms, overRooms } = computeAssignment(roomDay);
   let target = null;
   rooms.forEach(rm => rm.forEach(w => { if (w.cid === cid && (isNk2 ? w.seg2 : !w.seg2)) target = w; }));
@@ -1941,7 +1867,7 @@ function openMove(cid, ev, isNk2 = false) {
   const c = isSpecial ? null : state.casts.find(x => x.id === cid);
   const r = isSpecial ? null : rec(cid, roomDay);
   const sp = isSpecial ? (target ? target.sp : null) : (isNk2 ? (target ? target.sp : null) : span(r));
-  const nm = isNc ? "入店予定" : isBw ? (target ? target.name + "（掛け持ち）" : "掛け持ち") : (c ? c.name : "");
+  const nm = isBw ? (target ? target.name + "（掛け持ち）" : "掛け持ち") : (c ? c.name : "");
   const nkLabel = isNk2 ? "（中抜け後半）" : "";
 
   $("moveTitle").textContent = `${nm}${nkLabel} の部屋`;
@@ -2249,8 +2175,6 @@ function renderRoomsList() {
         const cobj = state.casts.find(x => x.id === w.cid);
         const rankCls = cobj && cobj.rank === "premier" ? " rank-premier" : cobj && cobj.rank === "vip" ? " rank-vip" : "";
         const nameCls = cobj && (cobj.furyo || cobj.autoOver) ? " furyo-name" : "";
-        if (w.newcomer)
-          return `<div class="lf-bar newcomer${rankCls}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="入店予定 ${fmtSp(w.sp)}"><span class="lf-barlabel">入店予定<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
         return `<div class="lf-bar ${k % 2 ? 'b2' : 'b1'}${rankCls}${w.r && w.r.hideNet ? ' has-hidenet' : ''} ${w.clash ? 'clash' : ''}" draggable="true" data-cid="${w.cid}"${w.seg2 ? ' data-nk2="1"' : ''} style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name} ${fmtSp(w.sp)}${w.r && w.r.hideNet ? ' 非掲載' : ''}${w.seg2 ? '（中抜け後半）' : ''}">${ov}<span class="lf-barlabel${nameCls}">${w.name}<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
       }).join("");
     }
@@ -2268,8 +2192,6 @@ function renderRoomsList() {
           return `<div class="lf-bar newcomer${rankCls}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name} ${fmtSp(w.sp)}（入店予定）"><span class="lf-barlabel">${w.name}<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
         if (w.borrow)
           return `<div class="lf-bar bw${rankCls} store-${w.store||''}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name} ${fmtSp(w.sp)}（掛け持ち）"><span class="lf-barlabel${nameCls}">${w.name}<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
-        if (w.newcomer)
-          return `<div class="lf-bar ov newcomer${rankCls}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="入店予定 ${fmtSp(w.sp)}"><span class="lf-barlabel">入店予定<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
         return `<div class="lf-bar ov${rankCls}" draggable="true" data-cid="${w.cid}"${w.seg2 ? ' data-nk2="1"' : ''} style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name} ${fmtSp(w.sp)}${w.seg2 ? '（中抜け後半）' : ''}"><span class="lf-barlabel${nameCls}">${w.name}<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
       }).join("");
       const allBorrow = arr.length && arr.every(x => x.borrow);
@@ -2982,8 +2904,6 @@ makeTimeSelect("startTime", "start");   // 月間利用：開始
 makeTimeSelect("endTime", "end");       // 月間利用：終了
 makeTimeSelect("startTime2", "start");  // 中抜け：開始
 makeTimeSelect("endTime2", "end");      // 中抜け：終了
-makeTimeSelect("ncStart", "start");     // 入店予定：開始
-makeTimeSelect("ncEnd", "end");         // 入店予定：終了
 makeTimeSelect("lendStart", "start");   // 掛け持ち：開始
 makeTimeSelect("lendEnd", "end");       // 掛け持ち：終了
 // 値設定の共通ショートカット
@@ -3428,7 +3348,6 @@ window.setAvail = setAvail; window.cycleAsk = cycleAsk; window.openLend = openLe
 window.removeLend = removeLend; window.jumpToDay = jumpToDay; window.jumpToListDay = jumpToListDay; window.jumpToListDate = jumpToListDate; window.searchCastInCalendar = searchCastInCalendar; window.editAskLabel = editAskLabel;
 window.optimizeRooms = optimizeRooms; window.openCastDlg = openCastDlg;
 window.toggleMDay = toggleMDay;
-window.openNewcomerEdit = openNewcomerEdit; window.delNewcomer = delNewcomer;
 
 renderAll();
 
