@@ -1129,20 +1129,34 @@ async function forceCloudPush() {
   if (!confirm("この端末のデータをサーバーへ強制送信します。\nサーバー側のデータは上書きされます。\n本当に実行しますか？")) return;
   cloudStatus("サーバーの状態を確認中…", "#c77");
   try {
-    const res = await fetch(cloudGetUrl("action=get&rev=0&_t=" + Date.now()), { method: "GET" });
-    const j = await res.json();
-    if (j && j.error === "auth") { cloudStatus("合言葉が違います（送信できません）", "#d12"); return; }
-    if (j && j.ok) {
-      lastSyncedRev = j.rev || 0;
+    // サーバーの現在のrevを取得（データは適用しない）
+    const getRes = await fetch(cloudGetUrl("action=get&rev=0&_t=" + Date.now()), { method: "GET" });
+    const getJ = await getRes.json();
+    if (getJ && getJ.error === "auth") { cloudStatus("合言葉が違います（送信できません）", "#d12"); return; }
+    if (!getJ || !getJ.ok) { cloudStatus("接続失敗", "#d12"); return; }
+    // ローカルデータをそのままPOST（doCloudPushを使わず直接送信してマージ上書きを防ぐ）
+    cloudStatus("送信中…", "#c77");
+    for (const k in state.records) { if (state.records[k] === undefined) delete state.records[k]; }
+    const body = { action: "save", rev: getJ.rev || 0, data: state, ts: Date.now(), pass: cloudPass };
+    const pushRes = await fetch(cloudUrl, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(body)
+    });
+    const pushJ = await pushRes.json();
+    if (pushJ && pushJ.ok) {
+      // マージ応答は無視してローカルデータを維持
+      lastSyncedRev = pushJ.rev;
       localStorage.setItem(CLOUD_REV_KEY, lastSyncedRev);
-      await doCloudPush();
       startCloudSync();
       cloudStatus("この端末のデータをサーバーへ送信しました ✓", "#2d8a4a");
+    } else if (pushJ && pushJ.error === "auth") {
+      cloudStatus("合言葉が違います（送信できません）", "#d12");
     } else {
-      cloudStatus("接続失敗", "#d12");
+      cloudStatus("送信失敗: " + JSON.stringify(pushJ), "#d12");
     }
   } catch (e) {
-    cloudStatus("オフライン（接続できません）", "#d12");
+    cloudStatus("エラー: " + (e && e.message ? e.message : String(e)), "#d12");
   }
 }
 
