@@ -628,7 +628,7 @@
 <div class="wrap">
   <div class="top-bar">
     <div class="month-nav"><button id="prevM">‹</button><span id="monthLabel"></span><button id="nextM">›</button></div>
-    <div style="font-size:9px;color:var(--ink-soft);text-align:right;line-height:1">v20260716e</div>
+    <div style="font-size:9px;color:var(--ink-soft);text-align:right;line-height:1">v20260716f</div>
     <div class="tabs" id="tabsBar">
       <button class="tab active" data-tab="rooms">部屋割り</button>
       <button class="tab" data-tab="roomslist">リスピラ</button>
@@ -1521,7 +1521,7 @@ function renderRooms() {
       const rankCls = cobj && cobj.rank === "premier" ? " rank-premier" : cobj && cobj.rank === "vip" ? " rank-vip" : "";
       const nameCls = cobj && (cobj.furyo || cobj.autoOver) ? " furyo-name" : "";
       if (w.borrow && w.newcomer)
-        return `<div class="rt-bar newcomer${rankCls} ${w.clash ? 'clash' : ''} ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${left}%;width:${width}%" title="${w.name} ${fmtSp(w.sp)}（入店予定）" onclick="openMove('${w.cid}',event)">${ov}<span class="rt-barlabel">${w.name}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
+        return `<div class="rt-bar newcomer${rankCls} ${w.clash ? 'clash' : ''} ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${left}%;width:${width}%" title="${w.name ? w.name+' ' : ''}入店予定 ${fmtSp(w.sp)}" onclick="openMove('${w.cid}',event)">${ov}<span class="rt-barlabel">${w.name ? w.name+' ' : ''}入店予定</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
       if (w.borrow)
         return `<div class="rt-bar bw${rankCls} store-${w.store||''} ${w.clash ? 'clash' : ''} ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${left}%;width:${width}%" title="${w.name} ${fmtSp(w.sp)}（掛け持ち）" onclick="openMove('${w.cid}',event)">${ov}<span class="rt-barlabel${nameCls}">${w.name}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
       return `<div class="rt-bar ${k % 2 ? 'b2' : 'b1'}${rankCls}${w.r && w.r.hideNet ? ' has-hidenet' : ''} ${w.clash ? 'clash' : ''} ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}"${w.seg2 ? ' data-nk2="1"' : ''} style="left:${left}%;width:${width}%" title="${tip}" onclick="openMove('${w.cid}',event${w.seg2 ? ',true' : ''})">${ov}<span class="rt-barlabel${nameCls}">${w.name}${w.r && w.r.hideNet ? '<span class="hidenet-bar">非掲載</span>' : ''}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
@@ -1542,7 +1542,7 @@ function renderRooms() {
       const cobj = state.casts.find(x => x.id === w.cid);
       const nameCls = cobj && (cobj.furyo || cobj.autoOver) ? " furyo-name" : "";
       if (w.borrow && w.newcomer)
-        return `<div class="rt-bar newcomer ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name} ${fmtSp(w.sp)}（入店予定）" onclick="openMove('${w.cid}',event)"><span class="rt-barlabel">${w.name}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
+        return `<div class="rt-bar newcomer ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name ? w.name+' ' : ''}入店予定 ${fmtSp(w.sp)}" onclick="openMove('${w.cid}',event)"><span class="rt-barlabel">${w.name ? w.name+' ' : ''}入店予定</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
       if (w.borrow)
         return `<div class="rt-bar bw store-${w.store||''} ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name} ${fmtSp(w.sp)}（掛け持ち）" onclick="openMove('${w.cid}',event)"><span class="rt-barlabel${nameCls}">${w.name}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
       return `<div class="rt-bar ov ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}"${w.seg2 ? ' data-nk2="1"' : ''} style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name} ${fmtSp(w.sp)}" onclick="openMove('${w.cid}',event${w.seg2 ? ',true' : ''})">${w.seg2 ? '<span class="rt-nklabel">後半</span>' : ''}<span class="rt-barlabel${nameCls}">${w.name}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
