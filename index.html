@@ -3182,6 +3182,8 @@ $("dlgSave").onclick = () => {
       const exT = state.records[rk2] || {};
       setRec(rk2, { ...exT, status: "off", note });
       if (state.assign[dkey(td)]) delete state.assign[dkey(td)][tc];
+    } else if ((pickStatus === "work" || pickStatus === "furikae") && state.records[rk2] && (state.records[rk2].status === "work" || state.records[rk2].status === "furikae")) {
+      // 既存の利用入力がある場合は時間を上書きしない（マーカー・メモのみ後続で適用）
     } else {
       applyRecordToDay(tc, td, primaryRec);
     }
