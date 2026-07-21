@@ -2333,7 +2333,7 @@ function cellInner(rc) {
   if (!rc.status && rc.stayBg) return { inner: note, cls: stayCls };
   switch (rc.status) {
     case "work":
-      if (rc.start2) return { inner: `<span class="timeunder">${fmtTime(rc)}<span class="nk-label">中抜け</span>${rc.start2}-${rc.end2 || 'L'}${rc.hideNet ? '<br><span class="hidenet">非掲載</span>' : ''}</span>${note}`, cls: "nakanuke" };
+      if (rc.start2) return { inner: `<span class="timeunder">${fmtTime(rc)}<span class="nk-label">中抜け</span>${rc.start2}-${rc.end2 || 'L'}${rc.hideNet ? '<br><span class="hidenet">非掲載</span>' : ''}</span>${note}`, cls: "nakanuke" + (stayCls ? " " + stayCls : "") };
       return { inner: `<span class="timeunder">${fmtTime(rc)}${rc.hideNet ? '<br><span class="hidenet">非掲載</span>' : ''}</span>${note}`, cls: stayCls };
     case "furikae":
       return { inner: `<span class="timeunder">${fmtTime(rc)}</span><span class="omark">○</span>${note}`, cls: stayCls };
