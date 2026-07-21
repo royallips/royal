@@ -2338,7 +2338,7 @@ function cellInner(rc) {
     case "furikae":
       return { inner: `<span class="timeunder">${fmtTime(rc)}</span><span class="omark">○</span>${note}`, cls: stayCls };
     case "mitei":
-      return { inner: "△" + note, cls: "" };
+      return { inner: "△" + note, cls: stayCls };
     case "seiri":
       return { inner: `<span class="timeunder">${fmtTime(rc)}</span>${note}`, cls: "st-seiri" };
     case "shukuhaku":
@@ -3097,8 +3097,19 @@ $("dlgSave").onclick = () => {
     }
     extraTargets.forEach(({ cid: tc, day: td }) => {
       const rk = recKey(tc, td);
-      if (pickOverlay) setRec(rk, { stayBg: pickOverlay, note });
-      else if (state.records[rk]) delete state.records[rk];
+      if (pickOverlay) {
+        if (state.records[rk]) {
+          // 既存レコードを保持してマーカーのみ更新（未定・休み等のステータスを消さない）
+          state.records[rk].stayBg = pickOverlay;
+          if (note) state.records[rk].note = note;
+          state.records[rk]._t = Date.now();
+        } else {
+          setRec(rk, { stayBg: pickOverlay, note });
+        }
+      } else if (state.records[rk]) {
+        delete state.records[rk].stayBg;
+        state.records[rk]._t = Date.now();
+      }
     });
     if (hadSelApply) exitCalSelMode();
     save(); dlgClose("dlg"); renderAfterEdit(); return;
