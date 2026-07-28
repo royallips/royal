@@ -1253,8 +1253,9 @@ function computeAssignmentByKey(dk, useListAssign = false) {
   const force = useListAssign ? (state.assignList[dk] || {}) : (state.assign[dk] || {});
   // 「自動溢れ」キャストは、手動で部屋番号を指定していない限り常に溢れ扱い
   const autoOverSet = new Set(state.casts.filter(c => c.autoOver).map(c => c.id));
+  const isOverAssign = v => v === "OVER" || (typeof v === "string" && v.startsWith("OVER:"));
   const isForcedOver = cid =>
-    force[cid] === "OVER" || (autoOverSet.has(cid) && typeof force[cid] !== "number");
+    isOverAssign(force[cid]) || (autoOverSet.has(cid) && typeof force[cid] !== "number");
   const workers = [];
   state.casts.forEach(c => {
     const r = recByKey(c.id, dk), sp = span(r);
@@ -1286,7 +1287,7 @@ function computeAssignmentByKey(dk, useListAssign = false) {
   // 溢れ指定（手動OVER または 自動溢れ）のものを最初に確保
   workers.forEach(w => {
     const fk = w.seg2 ? w.cid + ":nk2" : w.cid;
-    const fOver = force[fk] === "OVER" || (autoOverSet.has(w.cid) && typeof force[fk] !== "number");
+    const fOver = isOverAssign(force[fk]) || (autoOverSet.has(w.cid) && typeof force[fk] !== "number");
     if (fOver) { forcedOver.push(w); placed.add(w); }
   });
   // ① 手動で部屋番号を指定されたキャストを先に部屋へ入れて占有を確保
@@ -1305,13 +1306,21 @@ function computeAssignmentByKey(dk, useListAssign = false) {
     }
     if (!put) forcedOver.push(w);
   });
-  // 溢れを溢れ行へ詰め直し
+  // 溢れを溢れ行へ詰め直し（OVER:N指定がある場合は指定行へ固定して重ね合わせ可）
   const overRooms = [];
   forcedOver.sort((a, b) => a.sp[0] - b.sp[0]);
   forcedOver.forEach(w => {
-    let put = false;
-    for (const orow of overRooms) { if (orow.every(x => !overlap(x.sp, w.sp))) { orow.push(w); put = true; break; } }
-    if (!put) overRooms.push([w]);
+    const fk = w.seg2 ? w.cid + ":nk2" : w.cid;
+    const fv = force[fk] !== undefined ? force[fk] : force[w.cid];
+    if (typeof fv === "string" && fv.startsWith("OVER:")) {
+      const rowIdx = parseInt(fv.slice(5));
+      while (overRooms.length <= rowIdx) overRooms.push([]);
+      overRooms[rowIdx].push(w);
+    } else {
+      let put = false;
+      for (const orow of overRooms) { if (orow.every(x => !overlap(x.sp, w.sp))) { orow.push(w); put = true; break; } }
+      if (!put) overRooms.push([w]);
+    }
   });
   rooms.forEach(r => r.sort((a, b) => a.sp[0] - b.sp[0]));
   overRooms.forEach(r => r.sort((a, b) => a.sp[0] - b.sp[0]));
@@ -1925,7 +1934,7 @@ function moveCidToRoom(cid, ri, isNk2) {
   save(); selBar = null;
   scrollPreserve(renderAll);
 }
-function moveCidToRoomDay(cid, ri, day, isNk2 = false) {
+function moveCidToRoomDay(cid, ri, day, isNk2 = false, overRow = null) {
   const dk = dkey(day);
   if (!state.assignList[dk]) state.assignList[dk] = {};
   // 移動前に全キャストの現在位置を固定（自動詰めを防ぐ）
@@ -1933,7 +1942,7 @@ function moveCidToRoomDay(cid, ri, day, isNk2 = false) {
   rooms.forEach((arr, rIdx) => arr.forEach(w => { const fk = w.seg2 ? w.cid + ":nk2" : w.cid; if (state.assignList[dk][fk] == null) state.assignList[dk][fk] = rIdx; }));
   (overRooms || []).forEach(arr => arr.forEach(w => { const fk = w.seg2 ? w.cid + ":nk2" : w.cid; if (state.assignList[dk][fk] == null) state.assignList[dk][fk] = "OVER"; }));
   const assignKey = isNk2 ? cid + ":nk2" : cid;
-  state.assignList[dk][assignKey] = (ri === "OVER") ? "OVER" : Number(ri);
+  state.assignList[dk][assignKey] = (ri === "OVER") ? (overRow !== null ? "OVER:" + overRow : "OVER") : Number(ri);
   save();
   const scroller = document.querySelector("#view-roomslist .lf-scroll");
   const savedLeft = scroller ? scroller.scrollLeft : 0;
@@ -2004,9 +2013,10 @@ document.addEventListener("drop", e => {
     const day = parseInt(track.dataset.day);
     if (!day || day !== dragDay) { dragDay = null; return; }
     const ri = track.dataset.ri;
+    const overRow = (ri === "OVER" && track.dataset.overrow !== undefined) ? parseInt(track.dataset.overrow) : null;
     dragDay = null;
     e.preventDefault();
-    moveCidToRoomDay(cid, ri, day, dragIsNk2);
+    moveCidToRoomDay(cid, ri, day, dragIsNk2, overRow);
   } else {
     const track = e.target.closest(".rt-track[data-ri]");
     document.querySelectorAll(".rt-track.dropok").forEach(t => t.classList.remove("dropok"));
@@ -2169,7 +2179,7 @@ function renderRoomsList() {
       roomRows += `<div class="lf-row"><div class="lf-rno">${roomLabel(ri)}</div><div class="lf-track" data-ri="${ri}" data-day="${d}">${roomOverlays[ri]}${barsHtml(rooms[ri])}</div></div>`;
     roomRows += `<div class="lf-overline"></div>`;
     let ovNo = 0;
-    (overRooms || []).forEach((arr) => {
+    (overRooms || []).forEach((arr, overRowIdx) => {
       const bars = arr.map((w, k) => {
         const cobj = state.casts.find(x => x.id === w.cid);
         const rankCls = cobj && cobj.rank === "premier" ? " rank-premier" : cobj && cobj.rank === "vip" ? " rank-vip" : "";
@@ -2182,9 +2192,9 @@ function renderRoomsList() {
       }).join("");
       const allBorrow = arr.length && arr.every(x => x.borrow);
       const rno = allBorrow ? "借" : (++ovNo);
-      roomRows += `<div class="lf-row over"><div class="lf-rno" style="background:var(--over-bg);color:var(--over)">${rno}</div><div class="lf-track" data-ri="OVER" data-day="${d}">${bars}</div></div>`;
+      roomRows += `<div class="lf-row over"><div class="lf-rno" style="background:var(--over-bg);color:var(--over)">${rno}</div><div class="lf-track" data-ri="OVER" data-day="${d}" data-overrow="${overRowIdx}">${bars}</div></div>`;
     });
-    roomRows += `<div class="lf-row over"><div class="lf-rno" style="background:var(--over-bg);color:var(--over)">${ovNo === 0 ? '溢' : ''}</div><div class="lf-track" data-ri="OVER" data-day="${d}"></div></div>`;
+    roomRows += `<div class="lf-row over"><div class="lf-rno" style="background:var(--over-bg);color:var(--over)">${ovNo === 0 ? '溢' : ''}</div><div class="lf-track" data-ri="OVER" data-day="${d}" data-overrow="${(overRooms || []).length}"></div></div>`;
 
     const wd = new Date(y, m, d).getDay(), wkcls = wd === 0 ? "sun" : wd === 6 ? "sat" : "";
     const isToday = d === todayD;
