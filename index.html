@@ -719,10 +719,7 @@
       <div class="hint"></div>
     </div>
     <div id="absentNote" style="margin-top:10px;display:none"><div class="hint"></div></div>
-    <div id="multiDayRow" style="display:none;margin-top:10px">
-      <label style="font-size:11px;font-weight:700;color:var(--ink-soft);display:block;margin-bottom:4px">日にちを選択</label>
-      <div id="multiDayGrid" style="display:flex;flex-wrap:wrap;gap:4px"></div>
-    </div>
+
     <div id="noteRow" class="field" style="margin-top:6px"><label>備考</label><input id="noteText" placeholder=""></div>
 
   </div>
@@ -2928,10 +2925,6 @@ function applyRecordToDay(cid, d, rec) {
 }
 
 /* ===== 日にちを選択（予定・未定）============================================ */
-function toggleMDay(d) {
-  const btn = document.querySelector(`#multiDayGrid [data-d="${d}"]`);
-  if (btn) btn.classList.toggle("mday-sel");
-}
 
 /* ===== 案2: セル複数選択モード ============================================ */
 function toggleCalSel(cid, day) {
@@ -3009,7 +3002,6 @@ function openDlg(cid, day) {
   $("nakanukeChk").checked = !!(r && r.start2);
   $("hideNetChk").checked = !!(r && r.hideNet);
   $("noteText").value = r && r.note ? r.note : "";
-  const mdg = $("multiDayGrid"); if (mdg) mdg.innerHTML = "";
   refreshPick();
   dlgOpen("dlg");
 }
@@ -3040,19 +3032,6 @@ function refreshPick() {
       }
     }
     clearAllBtn.style.display = hasNeighbor ? "" : "none";
-  }
-  // 日にちを選択（未定）
-  const mdRow = $("multiDayRow"), mdGrid = $("multiDayGrid");
-  if (mdRow) {
-    const showMd = pickStatus === "mitei";
-    mdRow.style.display = showMd ? "" : "none";
-    if (showMd && mdGrid && editing && !mdGrid.hasChildNodes()) {
-      const dim = daysIn(cur);
-      let html = "";
-      for (let d = 1; d <= dim; d++)
-        html += `<button type="button" class="btn ghost sm mday-btn" data-d="${d}" onclick="toggleMDay(${d})">${d}</button>`;
-      mdGrid.innerHTML = html;
-    }
   }
 }
 $("statusGridInput").onclick = e => {
@@ -3147,21 +3126,8 @@ $("dlgSave").onclick = () => {
     setRec(k, offRec);
     if (state.assign[dkey(day)]) delete state.assign[dkey(day)][cid];
   } else if (pickStatus === "mitei") {
-    const selDays = [...($("multiDayGrid") || document.createElement("div")).querySelectorAll(".mday-btn.mday-sel")].map(b => parseInt(b.dataset.d));
-    if (selDays.length > 0) {
-      const conflicts = selDays.filter(d => { const r = state.records[recKey(cid, d)]; return r && (r.status === "work" || r.status === "furikae"); });
-      if (conflicts.length > 0) {
-        const msg = `${conflicts.map(d => `${cur.getMonth()+1}/${d}`).join("、")} に利用の入力があります。上書きしますか？`;
-        if (!confirm(msg)) return;
-      }
-      selDays.forEach(d => {
-        setRec(recKey(cid, d), { status: "mitei", note: (d === day ? note : "") });
-        if (state.assign[dkey(d)]) delete state.assign[dkey(d)][cid];
-      });
-    } else {
-      setRec(recKey(cid, day), { status: "mitei", note });
-      if (state.assign[dkey(day)]) delete state.assign[dkey(day)][cid];
-    }
+    setRec(recKey(cid, day), { status: "mitei", note });
+    if (state.assign[dkey(day)]) delete state.assign[dkey(day)][cid];
   } else {
     setRec(k, { status: pickStatus, note });
     if (state.assign[dkey(day)]) delete state.assign[dkey(day)][cid];
@@ -3173,13 +3139,7 @@ $("dlgSave").onclick = () => {
     else delete state.records[rk].stayBg;
     state.records[rk]._t = Date.now();
   };
-  // mitei の multiDay 複数日にも適用
-  if (pickStatus === "mitei") {
-    const selDays2 = [...($("multiDayGrid") || document.createElement("div")).querySelectorAll(".mday-btn.mday-sel")].map(b => parseInt(b.dataset.d));
-    (selDays2.length > 0 ? selDays2 : [day]).forEach(d => applyOverlay(recKey(cid, d)));
-  } else {
-    applyOverlay(k);
-  }
+  applyOverlay(k);
   // 繰り返し/まとめて入力を適用：対象日ごとに1回だけ部屋固定（ループ外で一括）
   if (pickStatus === "work" || pickStatus === "furikae") {
     const extraDays = new Set(extraTargets.map(({ day: td }) => td));
@@ -3349,7 +3309,6 @@ window.toggleRoomLock = toggleRoomLock;
 window.setAvail = setAvail; window.cycleAsk = cycleAsk; window.openLend = openLend; window.cycleSoukei = cycleSoukei; window.setLendType = setLendType;
 window.removeLend = removeLend; window.jumpToDay = jumpToDay; window.jumpToListDay = jumpToListDay; window.jumpToListDate = jumpToListDate; window.searchCastInCalendar = searchCastInCalendar; window.editAskLabel = editAskLabel;
 window.optimizeRooms = optimizeRooms; window.openCastDlg = openCastDlg;
-window.toggleMDay = toggleMDay;
 
 renderAll();
 
