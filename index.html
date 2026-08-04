@@ -915,6 +915,7 @@ const roomLabel = ri => ROOM_LABELS[ri] != null ? ROOM_LABELS[ri] : (ri + 1);
 let state = load();
 let cur = new Date(); cur.setDate(1);
 let roomDay = null, editing = null, pickStatus = "work", roomViewMode = "timeline";
+let dlgInitial = null; // ダイアログを開いた時点の状態（時間を実際に変更したか判定するため）
 let castGroup = "hiru", castRank = "", calGroup = "hiru", calSearch = "", calScrollLeft = null;
 let selBar = null, moveTarget = null, delTarget = null, statTarget = null, delConfirmStage = 0;
 let lendStore = null, lendMode = "lend";   // lend=加盟店へ掛け持ち / borrow=ロイヤルに掛け持ち
@@ -3038,6 +3039,7 @@ function openDlg(cid, day) {
   $("nakanukeChk").checked = !!(r && r.start2);
   $("hideNetChk").checked = !!(r && r.hideNet);
   $("noteText").value = r && r.note ? r.note : "";
+  dlgInitial = { status: pickStatus, start: val("startTime"), end: val("endTime"), start2: val("startTime2"), end2: val("endTime2") };
   refreshPick();
   dlgOpen("dlg");
 }
@@ -3096,6 +3098,10 @@ $("dlgSave").onclick = () => {
   const extraTargets = hadSelApply
     ? [...calSelCells].filter(x => x !== `${cid}@@${day}`).map(x => { const [c, d] = x.split("@@"); return { cid: c, day: parseInt(d) }; })
     : [];
+  // まとめて入力でダイアログを開いた時から時間を変更していないか（＝マーカーや備考だけの追加か）
+  const timeUnchanged = hadSelApply && dlgInitial && dlgInitial.status === pickStatus
+    && dlgInitial.start === s && dlgInitial.end === e
+    && dlgInitial.start2 === val("startTime2") && dlgInitial.end2 === val("endTime2");
 
   const _prevSeiri = state.records[k] && (state.records[k].status === "seiri" || state.records[k].seiriTint);
 
@@ -3189,6 +3195,8 @@ $("dlgSave").onclick = () => {
       const exT = state.records[rk2] || {};
       setRec(rk2, { ...exT, status: "off", note });
       if (state.assign[dkey(td)]) delete state.assign[dkey(td)][tc];
+    } else if ((pickStatus === "work" || pickStatus === "furikae") && timeUnchanged && state.records[rk2] && (state.records[rk2].status === "work" || state.records[rk2].status === "furikae")) {
+      // 時間を変更せずマーカー等だけ追加した場合は、各セル自身の利用時間を上書きしない
     } else {
       applyRecordToDay(tc, td, primaryRec);
     }
