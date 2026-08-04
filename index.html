@@ -121,6 +121,7 @@
   .lf-bar .lf-barlabel{position:relative;z-index:2;overflow:hidden;display:flex;align-items:center;gap:2px;white-space:nowrap}
   .lf-endtime{font-weight:600;opacity:.85;flex-shrink:0}
   .lf-bar .clash-ov{position:absolute;top:0;bottom:0;background:rgba(224,70,60,.28);border-left:1.2px solid rgba(224,70,60,.65);border-right:1.2px solid rgba(224,70,60,.65);z-index:1}
+  .lf-over-label{position:absolute;display:flex;align-items:center;overflow:hidden;white-space:nowrap;pointer-events:none;font-size:12px;font-weight:700;padding:0 3px;background:rgba(255,255,255,.88);border-radius:2px}
   .lf-bar.bsh{background:#fff}.lf-bar.btp{background:#fff}
   .lf-memo{font-size:13px;color:#5a3b2e;background:#fff8e6;border-top:1px solid var(--line);padding:6px 9px;white-space:pre-wrap;word-break:break-word;line-height:1.4}
   .lf-memo-input{width:100%;box-sizing:border-box;border:none;border-top:1px solid var(--line);background:#fff8e6;font-size:12px;font-family:inherit;padding:5px 8px;resize:none;color:#5a3b2e;outline:none;line-height:1.4}
@@ -2180,21 +2181,44 @@ function renderRoomsList() {
     roomRows += `<div class="lf-overline"></div>`;
     let ovNo = 0;
     (overRooms || []).forEach((arr, overRowIdx) => {
-      arr.forEach(w => { w.clash = arr.some(x => x !== w && overlap(x.sp, w.sp)); });
+      // 同じ行で時間が重なるバーは完全に重なって隠れてしまうため、ラベルだけ段違いに浮かせて必ず見えるようにする
+      const slotOf = [];
+      const rowSlots = [];
+      arr.forEach((w, k) => {
+        let s = 0;
+        while (rowSlots[s] && rowSlots[s].some(x => overlap(x.sp, w.sp))) s++;
+        if (!rowSlots[s]) rowSlots[s] = [];
+        rowSlots[s].push(w);
+        slotOf[k] = s;
+      });
+      const numSlots = rowSlots.length || 1;
+      const hasOverlap = numSlots > 1;
+      const slotH = hasOverlap ? Math.max(8, Math.floor(26 / numSlots)) : 26;
+
       const bars = arr.map((w, k) => {
         const cobj = state.casts.find(x => x.id === w.cid);
         const rankCls = cobj && cobj.rank === "premier" ? " rank-premier" : cobj && cobj.rank === "vip" ? " rank-vip" : "";
         const nameCls = cobj && (cobj.furyo || cobj.autoOver) ? " furyo-name" : "";
-        const ov = clashOverlayHtml(w, arr);
+        const innerLabel = hasOverlap ? "" : `<span class="lf-barlabel${nameCls}">${w.name}<span class="lf-endtime">${lfTime(w.sp)}</span></span>`;
         if (w.borrow && w.newcomer)
-          return `<div class="lf-bar newcomer${rankCls}${w.clash ? ' clash' : ''}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name ? w.name+' ' : ''}入店予定 ${fmtSp(w.sp)}">${ov}<span class="lf-barlabel">${w.name ? w.name+' ' : ''}入店予定<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
+          return `<div class="lf-bar newcomer${rankCls}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name ? w.name+' ' : ''}入店予定 ${fmtSp(w.sp)}">${hasOverlap ? "" : `<span class="lf-barlabel">${w.name ? w.name+' ' : ''}入店予定<span class="lf-endtime">${lfTime(w.sp)}</span></span>`}</div>`;
         if (w.borrow)
-          return `<div class="lf-bar bw${rankCls} store-${w.store||''}${w.clash ? ' clash' : ''}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name} ${fmtSp(w.sp)}（掛け持ち）">${ov}<span class="lf-barlabel${nameCls}">${w.name}<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
-        return `<div class="lf-bar ov${rankCls}${w.clash ? ' clash' : ''}" draggable="true" data-cid="${w.cid}"${w.seg2 ? ' data-nk2="1"' : ''} style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name} ${fmtSp(w.sp)}${w.seg2 ? '（中抜け後半）' : ''}">${ov}<span class="lf-barlabel${nameCls}">${w.name}<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
+          return `<div class="lf-bar bw${rankCls} store-${w.store||''}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name} ${fmtSp(w.sp)}（掛け持ち）">${innerLabel}</div>`;
+        return `<div class="lf-bar ov${rankCls}" draggable="true" data-cid="${w.cid}"${w.seg2 ? ' data-nk2="1"' : ''} style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name} ${fmtSp(w.sp)}${w.seg2 ? '（中抜け後半）' : ''}">${innerLabel}</div>`;
       }).join("");
+
+      // 重なっている場合の浮遊ラベル：バー自体は重なったままでも文字は必ず読める位置に段違い表示
+      const floatLabels = !hasOverlap ? "" : arr.map((w, k) => {
+        const cobj = state.casts.find(x => x.id === w.cid);
+        const nameCls = cobj && (cobj.furyo || cobj.autoOver) ? " furyo-name" : "";
+        const barName = w.borrow && w.newcomer ? (w.name ? w.name + " " : "") + "入店予定" : w.name;
+        const top = slotOf[k] * slotH + 1;
+        return `<span class="lf-over-label" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;top:${top}px;height:${slotH - 1}px;z-index:${500 + k}"><span class="lf-barlabel${nameCls}">${barName}<span class="lf-endtime">${lfTime(w.sp)}</span></span></span>`;
+      }).join("");
+
       const allBorrow = arr.length && arr.every(x => x.borrow);
       const rno = allBorrow ? "借" : (++ovNo);
-      roomRows += `<div class="lf-row over"><div class="lf-rno" style="background:var(--over-bg);color:var(--over)">${rno}</div><div class="lf-track" data-ri="OVER" data-day="${d}" data-overrow="${overRowIdx}">${bars}</div></div>`;
+      roomRows += `<div class="lf-row over"><div class="lf-rno" style="background:var(--over-bg);color:var(--over)">${rno}</div><div class="lf-track" data-ri="OVER" data-day="${d}" data-overrow="${overRowIdx}">${bars}${floatLabels}</div></div>`;
     });
     roomRows += `<div class="lf-row over"><div class="lf-rno" style="background:var(--over-bg);color:var(--over)">${ovNo === 0 ? '溢' : ''}</div><div class="lf-track" data-ri="OVER" data-day="${d}" data-overrow="${(overRooms || []).length}"></div></div>`;
 
