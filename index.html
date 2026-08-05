@@ -2604,14 +2604,12 @@ function renderCalendar() {
 }
 
 // --- 個人の月間集計 ---
-function openStat(cid) {
-  const c = state.casts.find(x => x.id === cid);
-  if (!c) return;
-  statTarget = cid;
-  const dim = daysIn(cur);
+// 指定キャスト・指定月の利用日数／利用時間などを集計
+function computeCastMonthStats(cid, y, m) {
+  const dim = daysIn(new Date(y, m, 1));
   let use = 0, absent = 0, furikae = 0, totalHours = 0;
   for (let d = 1; d <= dim; d++) {
-    const r = rec(cid, d);
+    const r = recByKey(cid, dkeyForDate(new Date(y, m, d)));
     if (!r) continue;
     if (r.status === "work") use++;
     else if (r.status === "shukuhaku" || r.status === "tenpaku") { if (r.start) use++; }
@@ -2624,38 +2622,43 @@ function openStat(cid) {
       if (sp2) totalHours += (sp2[1] - sp2[0]);
     }
   }
-  // 先月の利用日数
-  const prevD2 = new Date(cur.getFullYear(), cur.getMonth() - 1, 1);
-  const prevDim2 = daysIn(prevD2);
-  const prevY2 = prevD2.getFullYear(), prevM2 = prevD2.getMonth() + 1;
-  let prevUse = 0, prevTotalHours = 0;
-  for (let d = 1; d <= prevDim2; d++) {
-    const pr = recByKey(cid, dkeyForDate(new Date(prevY2, prevM2 - 1, d)));
-    if (!pr) continue;
-    if (pr.status === "work" || pr.status === "furikae") prevUse++;
-    else if ((pr.status === "shukuhaku" || pr.status === "tenpaku") && pr.start) prevUse++;
-    const psp = span(pr);
-    if (psp) prevTotalHours += (psp[1] - psp[0]);
-    if (isUse(pr.status) && pr.start2) {
-      const psp2 = spanRaw(pr.start2, pr.end2);
-      if (psp2) prevTotalHours += (psp2[1] - psp2[0]);
-    }
-  }
-  const phWhole = Math.floor(prevTotalHours);
-  const phMin = Math.round((prevTotalHours - phWhole) * 60);
-  const prevHoursLabel = phMin ? `${phWhole}時間${phMin}分` : `${phWhole}時間`;
-  // 時間表記（小数は0.5刻みで「○時間△分」に）
+  return { use, absent, furikae, totalHours };
+}
+// 時間表記（小数は0.5刻みで「○時間△分」に）
+function fmtHoursLabel(totalHours) {
   const hWhole = Math.floor(totalHours);
   const hMin = Math.round((totalHours - hWhole) * 60);
-  const hoursLabel = hMin ? `${hWhole}時間${hMin}分` : `${hWhole}時間`;
-  $("statTitle").textContent = `${c.name}　${cur.getMonth() + 1}月の集計`;
+  return hMin ? `${hWhole}時間${hMin}分` : `${hWhole}時間`;
+}
+// 全キャスト中の利用日数／利用時間 TOP5（クリックでその人の集計へ）
+function rankingHtml(y, m) {
+  const rows = state.casts.map(c => Object.assign({ cid: c.id, name: c.name, group: c.group }, computeCastMonthStats(c.id, y, m)));
+  const nameBadge = r => `<span style="background:var(--${r.group});color:${r.group === "hiru" ? "#b07b10" : "#2f6a9e"};border-radius:8px;padding:0 5px">${esc(r.name)}</span>`;
+  const rankList = (list, valueFn) => list.length
+    ? list.map((r, i) => `<div class="stat-row" style="cursor:pointer;padding:6px 4px" onclick="openStat('${r.cid}')"><span><b style="color:var(--ink-soft);margin-right:6px">${i + 1}位</b>${nameBadge(r)}</span><b style="font-size:14px">${valueFn(r)}</b></div>`).join("")
+    : `<div class="hint">データなし</div>`;
+  const byDays = rows.filter(r => r.use > 0).sort((a, b) => b.use - a.use || b.totalHours - a.totalHours).slice(0, 5);
+  const byHours = rows.filter(r => r.totalHours > 0).sort((a, b) => b.totalHours - a.totalHours || b.use - a.use).slice(0, 5);
+  return `<div style="margin-top:16px;font-size:13px;font-weight:800;color:var(--ink-soft)">${m + 1}月 利用日数ランキング TOP5</div>${rankList(byDays, r => `${r.use}日`)}
+    <div style="margin-top:16px;font-size:13px;font-weight:800;color:var(--ink-soft)">${m + 1}月 利用時間ランキング TOP5</div>${rankList(byHours, r => fmtHoursLabel(r.totalHours))}`;
+}
+function openStat(cid) {
+  const c = state.casts.find(x => x.id === cid);
+  if (!c) return;
+  statTarget = cid;
+  const y = cur.getFullYear(), m = cur.getMonth();
+  const st = computeCastMonthStats(cid, y, m);
+  const prevD2 = new Date(y, m - 1, 1);
+  const prevSt = computeCastMonthStats(cid, prevD2.getFullYear(), prevD2.getMonth());
+  $("statTitle").textContent = `${c.name}　${m + 1}月の集計`;
   $("statBody").innerHTML =
-    `<div class="stat-row"><span>利用日数</span><b>${use}日</b></div>
-     <div class="stat-row"><span>先月利用日数</span><b style="opacity:.7">${prevUse}日</b></div>
-     <div class="stat-row"><span>合計利用時間</span><b>${hoursLabel}</b></div>
-     <div class="stat-row"><span>先月合計利用時間</span><b style="opacity:.7">${prevHoursLabel}</b></div>
-     <div class="stat-row"><span>振替</span><b>${furikae}日</b></div>
-     <div class="stat-row"><span>当欠</span><b style="color:var(--over)">${absent}日</b></div>`;
+    `<div class="stat-row"><span>利用日数</span><b>${st.use}日</b></div>
+     <div class="stat-row"><span>先月利用日数</span><b style="opacity:.7">${prevSt.use}日</b></div>
+     <div class="stat-row"><span>合計利用時間</span><b>${fmtHoursLabel(st.totalHours)}</b></div>
+     <div class="stat-row"><span>先月合計利用時間</span><b style="opacity:.7">${fmtHoursLabel(prevSt.totalHours)}</b></div>
+     <div class="stat-row"><span>振替</span><b>${st.furikae}日</b></div>
+     <div class="stat-row"><span>当欠</span><b style="color:var(--over)">${st.absent}日</b></div>
+     ${rankingHtml(y, m)}`;
   dlgOpen("statDlg");
 }
 $("statClose").onclick = () => dlgClose("statDlg");
