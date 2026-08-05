@@ -2423,7 +2423,7 @@ function calTable(group) {
   const _alCur = (state.askLabels && state.askLabels[ym(cur)]) || {};
   const al1 = _alCur.l1 || "";
   const al2 = _alCur.l2 || "";
-  let head = "<th class='name-col'>キャスト</th><th class='avail-col'><small>確認</small></th>" +
+  let head = "<th class='name-col' style='cursor:pointer' onclick='openRanking()'>キャスト</th><th class='avail-col'><small>確認</small></th>" +
     `<th class='canask-col' onclick="editAskLabel(1)"><small>${al1}</small></th>` +
     `<th class='canask-col' onclick="editAskLabel(2)"><small>${al2}</small></th>`;
   for (let d = 1; d <= dim; d++) {
@@ -2657,8 +2657,14 @@ function openStat(cid) {
      <div class="stat-row"><span>合計利用時間</span><b>${fmtHoursLabel(st.totalHours)}</b></div>
      <div class="stat-row"><span>先月合計利用時間</span><b style="opacity:.7">${fmtHoursLabel(prevSt.totalHours)}</b></div>
      <div class="stat-row"><span>振替</span><b>${st.furikae}日</b></div>
-     <div class="stat-row"><span>当欠</span><b style="color:var(--over)">${st.absent}日</b></div>
-     ${rankingHtml(y, m)}`;
+     <div class="stat-row"><span>当欠</span><b style="color:var(--over)">${st.absent}日</b></div>`;
+  dlgOpen("statDlg");
+}
+// 利用表左上「キャスト」見出しクリック→月間ランキング
+function openRanking() {
+  const y = cur.getFullYear(), m = cur.getMonth();
+  $("statTitle").textContent = `${m + 1}月のランキング`;
+  $("statBody").innerHTML = rankingHtml(y, m);
   dlgOpen("statDlg");
 }
 $("statClose").onclick = () => dlgClose("statDlg");
@@ -3428,6 +3434,7 @@ window.setAvail = setAvail; window.cycleAsk = cycleAsk; window.openLend = openLe
 window.removeLend = removeLend; window.jumpToDay = jumpToDay; window.jumpToListDay = jumpToListDay; window.jumpToListDate = jumpToListDate; window.searchCastInCalendar = searchCastInCalendar; window.editAskLabel = editAskLabel;
 window.optimizeRooms = optimizeRooms; window.openCastDlg = openCastDlg;
 window.openShukuhakuList = openShukuhakuList; window.jumpToShukuhakuCell = jumpToShukuhakuCell;
+window.openRanking = openRanking;
 
 renderAll();
 
