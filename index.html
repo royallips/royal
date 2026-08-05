@@ -2662,9 +2662,14 @@ $("statClose").onclick = () => dlgClose("statDlg");
 $("statX").onclick = () => dlgClose("statDlg");
 
 // --- 宿泊一覧 ---
+function shukuhakuOn(cid, dateObj) {
+  const r = recByKey(cid, dkeyForDate(dateObj));
+  return !!(r && (r.status === "shukuhaku" || r.stayBg === "shukuhaku"));
+}
 function openShukuhakuList() {
   const dim = daysIn(cur);
-  // 連続する宿泊日をキャストごとにまとめて期間（開始日〜終了日）に変換
+  const y = cur.getFullYear(), m = cur.getMonth();
+  // 連続する宿泊日をキャストごとにまとめて期間（開始日〜終了日）に変換。月をまたぐ場合は前後の月まで日付を延長する
   const ranges = [];
   state.casts.forEach(c => {
     const days = [];
@@ -2681,13 +2686,29 @@ function openShukuhakuList() {
       start = d; prev = d;
     }
   });
+  ranges.forEach(rg => {
+    rg.startDate = new Date(y, m, rg.start);
+    if (rg.start === 1) {
+      let d2 = new Date(y, m, 0);
+      while (shukuhakuOn(rg.cid, d2)) { rg.startDate = d2; d2 = new Date(d2.getFullYear(), d2.getMonth(), d2.getDate() - 1); }
+    }
+    rg.endDate = new Date(y, m, rg.end);
+    if (rg.end === dim) {
+      let d2 = new Date(y, m, dim + 1);
+      while (shukuhakuOn(rg.cid, d2)) { rg.endDate = d2; d2 = new Date(d2.getFullYear(), d2.getMonth(), d2.getDate() + 1); }
+    }
+  });
   ranges.sort((a, b) => a.start - b.start || a.group.localeCompare(b.group) || a.name.localeCompare(b.name, "ja"));
   $("statTitle").textContent = `${cur.getMonth() + 1}月の宿泊一覧（${ranges.length}件）`;
   $("statBody").innerHTML = ranges.length
     ? ranges.map(rg => {
-        const dayCount = rg.end - rg.start + 1;
-        const label = rg.start === rg.end ? `${rg.start}日(${dayCount}泊)` : `${rg.start}日〜${rg.end}日(${dayCount}泊)`;
-        return `<div class="stat-row" style="cursor:pointer" onclick="jumpToShukuhakuCell('${rg.cid}',${rg.start})"><span>${esc(rg.name)}</span><b style="font-size:14px;color:var(--ink-soft)">${label}</b></div>`;
+        const dayCount = Math.round((rg.endDate - rg.startDate) / 86400000) + 1;
+        const sameMonth = rg.startDate.getFullYear() === rg.endDate.getFullYear() && rg.startDate.getMonth() === rg.endDate.getMonth();
+        const label = rg.startDate.getTime() === rg.endDate.getTime() ? `${rg.startDate.getDate()}日(${dayCount}泊)`
+          : sameMonth ? `${rg.startDate.getDate()}日〜${rg.endDate.getDate()}日(${dayCount}泊)`
+          : `${rg.startDate.getMonth() + 1}/${rg.startDate.getDate()}〜${rg.endDate.getMonth() + 1}/${rg.endDate.getDate()}(${dayCount}泊)`;
+        const jumpDay = (rg.startDate.getFullYear() === y && rg.startDate.getMonth() === m) ? rg.startDate.getDate() : 1;
+        return `<div class="stat-row" style="cursor:pointer" onclick="jumpToShukuhakuCell('${rg.cid}',${jumpDay})"><span>${esc(rg.name)}</span><b style="font-size:14px;color:var(--ink-soft)">${label}</b></div>`;
       }).join("")
     : `<div class="hint">この月は宿泊の登録がありません。</div>`;
   dlgOpen("statDlg");
