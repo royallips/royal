@@ -2664,19 +2664,31 @@ $("statX").onclick = () => dlgClose("statDlg");
 // --- 宿泊一覧 ---
 function openShukuhakuList() {
   const dim = daysIn(cur);
-  const items = [];
+  // 連続する宿泊日をキャストごとにまとめて期間（開始日〜終了日）に変換
+  const ranges = [];
   state.casts.forEach(c => {
+    const days = [];
     for (let d = 1; d <= dim; d++) {
       const r = rec(c.id, d);
-      if (!r) continue;
-      if (r.status !== "shukuhaku" && r.stayBg !== "shukuhaku") continue;
-      items.push({ cid: c.id, name: c.name, group: c.group, day: d, time: fmtTime(r), note: r.note || "" });
+      if (r && (r.status === "shukuhaku" || r.stayBg === "shukuhaku")) days.push(d);
+    }
+    if (!days.length) return;
+    let start = days[0], prev = days[0];
+    for (let i = 1; i <= days.length; i++) {
+      const d = days[i];
+      if (d === prev + 1) { prev = d; continue; }
+      ranges.push({ cid: c.id, name: c.name, group: c.group, start, end: prev });
+      start = d; prev = d;
     }
   });
-  items.sort((a, b) => a.day - b.day || a.group.localeCompare(b.group) || a.name.localeCompare(b.name, "ja"));
-  $("statTitle").textContent = `${cur.getMonth() + 1}月の宿泊一覧（${items.length}件）`;
-  $("statBody").innerHTML = items.length
-    ? items.map(it => `<div class="stat-row" style="cursor:pointer" onclick="jumpToShukuhakuCell('${it.cid}',${it.day})"><span>${cur.getMonth() + 1}/${it.day}　${esc(it.name)}${it.note ? `<small style="color:var(--ink-soft)">　${esc(it.note)}</small>` : ""}</span><b style="font-size:14px;color:var(--ink-soft)">${it.time ? esc(it.time) : ""}</b></div>`).join("")
+  ranges.sort((a, b) => a.start - b.start || a.group.localeCompare(b.group) || a.name.localeCompare(b.name, "ja"));
+  $("statTitle").textContent = `${cur.getMonth() + 1}月の宿泊一覧（${ranges.length}件）`;
+  $("statBody").innerHTML = ranges.length
+    ? ranges.map(rg => {
+        const dayCount = rg.end - rg.start + 1;
+        const label = rg.start === rg.end ? `${rg.start}日(${dayCount}泊)` : `${rg.start}日〜${rg.end}日(${dayCount}泊)`;
+        return `<div class="stat-row" style="cursor:pointer" onclick="jumpToShukuhakuCell('${rg.cid}',${rg.start})"><span>${esc(rg.name)}</span><b style="font-size:14px;color:var(--ink-soft)">${label}</b></div>`;
+      }).join("")
     : `<div class="hint">この月は宿泊の登録がありません。</div>`;
   dlgOpen("statDlg");
 }
