@@ -391,19 +391,21 @@
   /* シート表示 */
   .sheet-view{padding:4px;display:flex;flex-direction:column;height:calc(100vh - 150px);overflow:hidden;box-sizing:border-box}
   .sheet-top-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap;flex-shrink:0}
-  .sheet-header{display:flex;align-items:center;gap:8px;flex-shrink:0}
+  .sheet-header{display:none;align-items:center;gap:8px;flex-shrink:0}
+  body.ssmode .sheet-header{display:flex}
   .sheet-date{font-size:16px;font-weight:900;color:var(--ink);white-space:nowrap}
-  .sheet-kake-row{display:flex;gap:6px;flex:1;flex-wrap:wrap;align-items:center;min-width:0}
+  .sheet-kake-row{display:flex;gap:6px;flex:1;flex-wrap:wrap;align-items:center;justify-content:flex-start;min-width:0}
   .sh-kake-zone{display:inline-flex;flex-wrap:wrap;align-items:center;gap:4px;font-size:13px;font-weight:700;padding:3px 8px;border-radius:8px;max-width:100%;box-sizing:border-box}
   .sh-kake-zone.lend{color:var(--lend);background:rgba(140,44,196,.08)}
   .sh-kake-zone.borrow{color:var(--borrow);background:rgba(74,159,212,.1)}
   .sh-kake-zone.over{color:var(--over);background:rgba(224,70,60,.08);font-size:16px}
   .sh-kake-zone.over .sh-kake-label{font-size:11px}
   .sh-kake-zone.over .sh-kake-item{font-size:15px}
-  .sh-kake-zone.soukei{color:#1f8a9c;background:rgba(31,138,156,.08);margin-left:auto}
+  .sh-kake-zone.soukei{color:#1f8a9c;background:rgba(31,138,156,.08)}
   .sh-kake-label{font-size:10px;font-weight:900;margin-right:3px;opacity:.8}
   .sh-kake-item{background:rgba(255,255,255,.7);border-radius:5px;padding:1px 6px;font-size:12px}
   .sheet-memo-row{flex-shrink:0;margin-top:4px}
+  .sheet-soukei-row{flex-shrink:0;margin-top:4px;display:flex;justify-content:flex-start}
   .sheet-memo-row .memo-box{margin-top:0}
   .sheet-cols{display:grid;grid-template-columns:1fr 1fr;gap:6px;flex:1;min-height:0;overflow:hidden;box-sizing:border-box}
   .sheet-col{display:flex;flex-direction:column;overflow:hidden;min-height:0}
@@ -545,12 +547,12 @@
     .legend{gap:8px;font-size:10px}
     /* シートビュー：スマホ幅に合わせる */
     .sheet-view{height:calc(100vh - 120px)}
-    /* 溢れ・掛け持ち・送迎が人数が多いと右にはみ出るのを防ぎ、折り返して全部見えるようにする */
+    /* 溢れ・掛け持ちが人数が多いと右にはみ出るのを防ぎ、折り返して全部見えるようにする */
     .sheet-top-row{gap:4px}
     .sheet-kake-row{width:100%;gap:4px}
     .sh-kake-zone{font-size:11px;padding:2px 6px}
     .sh-kake-zone.over{font-size:13px}
-    .sh-kake-zone.soukei{margin-left:0;width:100%}
+    .sh-kake-zone.soukei{width:100%}
     .sh-rno{font-size:11px;width:20px;min-width:20px}
     .sh-inner{padding:0 2px;gap:2px}
     .sh-name{font-size:14px}
@@ -591,18 +593,19 @@
     .ss-btn { display: none !important; }
     .ss-exit { display: none !important; }
     .sheet-top-row { display: flex !important; align-items: center; gap: 4pt; margin-bottom: 1.5mm; flex-wrap: nowrap; flex-shrink: 0; }
-    .sheet-header { justify-content: flex-start; gap: 4pt; flex-shrink: 0; margin-bottom: 0; }
+    .sheet-header { display: flex !important; justify-content: flex-start; gap: 4pt; flex-shrink: 0; margin-bottom: 0; }
     .sheet-date { font-size: 12pt; font-weight: 900; white-space: nowrap; }
     .sheet-kake-row { display: flex !important; gap: 3pt; flex-wrap: wrap; align-items: center; flex: 1; margin: 0; }
     .sh-kake-zone { display: inline-flex !important; font-size: 12pt; padding: 2pt 6pt; border-radius: 3pt; }
     .sh-kake-zone.over { font-size: 12pt; }
     .sh-kake-zone.over .sh-kake-label { font-size: 10pt; }
     .sh-kake-zone.over .sh-kake-item { font-size: 12pt; }
-    .sh-kake-zone.soukei { font-size: 8pt; margin-left: auto; }
+    .sh-kake-zone.soukei { font-size: 8pt; }
     .sh-kake-zone.soukei .sh-kake-label { font-size: 7pt; }
     .sh-kake-zone.soukei .sh-kake-item { font-size: 8pt; }
     .sh-kake-label { font-size: 10pt; }
     .sh-kake-item { font-size: 12pt; padding: 0 5pt; }
+    .sheet-soukei-row { flex-shrink: 0; margin-top: 1.5mm; }
     /* シート本体: 行高さを固定mmで指定し、モバイル印刷でも1ページに収まるようにする */
     .sheet-view { padding: 0; display: flex; flex-direction: column; height: auto; overflow: visible; width: 100%; box-sizing: border-box; }
     .sheet-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; max-width: 100%; width: 100%; margin: 0; overflow: visible; box-sizing: border-box; break-inside: avoid; page-break-inside: avoid; }
@@ -1497,7 +1500,7 @@ function buildRoomsSheet(memo) {
       <div class="sheet-header">
         <span class="sheet-date">${m+1}月${roomDay}日（${wd}）</span>
       </div>
-      <div class="sheet-kake-row">${overZone}${lendZone}${borrowZone}${soukeiZoneHtml}</div>
+      <div class="sheet-kake-row">${overZone}${lendZone}${borrowZone}</div>
     </div>
     <div class="sheet-cols">
       <div class="sheet-col hiru">
@@ -1512,6 +1515,7 @@ function buildRoomsSheet(memo) {
     <div class="sheet-memo-row">
       <textarea class="memo-box" id="dayMemo" rows="5" placeholder="メモ">${memo}</textarea>
     </div>
+    <div class="sheet-soukei-row">${soukeiZoneHtml}</div>
   </div>`;
 }
 function renderRooms() {
