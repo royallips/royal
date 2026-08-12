@@ -2206,17 +2206,21 @@ function renderRoomsList() {
       const numSlots = rowSlots.length || 1;
       const hasOverlap = numSlots > 1;
       const slotH = hasOverlap ? Math.max(8, Math.floor(26 / numSlots)) : 26;
+      // 重なりの見た目（clash枠＋赤ハッチ）を通常部屋のバーと統一する
+      arr.forEach(w => { w.clash = arr.some(x => x !== w && overlap(x.sp, w.sp)); });
 
       const bars = arr.map((w, k) => {
         const cobj = state.casts.find(x => x.id === w.cid);
         const rankCls = cobj && cobj.rank === "premier" ? " rank-premier" : cobj && cobj.rank === "vip" ? " rank-vip" : "";
         const nameCls = cobj && (cobj.furyo || cobj.autoOver) ? " furyo-name" : "";
+        const clashCls = w.clash ? " clash" : "";
+        const ov = clashOverlayHtml(w, arr);
         const innerLabel = hasOverlap ? "" : `<span class="lf-barlabel${nameCls}">${w.name}<span class="lf-endtime">${lfTime(w.sp)}</span></span>`;
         if (w.borrow && w.newcomer)
-          return `<div class="lf-bar newcomer${rankCls}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name ? w.name+' ' : ''}入店予定 ${fmtSp(w.sp)}">${hasOverlap ? "" : `<span class="lf-barlabel">${w.name ? w.name+' ' : ''}入店予定<span class="lf-endtime">${lfTime(w.sp)}</span></span>`}</div>`;
+          return `<div class="lf-bar newcomer${rankCls}${clashCls}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name ? w.name+' ' : ''}入店予定 ${fmtSp(w.sp)}">${ov}${hasOverlap ? "" : `<span class="lf-barlabel">${w.name ? w.name+' ' : ''}入店予定<span class="lf-endtime">${lfTime(w.sp)}</span></span>`}</div>`;
         if (w.borrow)
-          return `<div class="lf-bar bw${rankCls} store-${w.store||''}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name} ${fmtSp(w.sp)}（掛け持ち）">${innerLabel}</div>`;
-        return `<div class="lf-bar ov${rankCls}" draggable="true" data-cid="${w.cid}"${w.seg2 ? ' data-nk2="1"' : ''} style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name} ${fmtSp(w.sp)}${w.seg2 ? '（中抜け後半）' : ''}">${innerLabel}</div>`;
+          return `<div class="lf-bar bw${rankCls} store-${w.store||''}${clashCls}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name} ${fmtSp(w.sp)}（掛け持ち）">${ov}${innerLabel}</div>`;
+        return `<div class="lf-bar ov${rankCls}${clashCls}" draggable="true" data-cid="${w.cid}"${w.seg2 ? ' data-nk2="1"' : ''} style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name} ${fmtSp(w.sp)}${w.seg2 ? '（中抜け後半）' : ''}">${ov}${innerLabel}</div>`;
       }).join("");
 
       // 重なっている場合の浮遊ラベル：バー自体は重なったままでも文字は必ず読める位置に段違い表示
