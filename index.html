@@ -461,8 +461,8 @@
   .room-move-list button.cur{background:var(--pink);color:#fff;border-color:var(--pink)}
   .room-move-list button.clashbtn{border-color:#d12;color:#d12;background:#fff5f5}
   .stat-row{display:flex;justify-content:space-between;padding:10px 4px;border-bottom:1px solid var(--line);font-size:15px}
-  .stat-split{display:flex;gap:10px;flex-wrap:nowrap}
-  .stat-split>.card{flex:1;min-width:0}
+  .stat-split{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .stat-split>.card{min-width:0;padding:8px 10px}
   .stat-row b{color:var(--pink);font-size:20px}
   .store-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin:6px 0}
   .store-grid button{padding:10px 0;border-radius:10px;border:1.5px solid var(--lend);background:#fff;color:var(--lend);font-weight:800;cursor:pointer}
@@ -488,7 +488,7 @@
     /* トップカードは2列に */
     .cards{grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px}
     /* 宿泊一覧・マット対応一覧などの3分割は狭い画面では縦積みに */
-    .stat-split{flex-wrap:wrap}
+    .stat-split{grid-template-columns:1fr}
     .card{padding:9px;border-radius:11px}
     .card .num{font-size:20px}
     .card .lbl{font-size:10px}
