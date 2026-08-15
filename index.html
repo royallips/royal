@@ -938,6 +938,7 @@ let state = load();
 let cur = new Date(); cur.setDate(1);
 let roomDay = null, editing = null, pickStatus = "work", roomViewMode = "timeline";
 let dlgInitial = null; // ダイアログを開いた時点の状態（時間を実際に変更したか判定するため）
+let editingOriginalRec = null; // 編集開始時点のレコードの元の値（時間欄を触っていない時に丸め誤差なく復元するため）
 let castGroup = "hiru", castRank = "", calGroup = "hiru", calSearch = "", calScrollLeft = null;
 let selBar = null, moveTarget = null, delTarget = null, statTarget = null, delConfirmStage = 0;
 let lendStore = null, lendMode = "lend";   // lend=加盟店へ掛け持ち / borrow=ロイヤルに掛け持ち
@@ -3128,6 +3129,7 @@ function openDlg(cid, day) {
   const c = state.casts.find(x => x.id === cid);
   $("dlgTitle").textContent = `${c.name}　${cur.getMonth() + 1}/${day}`;
   const r = rec(cid, day);
+  editingOriginalRec = r ? { ...r } : null;
   const _overlays = ["seiri","yotei","shukuhaku","tenpaku"];
   {
     let bs = (r && r.status) ? r.status : "none";
@@ -3214,10 +3216,11 @@ $("dlgSave").onclick = () => {
   const extraTargets = hadSelApply
     ? [...calSelCells].filter(x => x !== `${cid}@@${day}`).map(x => { const [c, d] = x.split("@@"); return { cid: c, day: parseInt(d) }; })
     : [];
-  // まとめて入力でダイアログを開いた時から時間を変更していないか（＝マーカーや備考だけの追加か）
-  const timeUnchanged = hadSelApply && dlgInitial && dlgInitial.status === pickStatus
+  // ダイアログを開いた時から時間欄を触っていないか（＝マーカーや備考だけの追加か）
+  const primaryTimeUnchanged = dlgInitial && dlgInitial.status === pickStatus
     && dlgInitial.start === s && dlgInitial.end === e
     && dlgInitial.start2 === val("startTime2") && dlgInitial.end2 === val("endTime2");
+  const timeUnchanged = hadSelApply && primaryTimeUnchanged;
 
   const _prevSeiri = state.records[k] && (state.records[k].status === "seiri" || state.records[k].seiriTint);
 
@@ -3262,6 +3265,13 @@ $("dlgSave").onclick = () => {
     }
     if (pickStatus === "work" && $("hideNetChk").checked) rec0.hideNet = true;
     if (pickStatus === "work" && $("dummyChk").checked) rec0.dummy = true;
+    // 時間欄を触っていない（マーカー等の追加だけ）場合は、プルダウンの丸め等で意図せず変わらないよう元の値をそのまま使う
+    if (primaryTimeUnchanged && editingOriginalRec && (editingOriginalRec.status === "work" || editingOriginalRec.status === "furikae")) {
+      rec0.start = editingOriginalRec.start;
+      rec0.end = editingOriginalRec.end;
+      if (editingOriginalRec.start2 != null) { rec0.start2 = editingOriginalRec.start2; rec0.end2 = editingOriginalRec.end2; }
+      else { delete rec0.start2; delete rec0.end2; }
+    }
     pinCurrentRooms(day); // 新規追加時に既存キャストの現在位置を固定（自動詰め直し防止）
     setRec(k, rec0);
     // 自動溢れキャストは溢れに、手動配置済みはそのまま、未配置のみ自動配置に戻す
