@@ -290,6 +290,10 @@
   .rt-bar.has-hidenet.bar-compact::after{content:"非";position:absolute;top:0;right:0;background:#ffe3e0;color:#d12;font-weight:900;font-size:8px;line-height:1.3;padding:0 2px;border-radius:0 5px 0 4px;z-index:3;pointer-events:none}
   .lf-bar.has-hidenet::after{content:"非";position:absolute;top:0;right:0;background:#ffe3e0;color:#d12;font-weight:900;font-size:12px;line-height:1.3;padding:0 4px;border-radius:0 4px 0 4px;z-index:3;pointer-events:none}
   .rt-bar.bar-compact .hidenet-bar{display:none}
+  .dummy-bar{display:inline-block;background:#e9e0fa;color:#6b3fb0;font-weight:800;border-radius:4px;padding:0 3px;margin-left:3px;font-size:9px}
+  .rt-bar.has-dummy.bar-compact::after{content:"ダミー";position:absolute;top:0;right:0;background:#e9e0fa;color:#6b3fb0;font-weight:900;font-size:7px;line-height:1.3;padding:0 2px;border-radius:0 5px 0 4px;z-index:3;pointer-events:none}
+  .lf-bar.has-dummy::after{content:"ダミー";position:absolute;top:0;right:0;background:#e9e0fa;color:#6b3fb0;font-weight:900;font-size:10px;line-height:1.3;padding:0 4px;border-radius:0 4px 0 4px;z-index:3;pointer-events:none}
+  .rt-bar.bar-compact .dummy-bar{display:none}
   .rt-bar.clash{box-shadow:0 1px 3px rgba(0,0,0,.15), inset 0 0 0 1.5px rgba(224,70,60,.9)}
   .rt-bar .rt-nklabel{position:relative;z-index:2;font-size:.7em;font-weight:700;opacity:.8;padding:0 2px;white-space:nowrap}
   .rt-bar .rt-barlabel{position:relative;z-index:2;overflow:hidden;text-overflow:ellipsis;max-width:100%}
@@ -725,6 +729,8 @@
         </div>
         <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--ink-soft);margin:2px 0 8px">
           <input type="checkbox" id="hideNetChk" style="width:auto"> ネット非掲載</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--ink-soft);margin:2px 0 8px">
+          <input type="checkbox" id="dummyChk" style="width:auto"> ダミー（シティヘブンのみ出勤・実際は不在／溢れ扱い）</label>
       </div>
       <div class="hint"></div>
     </div>
@@ -1295,10 +1301,10 @@ function computeAssignmentByKey(dk, useListAssign = false) {
     if (typeof ri === "number" && ri >= 0 && ri < ROOMS) { rooms[ri].push(w); placed.add(w); }
     else forcedOver.push(w);
   });
-  // 溢れ指定（手動OVER または 自動溢れ）のものを最初に確保
+  // 溢れ指定（手動OVER・自動溢れ・ダミー[シティヘブンのみ出勤で実際は不在]）のものを最初に確保
   workers.forEach(w => {
     const fk = w.seg2 ? w.cid + ":nk2" : w.cid;
-    const fOver = isOverAssign(force[fk]) || (autoOverSet.has(w.cid) && typeof force[fk] !== "number");
+    const fOver = isOverAssign(force[fk]) || (autoOverSet.has(w.cid) && typeof force[fk] !== "number") || (w.r && w.r.dummy);
     if (fOver) { forcedOver.push(w); placed.add(w); }
   });
   // ① 手動で部屋番号を指定されたキャストを先に部屋へ入れて占有を確保
@@ -1564,7 +1570,7 @@ function renderRooms() {
         return `<div class="rt-bar newcomer ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name ? w.name+' ' : ''}入店予定 ${fmtSp(w.sp)}" onclick="openMove('${w.cid}',event)"><span class="rt-barlabel">${w.name ? w.name+' ' : ''}入店予定</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
       if (w.borrow)
         return `<div class="rt-bar bw store-${w.store||''} ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name} ${fmtSp(w.sp)}（掛け持ち）" onclick="openMove('${w.cid}',event)"><span class="rt-barlabel${nameCls}">${w.name}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
-      return `<div class="rt-bar ov ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}"${w.seg2 ? ' data-nk2="1"' : ''} style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name} ${fmtSp(w.sp)}" onclick="openMove('${w.cid}',event${w.seg2 ? ',true' : ''})">${w.seg2 ? '<span class="rt-nklabel">後半</span>' : ''}<span class="rt-barlabel${nameCls}">${w.name}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
+      return `<div class="rt-bar ov${w.r && w.r.dummy ? ' has-dummy' : ''} ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}"${w.seg2 ? ' data-nk2="1"' : ''} style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name} ${fmtSp(w.sp)}${w.r && w.r.dummy ? ' ダミー' : ''}" onclick="openMove('${w.cid}',event${w.seg2 ? ',true' : ''})">${w.seg2 ? '<span class="rt-nklabel">後半</span>' : ''}<span class="rt-barlabel${nameCls}">${w.name}${w.r && w.r.dummy ? '<span class="dummy-bar">ダミー</span>' : ''}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
     }).join("");
     const hasCast = arr.some(w => !w.borrow);
     const allBorrow = arr.length && arr.every(w => w.borrow);
@@ -2204,7 +2210,7 @@ function renderRoomsList() {
           return `<div class="lf-bar newcomer${rankCls}${clashCls}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name ? w.name+' ' : ''}入店予定 ${fmtSp(w.sp)}">${ov}<span class="lf-barlabel">${w.name ? w.name+' ' : ''}入店予定<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
         if (w.borrow)
           return `<div class="lf-bar bw${rankCls} store-${w.store||''}${clashCls}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name} ${fmtSp(w.sp)}（掛け持ち）">${ov}<span class="lf-barlabel${nameCls}">${w.name}<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
-        return `<div class="lf-bar ov${rankCls}${clashCls}" draggable="true" data-cid="${w.cid}"${w.seg2 ? ' data-nk2="1"' : ''} style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name} ${fmtSp(w.sp)}${w.seg2 ? '（中抜け後半）' : ''}">${ov}<span class="lf-barlabel${nameCls}">${w.name}<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
+        return `<div class="lf-bar ov${rankCls}${clashCls}${w.r && w.r.dummy ? ' has-dummy' : ''}" draggable="true" data-cid="${w.cid}"${w.seg2 ? ' data-nk2="1"' : ''} style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name} ${fmtSp(w.sp)}${w.seg2 ? '（中抜け後半）' : ''}${w.r && w.r.dummy ? ' ダミー' : ''}">${ov}<span class="lf-barlabel${nameCls}">${w.name}<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
       }).join("");
 
       const allBorrow = arr.length && arr.every(x => x.borrow);
@@ -2461,7 +2467,7 @@ function calTable(group) {
       if (hasEv && !isTodayCol) cls += " eventcell"; // 今日はイベント色より優先
       if (d === bookD && !isTodayCol) cls += " bookcell";
       const rc = rec(c.id, d), ci = cellInner(rc);
-      if (rc && isUse(rc.status) && (rc.status === "work" || rc.status === "furikae" || rc.start)) tot++;
+      if (rc && isUse(rc.status) && !(rc.status === "work" && rc.dummy) && (rc.status === "work" || rc.status === "furikae" || rc.start)) tot++;
       const selCls = calSelCells.has(`${c.id}@@${d}`) ? " sel-cell" : "";
       r += `<td class='cell ${cls} ${ci.cls}${selCls}' data-cid="${c.id}" data-d="${d}" onclick="openDlg('${c.id}',${d})">${ci.inner}</td>`;
     }
@@ -2469,7 +2475,7 @@ function calTable(group) {
     for (let d = 1; d <= prevDim; d++) {
       const prc = recByKey(c.id, dkeyForDate(new Date(prevY, prevM - 1, d)));
       if (!prc) continue;
-      if (prc.status === "work") prevTot++;
+      if (prc.status === "work") { if (!prc.dummy) prevTot++; }
       else if (prc.status === "furikae") prevTot++;
       else if ((prc.status === "shukuhaku" || prc.status === "tenpaku") && prc.start) prevTot++;
     }
@@ -2600,7 +2606,7 @@ function computeCastMonthStats(cid, y, m) {
   for (let d = 1; d <= dim; d++) {
     const r = recByKey(cid, dkeyForDate(new Date(y, m, d)));
     if (!r) continue;
-    if (r.status === "work") use++;
+    if (r.status === "work") { if (!r.dummy) use++; }
     else if (r.status === "shukuhaku" || r.status === "tenpaku") { if (r.start) use++; }
     else if (r.status === "furikae") { use++; furikae++; }
     else if (r.status === "absent") absent++;
@@ -3109,6 +3115,7 @@ function openDlg(cid, day) {
   setTime("endTime2", r && r.end2 != null ? r.end2 : "");
   $("nakanukeChk").checked = !!(r && r.start2);
   $("hideNetChk").checked = !!(r && r.hideNet);
+  $("dummyChk").checked = !!(r && r.dummy);
   $("noteText").value = r && r.note ? r.note : "";
   dlgInitial = { status: pickStatus, start: val("startTime"), end: val("endTime"), start2: val("startTime2"), end2: val("endTime2") };
   refreshPick();
@@ -3216,6 +3223,7 @@ $("dlgSave").onclick = () => {
       if (s2) { if (!e2) e2 = "L"; rec0.start2 = s2; rec0.end2 = e2; }
     }
     if (pickStatus === "work" && $("hideNetChk").checked) rec0.hideNet = true;
+    if (pickStatus === "work" && $("dummyChk").checked) rec0.dummy = true;
     pinCurrentRooms(day); // 新規追加時に既存キャストの現在位置を固定（自動詰め直し防止）
     setRec(k, rec0);
     // 自動溢れキャストは溢れに、手動配置済みはそのまま、未配置のみ自動配置に戻す
