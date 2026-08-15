@@ -2546,7 +2546,7 @@ function renderCalendar() {
         <span style="font-weight:700;color:var(--over)">✕(赤)=当欠</span>
         <span style="font-weight:700;color:#222">ー=休み</span>
         <span style="font-weight:700;color:#222">△=未定</span><span><i class="dot st-seiri"></i>生理</span>
-        <span style="cursor:pointer;text-decoration:underline" onclick="openShukuhakuList()"><i class="dot st-shukuhaku"></i>宿泊</span><span><i class="dot st-yotei"></i>予定</span><span><i class="dot st-tenpaku"></i>店泊</span>
+        <span><i class="dot st-shukuhaku"></i>宿泊</span><span><i class="dot st-yotei"></i>予定</span><span><i class="dot st-tenpaku"></i>店泊</span>
         </div>
       <div id="calTableWrap" style="overflow:auto;max-height:70vh"></div></div>`;
   renderCalendarTable();
@@ -2666,15 +2666,14 @@ function shukuhakuOn(cid, dateObj) {
   const r = recByKey(cid, dkeyForDate(dateObj));
   return !!(r && (r.status === "shukuhaku" || r.stayBg === "shukuhaku"));
 }
-function openShukuhakuList() {
-  const dim = daysIn(cur);
-  const y = cur.getFullYear(), m = cur.getMonth();
-  // 連続する宿泊日をキャストごとにまとめて期間（開始日〜終了日）に変換。月をまたぐ場合は前後の月まで日付を延長する
+// 連続する宿泊日をキャストごとにまとめて期間（開始日〜終了日）に変換。月をまたぐ場合は前後の月まで日付を延長する
+function computeShukuhakuRanges(y, m) {
+  const dim = daysIn(new Date(y, m, 1));
   const ranges = [];
   state.casts.forEach(c => {
     const days = [];
     for (let d = 1; d <= dim; d++) {
-      const r = rec(c.id, d);
+      const r = recByKey(c.id, dkeyForDate(new Date(y, m, d)));
       if (r && (r.status === "shukuhaku" || r.stayBg === "shukuhaku")) days.push(d);
     }
     if (!days.length) return;
@@ -2699,22 +2698,26 @@ function openShukuhakuList() {
     }
   });
   ranges.sort((a, b) => a.start - b.start || a.group.localeCompare(b.group) || a.name.localeCompare(b.name, "ja"));
-  $("statTitle").textContent = `${cur.getMonth() + 1}月の宿泊一覧（${ranges.length}件）`;
-  $("statBody").innerHTML = ranges.length
-    ? ranges.map(rg => {
-        const dayCount = Math.round((rg.endDate - rg.startDate) / 86400000) + 1;
-        const sameMonth = rg.startDate.getFullYear() === rg.endDate.getFullYear() && rg.startDate.getMonth() === rg.endDate.getMonth();
-        const label = rg.startDate.getTime() === rg.endDate.getTime() ? `${rg.startDate.getDate()}日(${dayCount}泊)`
-          : sameMonth ? `${rg.startDate.getDate()}日〜${rg.endDate.getDate()}日(${dayCount}泊)`
-          : `${rg.startDate.getMonth() + 1}/${rg.startDate.getDate()}〜${rg.endDate.getMonth() + 1}/${rg.endDate.getDate()}(${dayCount}泊)`;
-        const jumpDay = (rg.startDate.getFullYear() === y && rg.startDate.getMonth() === m) ? rg.startDate.getDate() : 1;
-        return `<div class="stat-row" style="cursor:pointer" onclick="jumpToShukuhakuCell('${rg.cid}',${jumpDay})"><span>${esc(rg.name)}</span><b style="font-size:14px;color:var(--ink-soft)">${label}</b></div>`;
-      }).join("")
-    : `<div class="hint">この月は宿泊の登録がありません。</div>`;
-  dlgOpen("statDlg");
+  return ranges;
+}
+function shukuhakuRangeLabel(rg) {
+  const dayCount = Math.round((rg.endDate - rg.startDate) / 86400000) + 1;
+  const sameMonth = rg.startDate.getFullYear() === rg.endDate.getFullYear() && rg.startDate.getMonth() === rg.endDate.getMonth();
+  if (rg.startDate.getTime() === rg.endDate.getTime()) return `${rg.startDate.getDate()}日(${dayCount}泊)`;
+  if (sameMonth) return `${rg.startDate.getDate()}日〜${rg.endDate.getDate()}日(${dayCount}泊)`;
+  return `${rg.startDate.getMonth() + 1}/${rg.startDate.getDate()}〜${rg.endDate.getMonth() + 1}/${rg.endDate.getDate()}(${dayCount}泊)`;
+}
+// キャスト管理タブの宿泊一覧表からタップ → 利用表タブへ切り替えて該当セルへジャンプ
+function jumpToShukuhakuFromManage(cid, day) {
+  document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+  const tab = document.querySelector('.tab[data-tab="calendar"]');
+  if (tab) tab.classList.add("active");
+  ["rooms", "roomslist", "calendar", "manage"].forEach(v => $("view-" + v).style.display = v === "calendar" ? "block" : "none");
+  renderCalendar();
+  syncStatCards();
+  jumpToShukuhakuCell(cid, day);
 }
 function jumpToShukuhakuCell(cid, day) {
-  dlgClose("statDlg");
   const c = state.casts.find(x => x.id === cid);
   if (c && calGroup !== c.group) {
     calGroup = c.group;
@@ -2767,6 +2770,14 @@ function renderManage() {
       `<span class="chip ${group}"><span class="chipname" onclick="openCastDlg('${c.id}')">${c.autoOver ? '<span class="ao-mark">不</span>' : ''}${c.furyo ? '<span class="fr-mark">不</span>' : ''}${c.name}</span></span>`).join("")
       || '<span class="empty-msg">未登録</span>';
   }
+  const shukuY = cur.getFullYear(), shukuM = cur.getMonth();
+  const shukuRanges = computeShukuhakuRanges(shukuY, shukuM);
+  const shukuRowsHtml = shukuRanges.length
+    ? shukuRanges.map(rg => {
+        const jumpDay = (rg.startDate.getFullYear() === shukuY && rg.startDate.getMonth() === shukuM) ? rg.startDate.getDate() : 1;
+        return `<div class="stat-row" style="cursor:pointer" onclick="jumpToShukuhakuFromManage('${rg.cid}',${jumpDay})"><span>${esc(rg.name)}</span><b style="font-size:14px;color:var(--ink-soft)">${shukuhakuRangeLabel(rg)}</b></div>`;
+      }).join("")
+    : `<div class="hint">この月は宿泊の登録がありません。</div>`;
   $("view-manage").innerHTML =
     `<div class="panel">
       <div class="reg-card">
@@ -2783,6 +2794,8 @@ function renderManage() {
       <div class="sec-title"><span class="tag hiru">昼の部</span></div><div>${chips("hiru")}</div>
       <div class="sec-title" style="margin-top:14px"><span class="tag yoru">夜の部</span></div><div>${chips("yoru")}</div>
       <div style="margin-top:16px"><button class="btn" id="addCast2">＋ キャストを追加</button></div>
+      <div class="sec-title" style="margin-top:20px">${shukuM + 1}月の宿泊一覧（${shukuRanges.length}件）</div>
+      <div>${shukuRowsHtml}</div>
     </div>`;
   $("addCast2").onclick = () => openCastDlg();
 }
@@ -3433,7 +3446,7 @@ window.toggleRoomLock = toggleRoomLock;
 window.setAvail = setAvail; window.cycleAsk = cycleAsk; window.openLend = openLend; window.cycleSoukei = cycleSoukei; window.setLendType = setLendType;
 window.removeLend = removeLend; window.jumpToDay = jumpToDay; window.jumpToListDay = jumpToListDay; window.jumpToListDate = jumpToListDate; window.searchCastInCalendar = searchCastInCalendar; window.editAskLabel = editAskLabel;
 window.optimizeRooms = optimizeRooms; window.openCastDlg = openCastDlg;
-window.openShukuhakuList = openShukuhakuList; window.jumpToShukuhakuCell = jumpToShukuhakuCell;
+window.jumpToShukuhakuFromManage = jumpToShukuhakuFromManage;
 window.openRanking = openRanking;
 
 renderAll();
