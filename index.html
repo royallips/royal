@@ -1655,7 +1655,6 @@ function renderRooms() {
         <span style="font-weight:800">${m + 1}/${roomDay}（${WK[new Date(y, m, roomDay).getDay()]}）　利用${total}名</span>${eventTag}
         <span style="font-size:12px;font-weight:700"><span class="tag hiru">昼 ${hiruN}名</span> <span class="tag yoru">夜 ${yoruN}名</span></span>
         <button class="btn sm" id="optimizeBtn" style="margin-left:auto">最適に並べ替え</button>
-        <button class="btn ghost sm" id="undoBtn" ${canUndo() ? "" : "disabled"}>前に戻す</button>
         <button class="view-toggle-btn${roomViewMode === 'sheet' ? ' active' : ''}" id="viewToggleBtn">切り替え</button>
       </div>
       ${lockBanner}
@@ -1679,7 +1678,6 @@ function renderRooms() {
   };
   const dm = $("dayMemo"); if (dm) dm.onchange = e => { state.memos[dkey(roomDay)] = e.target.value; save(); };
   const ob = $("optimizeBtn"); if (ob) ob.onclick = () => optimizeRooms();
-  const ub = $("undoBtn"); if (ub) ub.onclick = () => doUndo();
   const srb = $("soukeiReqBtn"); if (srb) srb.onclick = () => buildSoukeiRequest();
   const vtb = $("viewToggleBtn"); if (vtb) vtb.onclick = () => { roomViewMode = roomViewMode === "timeline" ? "sheet" : "timeline"; renderRooms(); };
   if (roomViewMode === "sheet") setTimeout(fitSheetNames, 80);
@@ -2534,7 +2532,6 @@ function renderCalendar() {
       <div class="bar" style="margin:0 0 10px;gap:8px">
         <input id="calSearchBox" placeholder="🔍 キャスト名で検索" value="${calSearch.replace(/"/g, '&quot;')}" style="flex:1;min-width:160px;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px">
         <button class="btn ghost sm" id="calSearchClear">クリア</button>
-        <button class="btn ghost sm" id="calUndoBtn" ${calUndoStack.length ? "" : "disabled"}>前に戻す</button>
         <button class="btn ghost sm${calSelMode ? ' selmode-on' : ''}" id="calSelModeBtn">まとめて入力</button>
       </div>
       <div class="subtabs" id="calSubtabs">
@@ -2553,8 +2550,6 @@ function renderCalendar() {
         </div>
       <div id="calTableWrap" style="overflow:auto;max-height:70vh"></div></div>`;
   renderCalendarTable();
-  const cub = $("calUndoBtn");
-  if (cub) cub.onclick = () => doCalUndo();
 
   const wrap0 = $("calTableWrap");
   if (wrap0 && calScrollLeft != null) wrap0.scrollLeft = calScrollLeft;
