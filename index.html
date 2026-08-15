@@ -211,6 +211,7 @@
   .st-mitei{background:var(--mitei)!important;color:var(--ink-soft)}
   .cell .timeunder{font-size:11.5px;display:block;line-height:1.1;letter-spacing:-.5px}
   .cell .hidenet{font-size:8px;font-weight:800;color:#c0392b;background:#ffe3e0;border-radius:4px;padding:0 2px;display:inline-block;margin-top:1px}
+  .cell .dummy{font-size:8px;font-weight:800;color:#6b3fb0;background:#e9e0fa;border-radius:4px;padding:0 2px;display:inline-block;margin-top:1px}
   .cell.nakanuke{background:#fff}
   .cell.nakanuke .timeunder{font-size:9px;line-height:1.2;font-weight:800;text-align:center}
   .cell.nakanuke .nk-label{display:block;font-size:8px;font-weight:900;color:#e07800;letter-spacing:.5px}
@@ -730,7 +731,7 @@
         <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--ink-soft);margin:2px 0 8px">
           <input type="checkbox" id="hideNetChk" style="width:auto"> ネット非掲載</label>
         <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--ink-soft);margin:2px 0 8px">
-          <input type="checkbox" id="dummyChk" style="width:auto"> ダミー（シティヘブンのみ出勤・実際は不在／溢れ扱い）</label>
+          <input type="checkbox" id="dummyChk" style="width:auto"> ダミー</label>
       </div>
       <div class="hint"></div>
     </div>
@@ -2363,8 +2364,8 @@ function cellInner(rc) {
   if (!rc.status && rc.stayBg) return { inner: note, cls: stayCls };
   switch (rc.status) {
     case "work":
-      if (rc.start2) return { inner: `<span class="timeunder">${fmtTime(rc)}<span class="nk-label">中抜け</span>${rc.start2}-${rc.end2 || 'L'}${rc.hideNet ? '<br><span class="hidenet">非掲載</span>' : ''}</span>${note}`, cls: "nakanuke" + (stayCls ? " " + stayCls : "") };
-      return { inner: `<span class="timeunder">${fmtTime(rc)}${rc.hideNet ? '<br><span class="hidenet">非掲載</span>' : ''}</span>${note}`, cls: stayCls };
+      if (rc.start2) return { inner: `<span class="timeunder">${fmtTime(rc)}<span class="nk-label">中抜け</span>${rc.start2}-${rc.end2 || 'L'}${rc.hideNet ? '<br><span class="hidenet">非掲載</span>' : ''}${rc.dummy ? '<br><span class="dummy">ダミー</span>' : ''}</span>${note}`, cls: "nakanuke" + (stayCls ? " " + stayCls : "") };
+      return { inner: `<span class="timeunder">${fmtTime(rc)}${rc.hideNet ? '<br><span class="hidenet">非掲載</span>' : ''}${rc.dummy ? '<br><span class="dummy">ダミー</span>' : ''}</span>${note}`, cls: stayCls };
     case "furikae":
       return { inner: `<span class="timeunder">${fmtTime(rc)}</span><span class="omark">○</span>${note}`, cls: stayCls };
     case "mitei":
