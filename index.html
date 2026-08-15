@@ -461,7 +461,7 @@
   .room-move-list button.cur{background:var(--pink);color:#fff;border-color:var(--pink)}
   .room-move-list button.clashbtn{border-color:#d12;color:#d12;background:#fff5f5}
   .stat-row{display:flex;justify-content:space-between;padding:10px 4px;border-bottom:1px solid var(--line);font-size:15px}
-  .stat-split{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .stat-split{display:grid;grid-template-columns:repeat(var(--split-cols,3),minmax(0,1fr));gap:8px}
   .stat-split>.card{min-width:0;padding:8px 10px}
   .stat-row b{color:var(--pink);font-size:20px}
   .store-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin:6px 0}
@@ -1409,14 +1409,6 @@ function renderStats() {
   const askToday = isCur ? state.casts.filter(c => c.availDatesMon === ym(cur) && String(c.availDates) === String(today.getDate())).sort(byName) : [];
   const askHtml = askToday.length ? askToday.map(c => nameSpan(c, "")).join("") : '<span class="none">なし</span>';
 
-  const todayCards = isCur ?
-    `<div class="card list"><div class="lbl">本日利用 明日以降未定</div>
-       <div class="cnt">${futureNone.length}<span style="font-size:11px;color:var(--ink-soft)"> 名</span></div>
-       <div class="names" style="margin-top:2px">${fn}</div></div>
-     <div class="card list"><div class="lbl">本日利用を確認</div>
-       <div class="cnt">${askToday.length}<span style="font-size:11px;color:var(--ink-soft)"> 名</span></div>
-       <div class="names" style="margin-top:2px">${askHtml}</div></div>` : "";
-
   // 宿泊一覧（連続する宿泊日をキャストごとにまとめた期間）：利用が少ない日カードの右に並べて表示
   const shukuY = cur.getFullYear(), shukuM = cur.getMonth();
   const shukuRanges = computeShukuhakuRanges(shukuY, shukuM);
@@ -1430,30 +1422,33 @@ function renderStats() {
   const matCasts = state.casts.filter(c => c.mat).sort(byName);
   const matHtml = listOrNone(matCasts, "");
 
+  // 集計カードは全部まとめてPCで横一列に並べる
+  const statCardList = [];
+  statCardList.push(`<div class="card list"><div class="lbl">${moLabel}まだ一度も利用なし</div>
+       <div class="grp">昼（${noUseHiru.length}名）</div><div class="names">${nh}</div>
+       <div class="grp">夜（${noUseYoru.length}名）</div><div class="names">${ny}</div></div>`);
+  if (isCur) {
+    statCardList.push(`<div class="card list"><div class="lbl">本日利用 明日以降未定</div>
+       <div class="cnt">${futureNone.length}<span style="font-size:11px;color:var(--ink-soft)"> 名</span></div>
+       <div class="names" style="margin-top:2px">${fn}</div></div>`);
+    statCardList.push(`<div class="card list"><div class="lbl">本日利用を確認</div>
+       <div class="cnt">${askToday.length}<span style="font-size:11px;color:var(--ink-soft)"> 名</span></div>
+       <div class="names" style="margin-top:2px">${askHtml}</div></div>`);
+  }
+  statCardList.push(`<div class="card list"><div class="lbl">利用が多い日</div>
+       <div class="lowdays">${highHtml}</div></div>`);
+  statCardList.push(`<div class="card list"><div class="lbl">利用が少ない日</div>
+       <div class="lowdays">${lowHtml}</div></div>`);
+  statCardList.push(`<div class="card list"><div class="lbl">${shukuM + 1}月の宿泊一覧（${shukuRanges.length}件）</div>
+       <div>${shukuRowsHtml}</div></div>`);
+  statCardList.push(`<div class="card list"><div class="lbl">マット対応一覧</div>
+       <div class="names" style="margin-top:2px">${matHtml}</div></div>`);
+
   const manageActive = document.querySelector('.tab[data-tab="manage"]')?.classList.contains("active");
   $("statCards").style.display = manageActive ? "" : "none";
   $("statCards").innerHTML =
-    `<div class="card list"><div class="lbl">${moLabel}まだ一度も利用なし</div>
-       <div class="grp">昼（${noUseHiru.length}名）</div><div class="names">${nh}</div>
-       <div class="grp">夜（${noUseYoru.length}名）</div><div class="names">${ny}</div></div>
-     ${todayCards}
-     <div class="card list" style="grid-column:span 2"><div class="lbl">利用が多い日</div>
-       <div class="lowdays">${highHtml}</div></div>
-     <div style="grid-column:1 / -1">
-       <div class="stat-split">
-         <div class="card list">
-           <div class="lbl">利用が少ない日</div>
-           <div class="lowdays">${lowHtml}</div>
-         </div>
-         <div class="card list">
-           <div class="lbl">${shukuM + 1}月の宿泊一覧（${shukuRanges.length}件）</div>
-           <div>${shukuRowsHtml}</div>
-         </div>
-         <div class="card list">
-           <div class="lbl">マット対応一覧</div>
-           <div class="names" style="margin-top:2px">${matHtml}</div>
-         </div>
-       </div>
+    `<div style="grid-column:1 / -1">
+       <div class="stat-split" style="--split-cols:${statCardList.length}">${statCardList.join("")}</div>
      </div>`;
 }
 
