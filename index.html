@@ -3163,9 +3163,16 @@ $("statusGridMarker").onclick = e => {
   pickOverlay = (pickOverlay === m) ? null : m; // 再クリックでトグル解除
   refreshPick();
 };
-$("nakanukeChk").onchange = () => {
+// 中抜け利用・ネット非掲載・ダミーは同時に選べないようにする（どれか1つを選ぶと他は自動解除）
+function exclusiveChkChanged(idd) {
+  if ($(idd).checked) {
+    ["nakanukeChk", "hideNetChk", "dummyChk"].forEach(other => { if (other !== idd) $(other).checked = false; });
+  }
   $("nakanukeFields").style.display = $("nakanukeChk").checked ? "flex" : "none";
-};
+}
+$("nakanukeChk").onchange = () => exclusiveChkChanged("nakanukeChk");
+$("hideNetChk").onchange = () => exclusiveChkChanged("hideNetChk");
+$("dummyChk").onchange = () => exclusiveChkChanged("dummyChk");
 $("dlgSave").onclick = () => {
   pushCalUndo();
   const { cid, day } = editing, k = recKey(cid, day);
