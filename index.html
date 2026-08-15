@@ -1417,7 +1417,7 @@ function renderStats() {
   const shukuRowsHtml = shukuRanges.length
     ? shukuRanges.map(rg => {
         const jumpDay = (rg.startDate.getFullYear() === shukuY && rg.startDate.getMonth() === shukuM) ? rg.startDate.getDate() : 1;
-        return `<div class="stat-row" style="cursor:pointer;padding:6px 2px;font-size:13px" onclick="jumpToShukuhakuFromManage('${rg.cid}',${jumpDay})"><span>${esc(rg.name)}</span><b style="font-size:13px;color:var(--ink-soft)">${shukuhakuRangeLabel(rg)}</b></div>`;
+        return `<div class="stat-row" style="cursor:pointer;padding:6px 2px;font-size:13px" onclick="jumpToShukuhakuFromManage('${rg.cid}',${jumpDay})"><span class="names" style="margin:0"><span class="nm ${rg.group}">${esc(rg.name)}</span></span><b style="font-size:13px;color:var(--ink-soft)">${shukuhakuRangeLabel(rg)}</b></div>`;
       }).join("")
     : `<div class="hint">この月は宿泊の登録がありません。</div>`;
 
