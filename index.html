@@ -1442,6 +1442,7 @@ function renderStats() {
   statCardList.push(`<div class="card list"><div class="lbl">${shukuM + 1}月の宿泊一覧（${shukuRanges.length}件）</div>
        <div>${shukuRowsHtml}</div></div>`);
   statCardList.push(`<div class="card list"><div class="lbl">マット対応一覧</div>
+       <div class="cnt">${matCasts.length}<span style="font-size:11px;color:var(--ink-soft)"> / ${state.casts.length}名</span></div>
        <div class="names" style="margin-top:2px">${matHtml}</div></div>`);
 
   const manageActive = document.querySelector('.tab[data-tab="manage"]')?.classList.contains("active");
