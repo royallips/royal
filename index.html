@@ -754,6 +754,8 @@
     <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--ink-soft);margin-top:6px">
       <input type="checkbox" id="castBousui" style="width:auto"> 防水シート</label>
     <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--ink-soft);margin-top:6px">
+      <input type="checkbox" id="castMat" style="width:auto"> マット対応</label>
+    <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--ink-soft);margin-top:6px">
       <input type="checkbox" id="castAutoOver" style="width:auto"> 不安定</label>
     <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--ink-soft);margin-top:6px">
       <input type="checkbox" id="castFuryo" style="width:auto"> 不良</label>
@@ -1420,6 +1422,9 @@ function renderStats() {
         return `<div class="stat-row" style="cursor:pointer;padding:6px 2px;font-size:13px" onclick="jumpToShukuhakuFromManage('${rg.cid}',${jumpDay})"><span class="names" style="margin:0"><span class="nm ${rg.group}">${esc(rg.name)}</span></span><b style="font-size:13px;color:var(--ink-soft)">${shukuhakuRangeLabel(rg)}</b></div>`;
       }).join("")
     : `<div class="hint">この月は宿泊の登録がありません。</div>`;
+  // マット対応一覧：宿泊一覧の右に並べて表示
+  const matCasts = state.casts.filter(c => c.mat).sort(byName);
+  const matHtml = listOrNone(matCasts, "");
 
   const manageActive = document.querySelector('.tab[data-tab="manage"]')?.classList.contains("active");
   $("statCards").style.display = manageActive ? "" : "none";
@@ -1439,6 +1444,10 @@ function renderStats() {
          <div style="flex:1;min-width:150px;border-left:1px solid var(--line);padding-left:14px">
            <div class="lbl">${shukuM + 1}月の宿泊一覧（${shukuRanges.length}件）</div>
            <div>${shukuRowsHtml}</div>
+         </div>
+         <div style="flex:1;min-width:150px;border-left:1px solid var(--line);padding-left:14px">
+           <div class="lbl">マット対応一覧</div>
+           <div class="names" style="margin-top:2px">${matHtml}</div>
          </div>
        </div>
      </div>`;
@@ -2906,6 +2915,7 @@ function openCastDlg(cid) {
     $("castDlgTitle").textContent = "キャスト編集";
     $("castName").value = c.name; castGroup = c.group; castRank = c.rank || "";
     $("castBousui").checked = !!c.bousui;
+    $("castMat").checked = !!c.mat;
     $("castAutoOver").checked = !!c.autoOver;
     $("castSoukeiAri").checked = c.soukei === "ari";
     $("castSoukeiKakunin").checked = c.soukei === "kakunin";
@@ -2918,6 +2928,7 @@ function openCastDlg(cid) {
     $("castSoukeiAri").checked = false; $("castSoukeiKakunin").checked = false;
     $("castSoukeiPlace").value = "";
     $("castBousui").checked = false;
+    $("castMat").checked = false;
     $("castFuryo").checked = false;
     $("castDelete").style.display = "none";
   }
@@ -2957,14 +2968,15 @@ $("castSave").onclick = () => {
   const ao = $("castAutoOver").checked;
   const furyo = $("castFuryo").checked;
   const bousui = $("castBousui").checked;
+  const mat = $("castMat").checked;
   const soukei = $("castSoukeiAri").checked ? "ari" : ($("castSoukeiKakunin").checked ? "kakunin" : "");
   const soukeiPlace = soukei ? val("castSoukeiPlace") : "";
   const now = Date.now();
   if (editCastId) {
     const c = state.casts.find(x => x.id === editCastId);
-    if (c) { c.name = n; c.group = castGroup; c.autoOver = ao; c.soukei = soukei; c.soukeiPlace = soukeiPlace; c.furyo = furyo; c.bousui = bousui; c.rank = castRank; c._updatedAt = now; }
+    if (c) { c.name = n; c.group = castGroup; c.autoOver = ao; c.soukei = soukei; c.soukeiPlace = soukeiPlace; c.furyo = furyo; c.bousui = bousui; c.mat = mat; c.rank = castRank; c._updatedAt = now; }
   } else {
-    state.casts.push({ id: id(), name: n, group: castGroup, availDates: "", canAsk: "", canAsk2: "", autoOver: ao, soukei: soukei, soukeiPlace: soukeiPlace, furyo: furyo, bousui: bousui, rank: castRank, _updatedAt: now });
+    state.casts.push({ id: id(), name: n, group: castGroup, availDates: "", canAsk: "", canAsk2: "", autoOver: ao, soukei: soukei, soukeiPlace: soukeiPlace, furyo: furyo, bousui: bousui, mat: mat, rank: castRank, _updatedAt: now });
   }
   save(); dlgClose("castDlg"); renderAll();
 };
