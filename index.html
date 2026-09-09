@@ -2429,8 +2429,8 @@ function calTable(group) {
   const dim = daysIn(cur), y = cur.getFullYear(), m = cur.getMonth();
   const tdy = new Date();
   const todayD = (tdy.getFullYear() === y && tdy.getMonth() === m) ? tdy.getDate() : -1;
-  // 予約開始日＝今日から7日後。表示中の月に該当する日があれば印をつける
-  const bookDate = new Date(tdy.getFullYear(), tdy.getMonth(), tdy.getDate() + 7);
+  // 予約開始日＝今日から14日後。表示中の月に該当する日があれば印をつける
+  const bookDate = new Date(tdy.getFullYear(), tdy.getMonth(), tdy.getDate() + 14);
   const bookD = (bookDate.getFullYear() === y && bookDate.getMonth() === m) ? bookDate.getDate() : -1;
 
   let casts;
