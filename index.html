@@ -2889,7 +2889,7 @@ function renderSettings() {
     try { lastSync = parseInt(localStorage.getItem(LAST_SYNC_KEY) || "0"); } catch (e) {}
     const lastSyncStr = lastSync ? new Date(lastSync).toLocaleString("ja-JP") : "まだ一度も成功していません";
     const lastSyncColor = (!lastSync || Date.now() - lastSync > 3 * 24 * 3600 * 1000) ? "var(--over)" : "#2d8a4a";
-    lsi.innerHTML = `最後に共有（同期）できた日時：<b style="color:${lastSyncColor}">${lastSyncStr}</b>`;
+    lsi.innerHTML = `最後の同期日時：<b style="color:${lastSyncColor}">${lastSyncStr}</b>`;
   }
 }
 document.addEventListener("click", e => {
