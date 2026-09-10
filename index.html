@@ -901,6 +901,8 @@
     <p style="margin:0 0 6px">最初から入っているコードを全部消して、下のコードを貼り付けて保存（💾）します。</p>
     <textarea readonly style="width:100%;height:150px;font-size:11px;font-family:monospace;border:1px solid var(--line);border-radius:8px;padding:8px" id="gasCode"></textarea>
     <button class="btn ghost sm" id="copyGas" style="margin:6px 0 12px">コードをコピー</button>
+    <p style="font-weight:800;margin:0 0 6px">③-2 setup を1回実行</p>
+    <p style="margin:0 0 10px">エディタ上部の関数一覧から「<b>setup</b>」を選び「実行」を1回押します。初回は許可を求められるので自分のGoogleアカウントで承認してください。これで保存用ファイル（royal_sync_data.json）がドライブに作られ、既存データが引っ越します。（この行が無い旧コードの場合は不要）</p>
     <p style="font-weight:800;margin:0 0 6px">④ デプロイ（公開）</p>
     <p style="margin:0 0 10px">右上「デプロイ」→「新しいデプロイ」→種類を「ウェブアプリ」、アクセスできるユーザーを「全員」にして「デプロイ」。表示された <b>ウェブアプリのURL</b> をコピーします。（初回は許可を求められるので承認してください）</p>
     <p style="font-weight:800;margin:0 0 6px">⑤ URLと合言葉を設定</p>
@@ -3635,9 +3637,11 @@ window.openRanking = openRanking;
 renderAll();
 
 /* ===== 15. クラウド同期：GASコード文字列とUI初期化・起動 ============= */
-const GAS_CODE = `// ロイヤル利用管理 クラウド同期用 GAS（合言葉つき・PropertiesService版）
+const GAS_CODE = `// ロイヤル利用管理 クラウド同期用 GAS（合言葉つき・Driveファイル版）
 // スプレッドシートに貼り付けて「ウェブアプリ」としてデプロイしてください。
-// データはPropertiesServiceに同期保存されます（SpreadsheetのC1に合言葉を保存）。
+// データはGoogleドライブ上のJSONファイル（royal_sync_data.json）に保存されます。容量上限がほぼありません。
+// 【重要】貼り付けたら、まずエディタで関数「setup」を1回だけ実行してください（既存データをドライブへ引っ越します）。
+var DATA_FILE_NAME='royal_sync_data.json';
 function _sheet(){
   var ss=SpreadsheetApp.getActiveSpreadsheet();
   var sh=ss.getSheetByName('store');
@@ -3655,15 +3659,44 @@ function _deny(){
 }
 function _props(){ return PropertiesService.getScriptProperties(); }
 function _getRev(){ return Number(_props().getProperty('rev')||0); }
-function _getData(){
-  var d=_props().getProperty('data');
-  if(d){ try{return JSON.parse(d);}catch(e){} }
-  // 旧B1からの移行
+// --- データ本体は Drive ファイルに保存（容量制限をほぼ受けない） ---
+function _dataFile(){
+  var id=_props().getProperty('dataFileId');
+  if(id){ try{ return DriveApp.getFileById(id); }catch(e){} }
+  var f=DriveApp.createFile(DATA_FILE_NAME,'','application/json');
+  _props().setProperty('dataFileId', f.getId());
+  return f;
+}
+function _readDataFile(){
   try{
-    var sh=SpreadsheetApp.getActiveSpreadsheet().getSheetByName('store');
-    if(sh){ var b=sh.getRange('B1').getValue(); if(b){ var p=JSON.parse(b); _props().setProperty('data',b); return p; } }
+    var t=_dataFile().getBlob().getDataAsString();
+    if(t && t.replace(/\\s/g,'') && t.replace(/\\s/g,'')!=='{}'){ return JSON.parse(t); }
   }catch(e){}
   return null;
+}
+function _getData(){
+  var d=_readDataFile();
+  if(d) return d;
+  // 旧: PropertiesService の data
+  var p=_props().getProperty('data');
+  if(p){ try{return JSON.parse(p);}catch(e){} }
+  // 旧: スプレッドシート B1
+  try{
+    var sh=SpreadsheetApp.getActiveSpreadsheet().getSheetByName('store');
+    if(sh){ var b=sh.getRange('B1').getValue(); if(b){ return JSON.parse(b); } }
+  }catch(e){}
+  return null;
+}
+function _putData(obj){ _dataFile().setContent(JSON.stringify(obj)); }
+// 初回セットアップ（1回だけ実行）：既存データを Drive ファイルへ引っ越す
+function setup(){
+  var f=_dataFile();
+  var cur=_readDataFile();
+  if(!cur){ var p=_props().getProperty('data'); if(p){ try{cur=JSON.parse(p);}catch(e){} } }
+  if(!cur){ try{ var sh=SpreadsheetApp.getActiveSpreadsheet().getSheetByName('store'); if(sh){ var b=sh.getRange('B1').getValue(); if(b){ cur=JSON.parse(b); } } }catch(e){} }
+  f.setContent(JSON.stringify(cur||{}));
+  if(!_props().getProperty('rev')) _props().setProperty('rev','1');
+  Logger.log('セットアップ完了。記録 '+(cur&&cur.records?Object.keys(cur.records).length:0)+' 件をドライブの '+DATA_FILE_NAME+' に保存しました。');
 }
 function doGet(e){
   var sh=_sheet();
@@ -3689,7 +3722,8 @@ function doPost(e){
       merged=_merge(server,incoming); didMerge=true;
     }
     var newRev=serverRevNow+1;
-    _props().setProperties({rev:String(newRev), data:JSON.stringify(merged)});
+    _putData(merged);
+    _props().setProperty('rev', String(newRev));
     return ContentService.createTextOutput(JSON.stringify({ok:true,rev:newRev,merged:didMerge,data:didMerge?merged:null})).setMimeType(ContentService.MimeType.JSON);
   } finally { lock.releaseLock(); }
 }
