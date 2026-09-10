@@ -644,6 +644,7 @@
 <body>
 <button class="ss-exit" onclick="exitSSMode()">✕ 戻る</button>
 <div class="wrap">
+  <div id="saveAlert" style="display:none;background:var(--over);color:#fff;font-weight:800;padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:8px;line-height:1.5"></div>
   <div class="top-bar">
     <div class="month-nav"><button id="prevM">‹</button><span id="monthLabel"></span><button id="nextM">›</button></div>
     <div style="font-size:9px;color:var(--ink-soft);text-align:right;line-height:1">v20260716f</div>
@@ -674,6 +675,15 @@
         <button class="btn ghost" id="cloudHelpBtn">使い方</button>
       </div>
       <div id="cloudStatus" style="margin-top:8px;font-size:12px;font-weight:700"></div>
+
+      <div class="sec-title" style="margin-top:22px">🗂 データの整理</div>
+      <div id="dataInfo" style="font-size:13px;line-height:1.9"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+        <button class="btn ghost" id="archiveBtn">古いデータを整理する</button>
+        <button class="btn ghost" id="restoreBtn" style="display:none">整理したデータを本体に戻す</button>
+      </div>
+      <div id="dataMsg" style="margin-top:8px;font-size:12px;font-weight:700"></div>
+      <div class="hint" style="margin-top:6px">「整理」すると13か月より前の記録をこの端末の別の場所へ移してデータを軽くします。移したデータは消えず、「戻す」でいつでも元に戻せます。</div>
     </div>
   </div>
 </div>
@@ -927,6 +937,8 @@
 /* ===== 1. 定数・状態 ================================================== */
 const OPEN = 8, CLOSE = 24, ROOMS = 13, SHOWN = 18, HOURS = CLOSE - OPEN;
 const KEY = "cast_mgmt_v9";
+const ARCHIVE_KEY = KEY + "_archive";      // 整理して本体から外した古いデータの保管先（同じ端末内）
+const LAST_SYNC_KEY = "cast_mgmt_last_sync"; // 最後にサーバーと同期できた日時
 const WK = ["日", "月", "火", "水", "木", "金", "土"];
 const STORES = ["M", "T", "E", "L", "MR", "F"];
 // 部屋のインデックス(0〜12) → 実際の部屋番号
@@ -990,11 +1002,92 @@ function load() {
     events: {}, askLabels: {}, calAsk: {}, calAvail: {}, newcomers: {}, locks: {}, soukeiStatus: {}
   };
 }
+// 画面上部の赤い警告バー（保存できなかった時だけ表示）
+function showSaveAlert(msg) {
+  const el = document.getElementById("saveAlert");
+  if (el) { el.textContent = "⚠ " + msg; el.style.display = "block"; }
+}
+function clearSaveAlert() {
+  const el = document.getElementById("saveAlert");
+  if (el) el.style.display = "none";
+}
+// この端末に保存。容量オーバーで失敗したら警告を出す（従来は無言で失敗していた）。
+function writeLocal(showAlert) {
+  try {
+    localStorage.setItem(KEY, JSON.stringify(state));
+    clearSaveAlert();
+    return true;
+  } catch (e) {
+    console.error("[writeLocal] localStorage error:", e);
+    if (showAlert) showSaveAlert("この端末の保存容量がいっぱいで、入力を保存できませんでした。設定タブの「データの整理」で古いデータを整理してください。");
+    return false;
+  }
+}
 function save() {
-  localStorage.setItem(KEY, JSON.stringify(state));
+  writeLocal(true);
   cloudPush();
 }
-function persistLocal() { localStorage.setItem(KEY, JSON.stringify(state)); }
+function persistLocal() { writeLocal(true); }
+
+/* --- 古いデータの整理（本体を軽くする。消さずに同じ端末の別領域へ退避） --- */
+// キー文字列から "YYYY-MM" を取り出す（"cid_2026-09-11" / "2026-09-11" / "2026-09-11~cid" いずれも対応）
+function _ymOfKey(k) {
+  const m = String(k).match(/(\d{4})-(\d{2})-\d{2}/);
+  return m ? m[1] + "-" + m[2] : null;
+}
+function _cutoffYm(monthsToKeep) {
+  const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - monthsToKeep);
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+}
+const ARCHIVE_DAY_MAPS = ["assign", "assignTs", "assignList", "memos", "events", "lends", "borrows", "locks", "roomLocks", "soukeiStatus"];
+function countOldData(monthsToKeep) {
+  const cutoff = _cutoffYm(monthsToKeep);
+  let count = 0;
+  for (const k in state.records) { const ym = _ymOfKey(k); if (ym && ym < cutoff) count++; }
+  return { cutoff, count };
+}
+function archiveOldData(monthsToKeep) {
+  const cutoff = _cutoffYm(monthsToKeep);
+  let archive = {};
+  try { archive = JSON.parse(localStorage.getItem(ARCHIVE_KEY)) || {}; } catch (e) { archive = {}; }
+  archive.records = archive.records || {};
+  ARCHIVE_DAY_MAPS.forEach(f => archive[f] = archive[f] || {});
+  let moved = 0;
+  for (const k in state.records) {
+    const ym = _ymOfKey(k);
+    if (ym && ym < cutoff) { archive.records[k] = state.records[k]; delete state.records[k]; moved++; }
+  }
+  ARCHIVE_DAY_MAPS.forEach(f => {
+    const src = state[f] || {};
+    for (const k in src) {
+      const ym = _ymOfKey(k);
+      if (ym && ym < cutoff) { archive[f][k] = src[k]; delete src[k]; }
+    }
+  });
+  archive._archivedAt = Date.now();
+  try {
+    localStorage.setItem(ARCHIVE_KEY, JSON.stringify(archive));
+  } catch (e) {
+    console.error("[archiveOldData] archive write failed:", e);
+    showSaveAlert("整理用の保管場所も容量不足です。ブラウザの他サイトのデータ整理が必要かもしれません。");
+    return { moved: 0, cutoff, error: true };
+  }
+  writeLocal(true);
+  cloudPush();
+  return { moved, cutoff };
+}
+function restoreArchive() {
+  let archive = null;
+  try { archive = JSON.parse(localStorage.getItem(ARCHIVE_KEY)); } catch (e) { archive = null; }
+  if (!archive) return 0;
+  const n = Object.keys(archive.records || {}).length;
+  Object.assign(state.records, archive.records || {});
+  ARCHIVE_DAY_MAPS.forEach(f => { state[f] = state[f] || {}; Object.assign(state[f], archive[f] || {}); });
+  localStorage.removeItem(ARCHIVE_KEY);
+  writeLocal(true);
+  cloudPush();
+  return n;
+}
 
 /* ===== 3. クラウド同期（Googleスプレッドシート + GAS） ================ */
 const CLOUD_URL_KEY = "cast_mgmt_cloud_url";
@@ -1067,7 +1160,9 @@ async function doCloudPush() {
         persistLocal();
         scrollPreserve(renderAll);
       }
-      lastSyncedRev = j.rev; localStorage.setItem(CLOUD_REV_KEY, lastSyncedRev); cloudStatus("同期済み ✓", "#2d8a4a");
+      lastSyncedRev = j.rev; localStorage.setItem(CLOUD_REV_KEY, lastSyncedRev);
+      try { localStorage.setItem(LAST_SYNC_KEY, String(Date.now())); } catch (e) {}
+      cloudStatus("同期済み ✓", "#2d8a4a");
     } else if (j && j.error === "auth") {
       cloudStatus("合言葉が違います（保存できません）", "#d12");
     } else {
@@ -1096,6 +1191,7 @@ async function cloudPull() {
       suppressPush = true; applyCloudData(j.data); suppressPush = false;
       persistLocal();
       lastSyncedRev = j.rev; localStorage.setItem(CLOUD_REV_KEY, lastSyncedRev);
+      try { localStorage.setItem(LAST_SYNC_KEY, String(Date.now())); } catch (e) {}
       scrollPreserve(renderAll);
       cloudStatus("最新を反映 ✓", "#2d8a4a");
     }
@@ -2834,6 +2930,48 @@ function renderSettings() {
   if (cp) cp.onclick = () => { if (cloudUrl) { lastSyncedRev = 0; cloudPull(); } else alert("先にURLを設定してください"); };
   const ch = $("cloudHelpBtn");
   if (ch) ch.onclick = () => dlgOpen("cloudHelpDlg");
+
+  // --- データの整理セクション ---
+  const MONTHS_KEEP = 13;
+  const di = $("dataInfo");
+  if (di) {
+    let bytes = 0;
+    try { bytes = new Blob([JSON.stringify(state)]).size; } catch (e) { try { bytes = JSON.stringify(state).length; } catch (e2) { bytes = 0; } }
+    const mb = bytes / 1024 / 1024;
+    const sizeStr = mb >= 1 ? mb.toFixed(2) + " MB" : Math.round(bytes / 1024) + " KB";
+    const sizeColor = mb > 3 ? "var(--over)" : mb > 1 ? "#c77" : "#2d8a4a";
+    let lastSync = 0;
+    try { lastSync = parseInt(localStorage.getItem(LAST_SYNC_KEY) || "0"); } catch (e) {}
+    const lastSyncStr = lastSync ? new Date(lastSync).toLocaleString("ja-JP") : "まだ一度も成功していません";
+    const lastSyncColor = (!lastSync || Date.now() - lastSync > 3 * 24 * 3600 * 1000) ? "var(--over)" : "#2d8a4a";
+    let archN = 0;
+    try { const a = JSON.parse(localStorage.getItem(ARCHIVE_KEY)); archN = (a && a.records) ? Object.keys(a.records).length : 0; } catch (e) {}
+    const oldData = countOldData(MONTHS_KEEP);
+    di.innerHTML =
+      `いまのデータの重さ：<b style="color:${sizeColor}">${sizeStr}</b><br>` +
+      `最後に共有（同期）できた日時：<b style="color:${lastSyncColor}">${lastSyncStr}</b><br>` +
+      `${MONTHS_KEEP}か月より前（${oldData.cutoff}より前）の記録：<b>${oldData.count}</b> 件` +
+      (archN ? `<br>整理してこの端末に保管中：<b>${archN}</b> 件` : "");
+    const rb = $("restoreBtn"); if (rb) rb.style.display = archN ? "" : "none";
+  }
+  const dmsg = $("dataMsg");
+  const ab = $("archiveBtn");
+  if (ab) ab.onclick = () => {
+    const oldData = countOldData(MONTHS_KEEP);
+    if (!oldData.count) { if (dmsg) { dmsg.textContent = "整理できる古いデータはありません。"; dmsg.style.color = "var(--ink-soft)"; } return; }
+    if (!confirm(`${MONTHS_KEEP}か月より前（${oldData.cutoff}より前）の記録 ${oldData.count} 件を、この端末の別の場所へ移してデータを軽くします。\n\n移したデータは消えません。「本体に戻す」ボタンでいつでも元に戻せます。\n\n実行しますか？`)) return;
+    const r = archiveOldData(MONTHS_KEEP);
+    if (r.error) return;
+    if (dmsg) { dmsg.textContent = `${r.moved} 件を整理しました。データが軽くなりました。`; dmsg.style.color = "#2d8a4a"; }
+    scrollPreserve(renderAll);
+  };
+  const rbtn = $("restoreBtn");
+  if (rbtn) rbtn.onclick = () => {
+    if (!confirm("整理して別の場所へ移したデータを、すべて本体に戻します。実行しますか？")) return;
+    const n = restoreArchive();
+    if (dmsg) { dmsg.textContent = `${n} 件を本体に戻しました。`; dmsg.style.color = "#2d8a4a"; }
+    scrollPreserve(renderAll);
+  };
 }
 document.addEventListener("click", e => {
   const t = e.target.closest(".del");
