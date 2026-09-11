@@ -1135,6 +1135,9 @@ async function cloudPull() {
     const j = await res.json();
     if (j && j.error === "auth") { cloudStatus("合言葉が違います", "#d12"); return; }
     if (j && j.ok && j.changed && j.data) {
+      // 取得中（通信の間）に自分の入力が発生し送信待ち／送信中になっていたら、
+      // それを消してしまわないよう今回の反映は見送る（次のpull/pushで解消される）
+      if (cloudBusy || cloudPushTimer) return;
       // 編集ダイアログを開いている最中は反映を保留（入力の邪魔をしない）
       const editingOpen = ["dlg", "castDlg", "moveDlg", "lendDlg", "eventDlg", "askLabelDlg"]
         .some(idd => { const d = document.getElementById(idd); return d && d.open; });
