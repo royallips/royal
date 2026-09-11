@@ -1097,17 +1097,7 @@ async function doCloudPush() {
     if (j && j.ok) {
       if (j.merged && !cloudPushTimer) { // サーバーが他者の変更とマージした最新を返してきた
         // 次のpushが pending の場合は適用を保留（ローカルの未送信変更が消えるのを防ぐ）
-        const _localAL = state.assignList;
-        suppressPush = true; applyCloudData(j.data); suppressPush = false;
-        // assignListはマージデータ+ローカルの和集合。ローカル位置を優先して上書き。
-        if (_localAL) {
-          const mergedAL = state.assignList || {};
-          Object.keys(_localAL).forEach(dk => {
-            if (!mergedAL[dk]) mergedAL[dk] = {};
-            Object.assign(mergedAL[dk], _localAL[dk]);
-          });
-          state.assignList = mergedAL;
-        }
+        applyCloudDataKeepLocalAssignList(j.data);
         persistLocal();
         scrollPreserve(renderAll);
       }
@@ -1142,7 +1132,7 @@ async function cloudPull() {
       const editingOpen = ["dlg", "castDlg", "moveDlg", "lendDlg", "eventDlg", "askLabelDlg"]
         .some(idd => { const d = document.getElementById(idd); return d && d.open; });
       if (editingOpen) return;
-      suppressPush = true; applyCloudData(j.data); suppressPush = false;
+      applyCloudDataKeepLocalAssignList(j.data);
       persistLocal();
       lastSyncedRev = j.rev; localStorage.setItem(CLOUD_REV_KEY, lastSyncedRev);
       try { localStorage.setItem(LAST_SYNC_KEY, String(Date.now())); } catch (e) {}
@@ -1154,6 +1144,22 @@ async function cloudPull() {
 function applyCloudData(d) {
   if (!d || !d.casts) return;
   state = normalize(d);
+}
+// サーバーの内容を取り込みつつ、ローカルのassignList（リスピラの部屋配置）は消さずに上から重ねる。
+// assignListはサーバー側で日付単位のまるごと上書きでしか統合されず、部屋割り(assign/assignTs)のような
+// 1人ずつのタイムスタンプ比較を持たないため、これをしないと「動かした直後は反映されるが、数秒後の
+// 受信で元の配置に戻る」ことがある。
+function applyCloudDataKeepLocalAssignList(d) {
+  const _localAL = state.assignList;
+  suppressPush = true; applyCloudData(d); suppressPush = false;
+  if (_localAL) {
+    const mergedAL = state.assignList || {};
+    Object.keys(_localAL).forEach(dk => {
+      if (!mergedAL[dk]) mergedAL[dk] = {};
+      Object.assign(mergedAL[dk], _localAL[dk]);
+    });
+    state.assignList = mergedAL;
+  }
 }
 function startCloudSync() {
   if (!cloudUrl) return;
