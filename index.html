@@ -1070,12 +1070,24 @@ function cloudGetUrl(params) {
   return cloudUrl + (cloudUrl.includes("?") ? "&" : "?") + params + p;
 }
 
-// サーバーへ全体を送信（デバウンス0.8秒）。競合はサーバー側でマージ。
+// サーバーへ全体を送信（デバウンス0.3秒）。競合はサーバー側でマージ。
 function cloudPush() {
   if (!cloudUrl || suppressPush) return;
   if (cloudPushTimer) clearTimeout(cloudPushTimer);
-  cloudPushTimer = setTimeout(() => { cloudPushTimer = null; doCloudPush(); }, 800);
+  cloudPushTimer = setTimeout(() => { cloudPushTimer = null; doCloudPush(); }, 300);
 }
+// 入力した直後にタブを閉じる／アプリを切り替えると、送信待ち（デバウンス中）のまま
+// 送信されずに終わってしまうことがある（「たまに入力が反映されない」の一因）。
+// 画面が隠れる・閉じられる直前に、送信待ちがあれば待たずに今すぐ送信を開始する。
+function flushPendingPush() {
+  if (cloudUrl && cloudPushTimer) {
+    clearTimeout(cloudPushTimer);
+    cloudPushTimer = null;
+    doCloudPush();
+  }
+}
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") flushPendingPush(); });
+window.addEventListener("pagehide", flushPendingPush);
 async function doCloudPush() {
   if (!cloudUrl) return;
   if (cloudBusy) {
