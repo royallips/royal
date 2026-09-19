@@ -1088,6 +1088,15 @@ function flushPendingPush() {
 }
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") flushPendingPush(); });
 window.addEventListener("pagehide", flushPendingPush);
+// 送信失敗時の自動リトライ間隔（失敗するたび倍々に、上限30秒）。成功したら0に戻す。
+// これが無いと、通信の一瞬の不調・GAS側の混雑等で送信が一度失敗しただけで、次に何か
+// 別の操作をするまで一切再送されず、その入力だけが取り残されてしまう。
+let cloudPushRetryDelay = 0;
+function scheduleCloudPushRetry() {
+  cloudPushRetryDelay = cloudPushRetryDelay ? Math.min(cloudPushRetryDelay * 2, 30000) : 5000;
+  if (cloudPushTimer) return; // 既に次の送信が予約済みならそれに任せる
+  cloudPushTimer = setTimeout(() => { cloudPushTimer = null; doCloudPush(); }, cloudPushRetryDelay);
+}
 async function doCloudPush() {
   if (!cloudUrl) return;
   if (cloudBusy) {
@@ -1116,13 +1125,17 @@ async function doCloudPush() {
       lastSyncedRev = j.rev; localStorage.setItem(CLOUD_REV_KEY, lastSyncedRev);
       try { localStorage.setItem(LAST_SYNC_KEY, String(Date.now())); } catch (e) {}
       cloudStatus("同期済み ✓", "#2d8a4a");
+      cloudPushRetryDelay = 0;
     } else if (j && j.error === "auth") {
+      // 合言葉が違う場合は何度再送しても無駄なのでリトライしない（ユーザーの操作待ち）
       cloudStatus("合言葉が違います（保存できません）", "#d12");
     } else {
-      cloudStatus("保存失敗", "#d12");
+      cloudStatus("保存失敗（自動で再送します）", "#d12");
+      scheduleCloudPushRetry();
     }
   } catch (e) {
-    cloudStatus("送信エラー：" + (e && e.message ? e.message : String(e)), "#d12");
+    cloudStatus("送信エラー（自動で再送します）：" + (e && e.message ? e.message : String(e)), "#d12");
+    scheduleCloudPushRetry();
   }
   cloudBusy = false;
 }
@@ -1155,7 +1168,14 @@ async function cloudPull() {
 }
 function applyCloudData(d) {
   if (!d || !d.casts) return;
-  state = normalize(d);
+  // ここで例外が起きて呼び出し元へ抜けると、直後の「suppressPush = false」が実行されないまま
+  // 止まってしまい、以降ずっと（ページ再読み込みまで）この端末からの送信が無効化され続ける
+  // ＝原因不明のまま「反映されない」が延々と続く、という重い不具合になる。必ずここで受け止める。
+  try {
+    state = normalize(d);
+  } catch (e) {
+    console.error("[applyCloudData] サーバーデータの取り込みに失敗。ローカルの状態を維持します:", e);
+  }
 }
 // assignList（リスピラの部屋配置）・roomLocks・soukeiStatus・lends（他店部屋）・
 // borrows（掛け持ちor入店）・memos・events は、サーバー側で日付単位のまるごと上書きでしか
@@ -1172,7 +1192,7 @@ function applyCloudDataKeepLocalDayMaps(d) {
   if (dk) {
     DAYMAP_KEYED.concat(DAYMAP_WHOLE).forEach(f => { localSnap[f] = state[f] && state[f][dk]; });
   }
-  suppressPush = true; applyCloudData(d); suppressPush = false;
+  try { suppressPush = true; applyCloudData(d); } finally { suppressPush = false; }
   if (!dk) return;
   DAYMAP_KEYED.forEach(f => {
     const local = localSnap[f];
@@ -1205,7 +1225,7 @@ async function connectCloud() {
     if (j && j.error === "auth") { cloudStatus("合言葉が違います（接続できません）", "#d12"); return; }
     if (j && j.ok) {
       if (j.changed && j.data && j.data.casts) {
-        suppressPush = true; applyCloudData(j.data); suppressPush = false;
+        try { suppressPush = true; applyCloudData(j.data); } finally { suppressPush = false; }
         persistLocal();
         lastSyncedRev = j.rev; localStorage.setItem(CLOUD_REV_KEY, lastSyncedRev);
         scrollPreserve(renderAll);
