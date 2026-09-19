@@ -1109,7 +1109,7 @@ async function doCloudPush() {
     if (j && j.ok) {
       if (j.merged && !cloudPushTimer) { // サーバーが他者の変更とマージした最新を返してきた
         // 次のpushが pending の場合は適用を保留（ローカルの未送信変更が消えるのを防ぐ）
-        applyCloudDataKeepLocalAssignList(j.data);
+        applyCloudDataKeepLocalDayMaps(j.data);
         persistLocal();
         scrollPreserve(renderAll);
       }
@@ -1144,7 +1144,7 @@ async function cloudPull() {
       const editingOpen = ["dlg", "castDlg", "moveDlg", "lendDlg", "eventDlg", "askLabelDlg"]
         .some(idd => { const d = document.getElementById(idd); return d && d.open; });
       if (editingOpen) return;
-      applyCloudDataKeepLocalAssignList(j.data);
+      applyCloudDataKeepLocalDayMaps(j.data);
       persistLocal();
       lastSyncedRev = j.rev; localStorage.setItem(CLOUD_REV_KEY, lastSyncedRev);
       try { localStorage.setItem(LAST_SYNC_KEY, String(Date.now())); } catch (e) {}
@@ -1157,21 +1157,36 @@ function applyCloudData(d) {
   if (!d || !d.casts) return;
   state = normalize(d);
 }
-// サーバーの内容を取り込みつつ、ローカルのassignList（リスピラの部屋配置）は消さずに上から重ねる。
-// assignListはサーバー側で日付単位のまるごと上書きでしか統合されず、部屋割り(assign/assignTs)のような
-// 1人ずつのタイムスタンプ比較を持たないため、これをしないと「動かした直後は反映されるが、数秒後の
-// 受信で元の配置に戻る」ことがある。
-function applyCloudDataKeepLocalAssignList(d) {
-  const _localAL = state.assignList;
-  suppressPush = true; applyCloudData(d); suppressPush = false;
-  if (_localAL) {
-    const mergedAL = state.assignList || {};
-    Object.keys(_localAL).forEach(dk => {
-      if (!mergedAL[dk]) mergedAL[dk] = {};
-      Object.assign(mergedAL[dk], _localAL[dk]);
-    });
-    state.assignList = mergedAL;
+// assignList（リスピラの部屋配置）・roomLocks・soukeiStatus・lends（他店部屋）・
+// borrows（掛け持ちor入店）・memos・events は、サーバー側で日付単位のまるごと上書きでしか
+// 統合されず、部屋割り(assign/assignTs)のような1件ずつのタイムスタンプ比較を持たない。
+// そのままだと「入力/移動した直後は反映されるが、数秒後の受信で元に戻る」ことがある。
+// 対策として、クラウド受信の直後に「いま表示中の日」の分だけ、ローカルの直前の値を上から重ねる。
+// 保護を「いま見ている日」だけに絞るのは、全ての日に対して行うと逆に他端末の新しい変更を
+// 古いローカル値で恒久的に上書きし続けてしまうため。
+const DAYMAP_KEYED = ["assignList", "roomLocks", "soukeiStatus"]; // 日付→{キー:値}。キー単位で重ねる
+const DAYMAP_WHOLE = ["lends", "borrows", "memos", "events"];      // 日付→値（配列/文字列）。まるごと重ねる
+function applyCloudDataKeepLocalDayMaps(d) {
+  const dk = (roomDay != null) ? dkey(roomDay) : null;
+  const localSnap = {};
+  if (dk) {
+    DAYMAP_KEYED.concat(DAYMAP_WHOLE).forEach(f => { localSnap[f] = state[f] && state[f][dk]; });
   }
+  suppressPush = true; applyCloudData(d); suppressPush = false;
+  if (!dk) return;
+  DAYMAP_KEYED.forEach(f => {
+    const local = localSnap[f];
+    if (!local) return;
+    if (!state[f]) state[f] = {};
+    if (!state[f][dk]) state[f][dk] = {};
+    Object.assign(state[f][dk], local);
+  });
+  DAYMAP_WHOLE.forEach(f => {
+    const local = localSnap[f];
+    if (local === undefined) return;
+    if (!state[f]) state[f] = {};
+    state[f][dk] = local;
+  });
 }
 function startCloudSync() {
   if (!cloudUrl) return;
