@@ -2597,7 +2597,7 @@ function calTable(group) {
 }
 function setAvail(cid, v) {
   const c = state.casts.find(x => x.id === cid); if (!c) return;
-  c.availDates = v; c.availDatesMon = ym(cur);
+  c.availDates = v; c.availDatesMon = ym(cur); c._updatedAt = Date.now();
   save();
 }
 function cycleAsk(cid, col) {
@@ -2609,6 +2609,7 @@ function cycleAsk(cid, col) {
     c.canAsk = nextAsk((c.canAskMon === ym(cur)) ? (c.canAsk || "") : "");
     c.canAskMon = ym(cur);
   }
+  c._updatedAt = Date.now();
   save();
   scrollPreserve(refreshCalendar);
 }
