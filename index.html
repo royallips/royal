@@ -1181,31 +1181,52 @@ function applyCloudData(d) {
 // borrows（掛け持ちor入店）・memos・events は、サーバー側で日付単位のまるごと上書きでしか
 // 統合されず、部屋割り(assign/assignTs)のような1件ずつのタイムスタンプ比較を持たない。
 // そのままだと「入力/移動した直後は反映されるが、数秒後の受信で元に戻る」ことがある。
-// 対策として、クラウド受信の直後に「いま表示中の日」の分だけ、ローカルの直前の値を上から重ねる。
-// 保護を「いま見ている日」だけに絞るのは、全ての日に対して行うと逆に他端末の新しい変更を
-// 古いローカル値で恒久的に上書きし続けてしまうため。
+// 対策として、クラウド受信の直後に「実際にローカルで編集した日」の分だけ、直前の値を上から重ねる。
+// リスピラは月内の全日を1画面で編集できるビューなので、対象を「いま表示中の日(roomDay)」
+// だけに絞ると、それ以外の日の編集（掛け持ちor入店など）が保護されない。かといって全ての日を
+// 無条件に対象にすると、他端末の新しい変更を古いローカル値で恒久的に上書きし続けてしまう。
+// そこで「直近に実際に編集した日」を短時間だけ記録し、その日だけを対象にする。
+const RECENT_DAY_TOUCH_MS = 60000; // この時間内に編集した日だけ保護し、それより古い記録は信用しない
+let recentDayTouch = {}; // { "YYYY-MM-DD": 編集した時刻(ms) }
+function touchDay(dk) {
+  if (!dk) return;
+  recentDayTouch[dk] = Date.now();
+}
+function recentDayKeys() {
+  const now = Date.now();
+  const keys = Object.keys(recentDayTouch).filter(dk => now - recentDayTouch[dk] < RECENT_DAY_TOUCH_MS);
+  // 期限切れの記録はここで掃除しておく（際限なく増え続けないように）
+  if (keys.length !== Object.keys(recentDayTouch).length) {
+    const kept = {}; keys.forEach(dk => { kept[dk] = recentDayTouch[dk]; }); recentDayTouch = kept;
+  }
+  return keys;
+}
 const DAYMAP_KEYED = ["assignList", "roomLocks", "soukeiStatus"]; // 日付→{キー:値}。キー単位で重ねる
 const DAYMAP_WHOLE = ["lends", "borrows", "memos", "events"];      // 日付→値（配列/文字列）。まるごと重ねる
 function applyCloudDataKeepLocalDayMaps(d) {
-  const dk = (roomDay != null) ? dkey(roomDay) : null;
+  const dks = recentDayKeys();
   const localSnap = {};
-  if (dk) {
-    DAYMAP_KEYED.concat(DAYMAP_WHOLE).forEach(f => { localSnap[f] = state[f] && state[f][dk]; });
-  }
+  DAYMAP_KEYED.concat(DAYMAP_WHOLE).forEach(f => {
+    localSnap[f] = {};
+    dks.forEach(dk => { localSnap[f][dk] = state[f] && state[f][dk]; });
+  });
   try { suppressPush = true; applyCloudData(d); } finally { suppressPush = false; }
-  if (!dk) return;
   DAYMAP_KEYED.forEach(f => {
-    const local = localSnap[f];
-    if (!local) return;
-    if (!state[f]) state[f] = {};
-    if (!state[f][dk]) state[f][dk] = {};
-    Object.assign(state[f][dk], local);
+    dks.forEach(dk => {
+      const local = localSnap[f][dk];
+      if (!local) return;
+      if (!state[f]) state[f] = {};
+      if (!state[f][dk]) state[f][dk] = {};
+      Object.assign(state[f][dk], local);
+    });
   });
   DAYMAP_WHOLE.forEach(f => {
-    const local = localSnap[f];
-    if (local === undefined) return;
-    if (!state[f]) state[f] = {};
-    state[f][dk] = local;
+    dks.forEach(dk => {
+      const local = localSnap[f][dk];
+      if (local === undefined) return;
+      if (!state[f]) state[f] = {};
+      state[f][dk] = local;
+    });
   });
 }
 function startCloudSync() {
@@ -1808,7 +1829,7 @@ function renderRooms() {
     const d = new Date(e.target.value + "T00:00:00"); if (isNaN(d)) return;
     cur = new Date(d.getFullYear(), d.getMonth(), 1); roomDay = d.getDate(); renderAll();
   };
-  const dm = $("dayMemo"); if (dm) dm.onchange = e => { state.memos[dkey(roomDay)] = e.target.value; save(); };
+  const dm = $("dayMemo"); if (dm) dm.onchange = e => { const dk = dkey(roomDay); state.memos[dk] = e.target.value; touchDay(dk); save(); };
   const ob = $("optimizeBtn"); if (ob) ob.onclick = () => optimizeRooms();
   const srb = $("soukeiReqBtn"); if (srb) srb.onclick = () => buildSoukeiRequest();
   const vtb = $("viewToggleBtn"); if (vtb) vtb.onclick = () => { roomViewMode = roomViewMode === "timeline" ? "sheet" : "timeline"; renderRooms(); };
@@ -1836,6 +1857,7 @@ function toggleRoomLock(ri) {
   if (!state.roomLocks[k]) state.roomLocks[k] = {};
   if (state.roomLocks[k][String(ri)]) delete state.roomLocks[k][String(ri)];
   else state.roomLocks[k][String(ri)] = true;
+  touchDay(k);
   save(); scrollPreserve(renderRooms);
 }
 // --- 送迎（要確認の必要/不要切り替え・依頼作成） ---
@@ -1848,6 +1870,7 @@ function cycleSoukei(cid) {
   const next = cur0 === "hitsuyou" ? "fuyou" : cur0 === "fuyou" ? undefined : "hitsuyou";
   if (next === undefined) delete state.soukeiStatus[k][cid];
   else state.soukeiStatus[k][cid] = next;
+  touchDay(k);
   save();
   scrollPreserve(renderRooms);
 }
@@ -2092,6 +2115,7 @@ function moveCidToRoomDay(cid, ri, day, isNk2 = false, overRow = null) {
   (overRooms || []).forEach(arr => arr.forEach(w => { const fk = w.seg2 ? w.cid + ":nk2" : w.cid; if (state.assignList[dk][fk] == null) state.assignList[dk][fk] = "OVER"; }));
   const assignKey = isNk2 ? cid + ":nk2" : cid;
   state.assignList[dk][assignKey] = (ri === "OVER") ? (overRow !== null ? "OVER:" + overRow : "OVER") : Number(ri);
+  touchDay(dk);
   save();
   const scroller = document.querySelector("#view-roomslist .lf-scroll");
   const savedLeft = scroller ? scroller.scrollLeft : 0;
@@ -2198,12 +2222,12 @@ $("moveX").onclick = () => { dlgClose("moveDlg"); selBar = null; renderRooms(); 
 function addLend(bucket, obj, day) {
   const k = dkey(day != null ? day : roomDay);
   if (!state[bucket][k]) state[bucket][k] = [];
-  state[bucket][k].push(obj); save();
+  state[bucket][k].push(obj); touchDay(k); save();
 }
 function removeLend(bucket, i, day) {
   const d = day != null ? day : roomDay;
   const k = dkey(d);
-  if (state[bucket][k]) { state[bucket][k].splice(i, 1); save(); renderAll(); }
+  if (state[bucket][k]) { state[bucket][k].splice(i, 1); touchDay(k); save(); renderAll(); }
 }
 let lendIsNewcomer = false;
 function setLendType(type) {
@@ -2409,7 +2433,9 @@ function renderRoomsList() {
     ta.onchange = e => {
       const d = Number(e.target.dataset.day);
       if (!state.memos) state.memos = {};
-      state.memos[dkey(d)] = e.target.value;
+      const dk = dkey(d);
+      state.memos[dk] = e.target.value;
+      touchDay(dk);
       save();
     };
   });
@@ -2880,11 +2906,12 @@ function openEvent(d) {
 $("eventSave").onclick = () => {
   const v = val("eventName");
   if (v) state.events[dkey(eventDay)] = v; else delete state.events[dkey(eventDay)];
+  touchDay(dkey(eventDay));
   save(); dlgClose("eventDlg");
   scrollPreserve(refreshCalendar);
 };
 $("eventDel").onclick = () => {
-  delete state.events[dkey(eventDay)]; save(); dlgClose("eventDlg");
+  delete state.events[dkey(eventDay)]; touchDay(dkey(eventDay)); save(); dlgClose("eventDlg");
   scrollPreserve(refreshCalendar);
 };
 $("eventX").onclick = () => dlgClose("eventDlg");
