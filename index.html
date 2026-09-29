@@ -2517,7 +2517,7 @@ function cellInner(rc) {
   if (!rc) return { inner: "", cls: "" };
   const note = rc.note ? `<span class="note">${rc.note}</span>` : "";
   const stayCls = rc.seiriTint ? "st-seiri" : rc.stayBg === "shukuhaku" ? "st-shukuhaku" : rc.stayBg === "tenpaku" ? "st-tenpaku" : rc.stayBg === "seiri" ? "st-seiri" : rc.stayBg === "yotei" ? "st-yotei" : "";
-  if (!rc.status && rc.stayBg) return { inner: note, cls: stayCls };
+  if (!rc.status) return { inner: note, cls: stayCls }; // ステータス未選択＝マーカーのみ、または備考のみ
   switch (rc.status) {
     case "work":
       if (rc.start2) return { inner: `<span class="timeunder">${fmtTime(rc)}<span class="nk-label">中抜け</span>${rc.start2}-${rc.end2 || 'L'}${rc.hideNet ? '<br><span class="hidenet">非掲載</span>' : ''}${rc.dummy ? '<br><span class="dummy">ダミー</span>' : ''}</span>${note}`, cls: "nakanuke" + (stayCls ? " " + stayCls : "") };
@@ -3367,10 +3367,12 @@ $("dlgSave").onclick = () => {
   // 時間なし＋マーカーあり → 入力選択を無視してマーカーのみ保存
   if ((pickStatus === "work" || pickStatus === "furikae") && !s && pickOverlay) pickStatus = "none";
 
-  // マーカーのみ（入力ステータス未選択）
+  // マーカーのみ、または備考のみ（入力ステータス未選択）
   if (pickStatus === "none") {
     if (pickOverlay) {
       setRec(k, { stayBg: pickOverlay, note });
+    } else if (note) {
+      setRec(k, { note });
     } else if (state.records[k]) {
       delete state.records[k];
       if (state.assign[dkey(day)]) delete state.assign[dkey(day)][cid];
@@ -3385,6 +3387,14 @@ $("dlgSave").onclick = () => {
           state.records[rk]._t = Date.now();
         } else {
           setRec(rk, { stayBg: pickOverlay, note });
+        }
+      } else if (note) {
+        if (state.records[rk]) {
+          // 既存レコードを保持して備考だけ更新（ステータス・マーカーを消さない）
+          state.records[rk].note = note;
+          state.records[rk]._t = Date.now();
+        } else {
+          setRec(rk, { note });
         }
       } else if (state.records[rk]) {
         delete state.records[rk].stayBg;
