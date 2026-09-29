@@ -3504,7 +3504,14 @@ $("dlgClearAll").onclick = () => {
   }
   exitCalSelMode(); save(); dlgClose("dlg"); renderAfterEdit();
 };
-$("dlgX").onclick = () => { dlgClose("dlg"); if (calSelApply) calSelApply = false; };
+// 「まとめて入力」ダイアログを保存せず×で閉じた場合、選択状態(calSelCells)が
+// 残ったままになるバグがあった（calSelApplyだけ戻してcalSelMode/calSelCellsを
+// クリアしていなかった）。後日まったく別のセルを選んで入力すると、この残った
+// 選択と合算されて他のキャストにも同じ内容が書き込まれてしまう不具合の原因
+// だったため、キャンセル時も選択状態を完全にリセットする。
+$("dlgX").onclick = () => { dlgClose("dlg"); if (calSelApply) exitCalSelMode(); };
+// ESCキーでダイアログを閉じた場合（×ボタンを経由しない）も同じ後始末が必要
+$("dlg").addEventListener("cancel", () => { if (calSelApply) exitCalSelMode(); });
 $("calSelInputBtn").onclick = () => openCalSelDlg();
 $("calSelDeleteBtn").onclick = () => {
   if (calSelCells.size === 0) return;
