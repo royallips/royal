@@ -1304,9 +1304,18 @@ function ym(d) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStar
 function daysIn(d) { return new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate(); }
 function dkey(day) { return ym(cur) + "-" + String(day).padStart(2, "0"); }
 function dkeyForDate(dt) { return dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0") + "-" + String(dt.getDate()).padStart(2, "0"); }
-function recByKey(cid, dk) { return state.records[cid + "_" + dk]; }
+// 削除は実際にキーを消さず「削除済み」の目印(_deleted)を付けて残す(tombstone)。
+// 理由：クラウド同期のマージは、送信側のrecordsに存在しないキーを「元々無かった」
+// のか「削除された」のか区別できず、キーを丸ごと消すと他端末の変更とのマージ時に
+// サーバー側の古い内容が復活してしまう（削除が反映されない・時間が経つと復活する
+// 不具合の原因）。キーを残したまま_deletedと新しい_tだけ更新すれば、他のフィールド
+// 更新と同じ「タイムスタンプが新しい方を採用」という既存の仕組みでそのまま
+// 正しく統合される。
+function liveRec(k) { const r = state.records[k]; return (r && r._deleted) ? undefined : r; }
+function tombstone(k) { if (state.records[k]) state.records[k] = { _deleted: true, _t: Date.now() }; }
+function recByKey(cid, dk) { return liveRec(cid + "_" + dk); }
 function recKey(cid, day) { return cid + "_" + dkey(day); }
-function rec(cid, day) { return state.records[recKey(cid, day)]; }
+function rec(cid, day) { return liveRec(recKey(cid, day)); }
 function num(v) { const n = parseFloat(v); return isNaN(n) ? null : n; }
 function fmtTime(r) {
   if (!r) return "";
@@ -3182,7 +3191,7 @@ makeTimeSelect("lendEnd", "end");       // 掛け持ち：終了
 function setTime(prefix, v) { if (timeSelects[prefix]) timeSelects[prefix].set(v); }
 
 function setRec(k, v) {
-  if (!v) { delete state.records[k]; return; }
+  if (!v) { tombstone(k); return; }
   state.records[k] = Object.assign({}, v, { _t: Date.now() });
 }
 function setAssign(dk, cid, val) {
@@ -3194,7 +3203,7 @@ function setAssign(dk, cid, val) {
 function applyRecordToDay(cid, d, rec) {
   const k = recKey(cid, d);
   if (!rec) {
-    delete state.records[k];
+    tombstone(k);
     if (state.assign[dkey(d)]) delete state.assign[dkey(d)][cid];
     return;
   }
@@ -3309,13 +3318,13 @@ function refreshPick() {
     let hasNeighbor = false;
     if (editing) {
       const { cid, day } = editing;
-      const rec0 = state.records[recKey(cid, day)] || {};
+      const rec0 = liveRec(recKey(cid, day)) || {};
       const savedSt = (rec0.stayBg && ["seiri","yotei","shukuhaku","tenpaku"].includes(rec0.stayBg)) ? rec0.stayBg
         : (rec0.status && ["seiri","yotei","shukuhaku","tenpaku"].includes(rec0.status)) ? rec0.status : null;
       if (savedSt) {
         const dim = daysIn(cur);
-        const prevR = day > 1 ? state.records[recKey(cid, day - 1)] : null;
-        const nextR = day < dim ? state.records[recKey(cid, day + 1)] : null;
+        const prevR = day > 1 ? liveRec(recKey(cid, day - 1)) : null;
+        const nextR = day < dim ? liveRec(recKey(cid, day + 1)) : null;
         const matchOverlay = r => r && (r.stayBg === savedSt || r.status === savedSt);
         hasNeighbor = matchOverlay(prevR) || matchOverlay(nextR);
       }
@@ -3373,14 +3382,14 @@ $("dlgSave").onclick = () => {
       setRec(k, { stayBg: pickOverlay, note });
     } else if (note) {
       setRec(k, { note });
-    } else if (state.records[k]) {
-      delete state.records[k];
+    } else if (liveRec(k)) {
+      tombstone(k);
       if (state.assign[dkey(day)]) delete state.assign[dkey(day)][cid];
     }
     extraTargets.forEach(({ cid: tc, day: td }) => {
       const rk = recKey(tc, td);
       if (pickOverlay) {
-        if (state.records[rk]) {
+        if (liveRec(rk)) {
           // 既存レコードを保持してマーカーのみ更新（未定・休み等のステータスを消さない）
           state.records[rk].stayBg = pickOverlay;
           if (note) state.records[rk].note = note;
@@ -3389,14 +3398,14 @@ $("dlgSave").onclick = () => {
           setRec(rk, { stayBg: pickOverlay, note });
         }
       } else if (note) {
-        if (state.records[rk]) {
+        if (liveRec(rk)) {
           // 既存レコードを保持して備考だけ更新（ステータス・マーカーを消さない）
           state.records[rk].note = note;
           state.records[rk]._t = Date.now();
         } else {
           setRec(rk, { note });
         }
-      } else if (state.records[rk]) {
+      } else if (liveRec(rk)) {
         delete state.records[rk].stayBg;
         state.records[rk]._t = Date.now();
       }
@@ -3439,7 +3448,7 @@ $("dlgSave").onclick = () => {
     if (state.assign[dkey(day)]) delete state.assign[dkey(day)][cid];
   } else if (pickStatus === "off") {
     // 非破壊：既存データ（利用時間・マーカー等）を保持し status だけ上書き
-    const ex = state.records[k] || {};
+    const ex = liveRec(k) || {};
     const offRec = { ...ex, status: "off", note };
     if (s) { offRec.start = s; offRec.end = e || "L"; }
     setRec(k, offRec);
@@ -3453,7 +3462,7 @@ $("dlgSave").onclick = () => {
   }
   // マーカー（pickOverlay）を stayBg として保存対象レコードに適用
   const applyOverlay = rk => {
-    if (!state.records[rk]) return;
+    if (!liveRec(rk)) return;
     if (pickOverlay) state.records[rk].stayBg = pickOverlay;
     else delete state.records[rk].stayBg;
     state.records[rk]._t = Date.now();
@@ -3469,15 +3478,15 @@ $("dlgSave").onclick = () => {
     const rk2 = recKey(tc, td);
     if (pickStatus === "off") {
       // 非破壊：各セル自身のデータを保持して status だけ off に
-      const exT = state.records[rk2] || {};
+      const exT = liveRec(rk2) || {};
       setRec(rk2, { ...exT, status: "off", note });
       if (state.assign[dkey(td)]) delete state.assign[dkey(td)][tc];
-    } else if ((pickStatus === "work" || pickStatus === "furikae") && timeUnchanged && state.records[rk2] && (state.records[rk2].status === "work" || state.records[rk2].status === "furikae")) {
+    } else if ((pickStatus === "work" || pickStatus === "furikae") && timeUnchanged && liveRec(rk2) && (state.records[rk2].status === "work" || state.records[rk2].status === "furikae")) {
       // 時間を変更せずマーカー等だけ追加した場合は、各セル自身の利用時間を上書きしない
     } else {
       applyRecordToDay(tc, td, primaryRec);
     }
-    if (state.records[rk2]) { state.records[rk2].note = note; state.records[rk2]._t = Date.now(); }
+    if (liveRec(rk2)) { state.records[rk2].note = note; state.records[rk2]._t = Date.now(); }
     applyOverlay(rk2);
   });
   if (hadSelApply) exitCalSelMode();
@@ -3486,28 +3495,28 @@ $("dlgSave").onclick = () => {
 $("dlgClear").onclick = () => {
   pushCalUndo();
   const { cid, day } = editing;
-  delete state.records[recKey(cid, day)];
+  tombstone(recKey(cid, day));
   if (state.assign[dkey(day)]) delete state.assign[dkey(day)][cid];
   save(); dlgClose("dlg"); renderAfterEdit();
 };
 $("dlgClearAll").onclick = () => {
   pushCalUndo();
   const { cid, day } = editing;
-  const r0 = state.records[recKey(cid, day)];
+  const r0 = liveRec(recKey(cid, day));
   const _ov = ["seiri","yotei","shukuhaku","tenpaku"];
   const rangeKey = r0 ? (r0.stayBg && _ov.includes(r0.stayBg) ? r0.stayBg : (r0.status && _ov.includes(r0.status) ? r0.status : null)) : null;
   if (rangeKey) {
     const dim = daysIn(cur);
     const matchR = r => r && (r.stayBg === rangeKey || r.status === rangeKey);
     let lo = day;
-    while (lo > 1 && matchR(state.records[recKey(cid, lo - 1)])) lo--;
+    while (lo > 1 && matchR(liveRec(recKey(cid, lo - 1)))) lo--;
     let hi = day;
-    while (hi < dim && matchR(state.records[recKey(cid, hi + 1)])) hi++;
+    while (hi < dim && matchR(liveRec(recKey(cid, hi + 1)))) hi++;
     for (let d = lo; d <= hi; d++) {
-      const dr = state.records[recKey(cid, d)];
+      const dr = liveRec(recKey(cid, d));
       if (dr) {
         delete dr.stayBg;
-        if (!dr.status) delete state.records[recKey(cid, d)];
+        if (!dr.status) tombstone(recKey(cid, d));
       }
       if (state.assign[dkey(d)]) delete state.assign[dkey(d)][cid];
     }
@@ -3531,7 +3540,7 @@ $("calSelDeleteBtn").onclick = () => {
     const [cid, dStr] = key.split("@@");
     const d = parseInt(dStr);
     const rk = recKey(cid, d);
-    if (state.records[rk]) delete state.records[rk];
+    tombstone(rk);
     const dk = dkey(d);
     if (state.assign[dk] && state.assign[dk][cid] != null) delete state.assign[dk][cid];
   });
