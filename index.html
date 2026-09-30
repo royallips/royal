@@ -1149,20 +1149,26 @@ async function cloudPull() {
     const res = await fetch(cloudGetUrl("action=get&rev=" + lastSyncedRev + "&_t=" + Date.now()), { method: "GET" });
     const j = await res.json();
     if (j && j.error === "auth") { cloudStatus("合言葉が違います", "#d12"); return; }
-    if (j && j.ok && j.changed && j.data) {
-      // 取得中（通信の間）に自分の入力が発生し送信待ち／送信中になっていたら、
-      // それを消してしまわないよう今回の反映は見送る（次のpull/pushで解消される）
-      if (cloudBusy || cloudPushTimer) return;
-      // 編集ダイアログを開いている最中は反映を保留（入力の邪魔をしない）
-      const editingOpen = ["dlg", "castDlg", "moveDlg", "lendDlg", "eventDlg", "askLabelDlg"]
-        .some(idd => { const d = document.getElementById(idd); return d && d.open; });
-      if (editingOpen) return;
-      applyCloudDataKeepLocalDayMaps(j.data);
-      persistLocal();
-      lastSyncedRev = j.rev; localStorage.setItem(CLOUD_REV_KEY, lastSyncedRev);
+    if (j && j.ok) {
+      // 「最後の同期日時」は、新しい変更を受信できた時だけでなく、サーバーと通信が
+      // 成功した時点（＝変更が無く"最新のまま"だった場合も含む）で更新する。
+      // そうしないと、他端末からの更新が無い間は表示が古いまま止まり、正常に
+      // 動いている端末でも「同期できていない」ように見えてしまう。
       try { localStorage.setItem(LAST_SYNC_KEY, String(Date.now())); } catch (e) {}
-      scrollPreserve(renderAll);
-      cloudStatus("最新を反映 ✓", "#2d8a4a");
+      if (j.changed && j.data) {
+        // 取得中（通信の間）に自分の入力が発生し送信待ち／送信中になっていたら、
+        // それを消してしまわないよう今回の反映は見送る（次のpull/pushで解消される）
+        if (cloudBusy || cloudPushTimer) return;
+        // 編集ダイアログを開いている最中は反映を保留（入力の邪魔をしない）
+        const editingOpen = ["dlg", "castDlg", "moveDlg", "lendDlg", "eventDlg", "askLabelDlg"]
+          .some(idd => { const d = document.getElementById(idd); return d && d.open; });
+        if (editingOpen) return;
+        applyCloudDataKeepLocalDayMaps(j.data);
+        persistLocal();
+        lastSyncedRev = j.rev; localStorage.setItem(CLOUD_REV_KEY, lastSyncedRev);
+        scrollPreserve(renderAll);
+        cloudStatus("最新を反映 ✓", "#2d8a4a");
+      }
     }
   } catch (e) { /* オフラインは無視 */ }
 }
