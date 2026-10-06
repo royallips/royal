@@ -3389,9 +3389,23 @@ $("dlgSave").onclick = () => {
   // マーカーのみ、または備考のみ（入力ステータス未選択）
   if (pickStatus === "none") {
     if (pickOverlay) {
-      setRec(k, { stayBg: pickOverlay, note });
+      if (hadSelApply && liveRec(k)) {
+        // まとめて入力：対象セルと同様、先頭セルも既存レコードを保持してマーカーのみ更新
+        // （ここをsetRecで丸ごと置き換えると、先頭セルだけ既存の利用時間が消えてしまう）
+        state.records[k].stayBg = pickOverlay;
+        if (note) state.records[k].note = note;
+        state.records[k]._t = Date.now();
+      } else {
+        setRec(k, { stayBg: pickOverlay, note });
+      }
     } else if (note) {
-      setRec(k, { note });
+      if (hadSelApply && liveRec(k)) {
+        // まとめて入力：先頭セルも既存レコードを保持して備考だけ更新
+        state.records[k].note = note;
+        state.records[k]._t = Date.now();
+      } else {
+        setRec(k, { note });
+      }
     } else if (liveRec(k)) {
       tombstone(k);
       if (state.assign[dkey(day)]) delete state.assign[dkey(day)][cid];
