@@ -3009,6 +3009,9 @@ document.addEventListener("mousemove", ev => {
   if (!cell) return;
   const cid = cell.dataset.cid, d = parseInt(cell.dataset.d);
   if (!calDragMoved) {
+    // クリックしたつもりの微小な動きで誤発動しないよう、最初に押したセルと
+    // 別のセルに実際に入った時だけドラッグ選択とみなす（同じセル内の動きは無視）
+    if (calDragAnchor && cid === calDragAnchor.cid && d === calDragAnchor.day) return;
     calDragMoved = true;
     if (!calSelMode) {
       enterCalSelMode();
