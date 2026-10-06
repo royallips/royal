@@ -3482,18 +3482,22 @@ $("dlgSave").onclick = () => {
   const primaryRec = state.records[k] || null;
   extraTargets.forEach(({ cid: tc, day: td }) => {
     const rk2 = recKey(tc, td);
+    const existing2 = liveRec(rk2);
     if (pickStatus === "off") {
       // 非破壊：各セル自身のデータを保持して status だけ off に
-      const exT = liveRec(rk2) || {};
+      const exT = existing2 || {};
       setRec(rk2, { ...exT, status: "off", note });
       if (state.assign[dkey(td)]) delete state.assign[dkey(td)][tc];
-    } else if ((pickStatus === "work" || pickStatus === "furikae") && timeUnchanged && liveRec(rk2) && (state.records[rk2].status === "work" || state.records[rk2].status === "furikae")) {
+    } else if ((pickStatus === "work" || pickStatus === "furikae") && timeUnchanged && existing2 && (existing2.status === "work" || existing2.status === "furikae")) {
       // 時間を変更せずマーカー等だけ追加した場合は、各セル自身の利用時間を上書きしない
+    } else if ((pickStatus === "work" || pickStatus === "furikae") && !pickOverlay && existing2 && existing2.stayBg && existing2.status !== "work" && existing2.status !== "furikae") {
+      // 生理・予定などマーカーのみのセルは、まとめて入力でマーカーを選んでいない限り
+      // 上書きしない（空白に見えるマーカー付きセルが勝手に「利用」になるのを防ぐ）
     } else {
       applyRecordToDay(tc, td, primaryRec);
     }
     if (liveRec(rk2)) { state.records[rk2].note = note; state.records[rk2]._t = Date.now(); }
-    applyOverlay(rk2);
+    if (pickOverlay) applyOverlay(rk2); // マーカーを明示的に選んだ時だけ、まとめて入力先にも適用する
   });
   if (hadSelApply) exitCalSelMode();
   save(); dlgClose("dlg"); renderAfterEdit();
