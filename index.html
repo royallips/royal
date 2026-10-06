@@ -3273,17 +3273,21 @@ function openCalSelDlg() {
   const parts = first.split("@@");
   const scid = parts[0], sday = parseInt(parts[1]);
   calSelApply = true;
-  openDlg(scid, sday);
+  openDlg(scid, sday, true);
   const title = $("dlgTitle"); if (title) title.textContent = `${calSelCells.size}セル まとめて入力`;
 }
 
-function openDlg(cid, day) {
+function openDlg(cid, day, blank = false) {
   if (calDragMoved) return;
   if (calSelMode && !calSelApply) { toggleCalSel(cid, day); return; }
   editing = { cid, day };
   const c = state.casts.find(x => x.id === cid);
   $("dlgTitle").textContent = `${c.name}　${cur.getMonth() + 1}/${day}`;
-  const r = rec(cid, day);
+  // まとめて入力は、選択した中で最初に触れたセルの既存内容（利用時間等）を
+  // そのまま引き継いでしまうと、他のセルにも意図せずその時間が適用されてしまう
+  // （マーカーだけ付けたいのに利用時間まで一緒に入ってしまう等）。そのため
+  // まとめて入力で開く時は、そのセルに実際の記録があっても空欄から始める。
+  const r = blank ? null : rec(cid, day);
   editingOriginalRec = r ? { ...r } : null;
   const _overlays = ["seiri","yotei","shukuhaku","tenpaku"];
   {
