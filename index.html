@@ -3528,28 +3528,50 @@ $("dlgClear").onclick = () => {
   const { cid, day } = editing;
   tombstone(recKey(cid, day));
   if (state.assign[dkey(day)]) delete state.assign[dkey(day)][cid];
+  // まとめて入力中に「消す」を押した場合は、先頭セルだけでなく選択した全セルを消す
+  if (calSelApply) {
+    const primaryKey = `${cid}@@${day}`;
+    calSelCells.forEach(key => {
+      if (key === primaryKey) return;
+      const [tc, dStr] = key.split("@@");
+      const td = parseInt(dStr);
+      tombstone(recKey(tc, td));
+      if (state.assign[dkey(td)]) delete state.assign[dkey(td)][tc];
+    });
+    exitCalSelMode();
+  }
   save(); dlgClose("dlg"); renderAfterEdit();
 };
 $("dlgClearAll").onclick = () => {
   pushCalUndo();
   const { cid, day } = editing;
-  const r0 = liveRec(recKey(cid, day));
-  const _ov = ["seiri","yotei","shukuhaku","tenpaku"];
-  const rangeKey = r0 ? (r0.stayBg && _ov.includes(r0.stayBg) ? r0.stayBg : (r0.status && _ov.includes(r0.status) ? r0.status : null)) : null;
-  if (rangeKey) {
-    const dim = daysIn(cur);
-    const matchR = r => r && (r.stayBg === rangeKey || r.status === rangeKey);
-    let lo = day;
-    while (lo > 1 && matchR(liveRec(recKey(cid, lo - 1)))) lo--;
-    let hi = day;
-    while (hi < dim && matchR(liveRec(recKey(cid, hi + 1)))) hi++;
-    for (let d = lo; d <= hi; d++) {
-      const dr = liveRec(recKey(cid, d));
-      if (dr) {
-        delete dr.stayBg;
-        if (!dr.status) tombstone(recKey(cid, d));
+  if (calSelApply) {
+    // まとめて入力中は、日付範囲の自動検出ではなく選択した全セルをそのまま消す
+    calSelCells.forEach(key => {
+      const [tc, dStr] = key.split("@@");
+      const td = parseInt(dStr);
+      tombstone(recKey(tc, td));
+      if (state.assign[dkey(td)]) delete state.assign[dkey(td)][tc];
+    });
+  } else {
+    const r0 = liveRec(recKey(cid, day));
+    const _ov = ["seiri","yotei","shukuhaku","tenpaku"];
+    const rangeKey = r0 ? (r0.stayBg && _ov.includes(r0.stayBg) ? r0.stayBg : (r0.status && _ov.includes(r0.status) ? r0.status : null)) : null;
+    if (rangeKey) {
+      const dim = daysIn(cur);
+      const matchR = r => r && (r.stayBg === rangeKey || r.status === rangeKey);
+      let lo = day;
+      while (lo > 1 && matchR(liveRec(recKey(cid, lo - 1)))) lo--;
+      let hi = day;
+      while (hi < dim && matchR(liveRec(recKey(cid, hi + 1)))) hi++;
+      for (let d = lo; d <= hi; d++) {
+        const dr = liveRec(recKey(cid, d));
+        if (dr) {
+          delete dr.stayBg;
+          if (!dr.status) tombstone(recKey(cid, d));
+        }
+        if (state.assign[dkey(d)]) delete state.assign[dkey(d)][cid];
       }
-      if (state.assign[dkey(d)]) delete state.assign[dkey(d)][cid];
     }
   }
   exitCalSelMode(); save(); dlgClose("dlg"); renderAfterEdit();
