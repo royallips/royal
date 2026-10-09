@@ -347,6 +347,16 @@
   .dlg-head .x{cursor:pointer;font-size:20px}
   .dlg-body{padding:16px}
   .field{margin-bottom:12px}
+  /* キャスト編集：プロフィール画像（受付画面の img フォルダ） */
+  .pimg-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:4px}
+  .pimg{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0}
+  .pimg-thumb{position:relative;width:100%;aspect-ratio:595/842;border-radius:8px;overflow:hidden;background:#f3e8ee;border:1.5px dashed var(--line);
+    display:flex;align-items:center;justify-content:center;color:var(--ink-soft);font-size:18px;cursor:pointer}
+  .pimg-thumb.has{border-style:solid}
+  .pimg-thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .pimg-thumb.busy::after{content:"…";position:absolute;inset:0;background:rgba(255,255,255,.75);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--pink)}
+  .pimg-label{font-size:10px;font-weight:700;color:var(--ink-soft);white-space:nowrap}
+  .pimg-del{font-size:10px;border:none;background:none;color:#c0392b;padding:0;cursor:pointer;min-height:14px}
   .field label{display:block;font-size:12px;font-weight:700;color:var(--ink-soft);margin-bottom:4px}
   .field input,.field select{width:100%;padding:9px 10px;border:1.5px solid var(--line);border-radius:10px}
   .time-row{display:flex;gap:8px}.time-row>div{flex:1}
@@ -772,6 +782,10 @@
         <input type="checkbox" id="castSoukeiKakunin" style="width:auto"> 送迎要確認</label>
     </div>
     <div class="field" id="castSoukeiPlaceField" style="margin-top:8px;display:none"><label>送迎場所</label><input id="castSoukeiPlace" placeholder=""></div>
+    <div style="margin-top:12px;font-size:12px;font-weight:700;color:var(--ink-soft)">プロフィール画像（受付画面に表示）</div>
+    <div class="hint" id="castImgHint" style="font-size:11px;margin-top:2px">タップで画像を選択・差し替え。A1・A2はインバウンド用です。</div>
+    <div class="pimg-grid" id="castImgGrid"></div>
+    <input type="file" id="castImgFile" accept="image/*" style="display:none">
   </div>
   <div class="dlg-foot"><button class="btn danger" id="castDelete" style="display:none">削除</button><button class="btn" id="castSave" style="flex:1">保存</button></div>
 </dialog>
@@ -3094,6 +3108,8 @@ function openCastDlg(cid) {
   refreshSoukeiPlace();
   refreshCastSeg();
   refreshRankSeg();
+  castImgName = editCastId ? (state.casts.find(x => x.id === editCastId) || {}).name || "" : "";
+  renderCastImages();
   dlgOpen("castDlg");
   setTimeout(() => $("castName").focus(), 50);
 }
@@ -3133,6 +3149,7 @@ $("castSave").onclick = () => {
   const now = Date.now();
   if (editCastId) {
     const c = state.casts.find(x => x.id === editCastId);
+    if (c && c.name !== n) renameCastImages(c.name, n);
     if (c) { c.name = n; c.group = castGroup; c.autoOver = ao; c.soukei = soukei; c.soukeiPlace = soukeiPlace; c.furyo = furyo; c.bousui = bousui; c.mat = mat; c.rank = castRank; c._updatedAt = now; }
   } else {
     state.casts.push({ id: id(), name: n, group: castGroup, availDates: "", canAsk: "", canAsk2: "", autoOver: ao, soukei: soukei, soukeiPlace: soukeiPlace, furyo: furyo, bousui: bousui, mat: mat, rank: castRank, _updatedAt: now });
@@ -3146,6 +3163,140 @@ $("castDelete").onclick = () => {
   openDelDlg(editCastId);
 };
 $("castName").addEventListener("keydown", e => { if (e.key === "Enter") e.preventDefault(); });
+
+/* ===== 12b. プロフィール画像（受付画面 royal-reception の img/源氏名*.jpg を直接読み書き） ===== */
+// 受付画面と同じ royallips.github.io なので、GitHub トークン（rr_gh_token）を共有する
+const IMG_REPO = "royallips/royal-reception";
+const IMG_SLOTS = [["", "メイン"], ["2", "2枚目"], ["3", "3枚目"], ["A1", "A1"], ["A2", "A2"]];
+const GH_TOKEN_KEY = "rr_gh_token";
+let castImgName = "";          // ダイアログを開いた時点の源氏名（画像のファイル名）
+let castImgFiles = null;       // img フォルダの一覧 {ファイル名: {sha, url}}
+let castImgSlot = "";          // 選択中の枠
+function ghToken(ask) {
+  let t = "";
+  try { t = localStorage.getItem(GH_TOKEN_KEY) || ""; } catch (e) {}
+  if (!t && ask) {
+    t = (prompt("画像を保存するには GitHub のトークンが必要です（ghp_ で始まるもの）。\nこの端末に保存されます。") || "").trim();
+    if (t) try { localStorage.setItem(GH_TOKEN_KEY, t); } catch (e) {}
+  }
+  return t;
+}
+function ghHeaders() {
+  const h = { Accept: "application/vnd.github+json" };
+  const t = ghToken(false); if (t) h.Authorization = "token " + t;
+  return h;
+}
+function imgPath(name, suf) { return "img/" + encodeURIComponent(name.normalize("NFC") + suf + ".jpg"); }
+async function loadImgList(force) {
+  if (castImgFiles && !force) return castImgFiles;
+  const res = await fetch(`https://api.github.com/repos/${IMG_REPO}/contents/img?ref=main&_t=${Date.now()}`, { headers: ghHeaders(), cache: "no-store" });
+  if (!res.ok) throw new Error("画像一覧の取得に失敗（" + res.status + "）");
+  const map = {};
+  for (const f of await res.json()) map[f.name.normalize("NFC")] = { sha: f.sha, url: f.download_url + "?v=" + f.sha };
+  return castImgFiles = map;
+}
+async function renderCastImages() {
+  const grid = $("castImgGrid");
+  const name = castImgName;
+  if (!editCastId || !name) {
+    grid.innerHTML = ""; $("castImgHint").textContent = "画像は、キャストを保存したあと「キャスト編集」から追加できます。";
+    return;
+  }
+  $("castImgHint").textContent = "タップで画像を選択・差し替え。A1・A2はインバウンド用です。";
+  const draw = files => {
+    if (castImgName !== name) return;
+    grid.innerHTML = IMG_SLOTS.map(([suf, label]) => {
+      const f = files && files[name.normalize("NFC") + suf + ".jpg"];
+      return `<div class="pimg"><div class="pimg-thumb ${f ? "has" : ""}" data-suf="${suf}">${f ? `<img src="${esc(f.url)}" alt="">` : "＋"}</div>
+        <div class="pimg-label">${label}</div>
+        <button class="pimg-del" data-del="${suf}" style="visibility:${f ? "visible" : "hidden"}">削除</button></div>`;
+    }).join("");
+  };
+  draw(castImgFiles);
+  try { draw(await loadImgList(true)); }
+  catch (e) { $("castImgHint").textContent = String(e.message || e); }
+}
+$("castImgGrid").onclick = e => {
+  const th = e.target.closest(".pimg-thumb");
+  if (th) { castImgSlot = th.dataset.suf; $("castImgFile").value = ""; $("castImgFile").click(); return; }
+  const del = e.target.closest("[data-del]");
+  if (del) deleteCastImage(del.dataset.del);
+};
+$("castImgFile").onchange = async () => {
+  const file = $("castImgFile").files[0]; if (!file) return;
+  if (!ghToken(true)) return;
+  const name = castImgName, suf = castImgSlot;
+  const th = document.querySelector(`.pimg-thumb[data-suf="${suf}"]`); if (th) th.classList.add("busy");
+  try {
+    const b64 = await resizeToJpegBase64(file, 1200, 0.88);
+    await ghPutImage(name, suf, b64, "プロフィール画像を更新: " + name + suf);
+    await renderCastImages();
+  } catch (e) {
+    alert("画像の保存に失敗しました。\n" + (e.message || e));
+    if (th) th.classList.remove("busy");
+  }
+};
+// 長い辺を maxSide 以内に縮小して JPEG の base64（ヘッダなし）にする
+function resizeToJpegBase64(file, maxSide, quality) {
+  return new Promise((resolve, reject) => {
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => {
+      const k = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
+      const cv = document.createElement("canvas");
+      cv.width = Math.round(img.naturalWidth * k); cv.height = Math.round(img.naturalHeight * k);
+      cv.getContext("2d").drawImage(img, 0, 0, cv.width, cv.height);
+      URL.revokeObjectURL(url);
+      resolve(cv.toDataURL("image/jpeg", quality).split(",")[1]);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("画像を読み込めませんでした")); };
+    img.src = url;
+  });
+}
+async function ghPutImage(name, suf, b64, message) {
+  const files = await loadImgList(true);
+  const cur = files[name.normalize("NFC") + suf + ".jpg"];
+  const res = await fetch(`https://api.github.com/repos/${IMG_REPO}/contents/${imgPath(name, suf)}`, {
+    method: "PUT", headers: { ...ghHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify({ message, content: b64, branch: "main", ...(cur ? { sha: cur.sha } : {}) })
+  });
+  if (res.status === 401 || res.status === 403) { try { localStorage.removeItem(GH_TOKEN_KEY); } catch (e) {} throw new Error("トークンが無効です。もう一度お試しください。"); }
+  if (!res.ok) throw new Error("GitHub への保存エラー（" + res.status + "）");
+}
+async function ghDeleteImage(name, suf, message) {
+  const files = await loadImgList(true);
+  const cur = files[name.normalize("NFC") + suf + ".jpg"]; if (!cur) return;
+  const res = await fetch(`https://api.github.com/repos/${IMG_REPO}/contents/${imgPath(name, suf)}`, {
+    method: "DELETE", headers: { ...ghHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify({ message, sha: cur.sha, branch: "main" })
+  });
+  if (!res.ok) throw new Error("GitHub での削除エラー（" + res.status + "）");
+}
+async function deleteCastImage(suf) {
+  const label = (IMG_SLOTS.find(x => x[0] === suf) || [])[1];
+  if (!confirm(`${castImgName} の「${label}」画像を削除しますか？`)) return;
+  if (!ghToken(true)) return;
+  try { await ghDeleteImage(castImgName, suf, "プロフィール画像を削除: " + castImgName + suf); await renderCastImages(); }
+  catch (e) { alert("画像の削除に失敗しました。\n" + (e.message || e)); }
+}
+// 名前を変えたら画像のファイル名も付け替える（新しい名前の画像が既にある枠はそのまま）
+async function renameCastImages(oldName, newName) {
+  let files;
+  try { files = await loadImgList(true); } catch (e) { return; }
+  const targets = IMG_SLOTS.map(([suf]) => suf).filter(suf => files[oldName.normalize("NFC") + suf + ".jpg"]);
+  if (!targets.length) return;
+  if (!ghToken(true)) { alert("トークンがないため、画像のファイル名は変更されませんでした。"); return; }
+  const skipped = [];
+  for (const suf of targets) {
+    if (files[newName.normalize("NFC") + suf + ".jpg"]) { skipped.push(newName + suf); continue; }
+    try {
+      const r = await fetch(`https://api.github.com/repos/${IMG_REPO}/contents/${imgPath(oldName, suf)}?ref=main`, { headers: ghHeaders(), cache: "no-store" });
+      const j = await r.json();
+      await ghPutImage(newName, suf, (j.content || "").replace(/\n/g, ""), `プロフィール画像の名前を変更: ${oldName}${suf} → ${newName}${suf}`);
+      await ghDeleteImage(oldName, suf, `プロフィール画像の名前を変更: ${oldName}${suf} → ${newName}${suf}`);
+    } catch (e) { skipped.push(oldName + suf); }
+  }
+  if (skipped.length) alert("次の画像は名前を変更できませんでした：\n" + skipped.join("、"));
+}
 
 /* ===== 13. 利用入力ダイアログ ====================================== */
 // 開始時間ドロップダウン（時：OPEN〜23、分：00 / .5）を初期化
