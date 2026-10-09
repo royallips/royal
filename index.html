@@ -784,8 +784,8 @@
         <input type="checkbox" id="castSoukeiKakunin" style="width:auto"> 送迎要確認</label>
     </div>
     <div class="field" id="castSoukeiPlaceField" style="margin-top:8px;display:none"><label>送迎場所</label><input id="castSoukeiPlace" placeholder=""></div>
-    <div style="margin-top:12px;font-size:12px;font-weight:700;color:var(--ink-soft)">プロフィール画像（受付画面に表示）</div>
-    <div class="hint" id="castImgHint" style="font-size:11px;margin-top:2px">タップで画像を選択・差し替え。</div>
+    <div style="margin-top:12px;font-size:12px;font-weight:700;color:var(--ink-soft)">パネル画像</div>
+    <div class="hint" id="castImgHint" style="font-size:11px;margin-top:2px"></div>
     <div class="pimg-grid" id="castImgGrid"></div>
     <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--ink-soft);margin-top:12px">
       <input type="checkbox" id="castInbound" style="width:auto"> インバウンド対応</label>
@@ -3011,7 +3011,7 @@ function renderManage() {
       <div style="margin-top:16px"><button class="btn" id="addCast2">＋ キャストを追加</button></div>
     </div>
     <div class="panel">
-      <div class="sec-title">🖼 パネルトップ画像</div>
+      <div class="sec-title">パネルトップ画像</div>
       <div class="hint" id="topImgHint" style="font-size:11px;margin-bottom:6px">画像サイズ9:16</div>
       <div class="pimg-grid top-grid" id="topImgGrid"></div>
       <input type="file" id="topImgFile" accept="image/*" style="display:none">
@@ -3252,7 +3252,7 @@ async function renderCastImages() {
     grid.innerHTML = inbGrid.innerHTML = ""; $("castImgHint").textContent = "画像は、キャストを保存したあと「キャスト編集」から追加できます。";
     return;
   }
-  $("castImgHint").textContent = "タップで画像を選択・差し替え。";
+  $("castImgHint").textContent = "";
   const slotsHTML = (slots, files) => slots.map(([suf, label]) => {
       const f = files && files[name.normalize("NFC") + suf + ".jpg"];
       return `<div class="pimg"><div class="pimg-thumb ${f ? "has" : ""}" data-suf="${suf}">${f ? `<img src="${esc(f.url)}" alt="">` : "＋"}</div>
