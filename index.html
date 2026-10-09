@@ -356,6 +356,11 @@
   .pimg-thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
   .pimg-thumb.busy::after{content:"…";position:absolute;inset:0;background:rgba(255,255,255,.75);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--pink)}
   .pimg-label{font-size:10px;font-weight:700;color:var(--ink-soft);white-space:nowrap}
+  .inb-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:0 16px;max-width:760px}
+  .inb-row{display:flex;align-items:baseline;gap:10px;padding:7px 4px;border-bottom:1px solid var(--line);cursor:pointer}
+  .inb-row:hover{background:var(--pink-soft)}
+  .inb-name{font-weight:800;font-size:14px;white-space:nowrap}
+  .inb-memo{font-size:12px;color:var(--ink-soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .top-grid{grid-template-columns:repeat(auto-fill,minmax(84px,1fr));max-width:720px}
   .top-grid .pimg-thumb{aspect-ratio:9/16}
   .pimg-del{font-size:10px;border:none;background:none;color:#c0392b;padding:0;cursor:pointer;min-height:14px}
@@ -2989,6 +2994,7 @@ $("askLabelInput").addEventListener("keydown", e => { if (e.key === "Enter") { e
 
 /* ===== 12. キャスト管理 ============================================ */
 function renderManage() {
+  const inbCasts = state.casts.filter(c => c.inbound).sort((a, b) => a.name.localeCompare(b.name, "ja"));
   function chips(group) {
     const cs = sortedCasts(group);
     return cs.map(c =>
@@ -3011,6 +3017,12 @@ function renderManage() {
       <div class="sec-title"><span class="tag hiru">昼の部</span></div><div>${chips("hiru")}</div>
       <div class="sec-title" style="margin-top:14px"><span class="tag yoru">夜の部</span></div><div>${chips("yoru")}</div>
       <div style="margin-top:16px"><button class="btn" id="addCast2">＋ キャストを追加</button></div>
+    </div>
+    <div class="panel">
+      <div class="sec-title">インバウンド対応 <span style="font-size:12px;font-weight:600;color:var(--ink-soft)">${inbCasts.length}名</span></div>
+      ${inbCasts.length ? `<div class="inb-list">${inbCasts.map(c =>
+        `<div class="inb-row" onclick="openCastDlg('${c.id}')"><span class="inb-name">${esc(c.name)}</span><span class="inb-memo">${esc(c.inbMemo || "—")}</span></div>`).join("")}</div>`
+        : '<span class="empty-msg">インバウンド対応のキャストはいません</span>'}
     </div>
     <div class="panel">
       <div class="sec-title">パネルトップ画像</div>
