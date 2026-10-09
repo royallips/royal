@@ -3224,7 +3224,6 @@ const INB_SLOTS = [["A1", "メイン"], ["A2", "2枚目"]];
 const IMG_SLOTS = [...MAIN_SLOTS, ...INB_SLOTS];
 const GH_TOKEN_KEY = "rr_gh_token";
 let castImgName = "";          // ダイアログを開いた時点の源氏名（画像のファイル名）
-let castImgFiles = null;       // img フォルダの一覧 {ファイル名: {sha, url}}
 let castImgSlot = "";          // 選択中の枠
 function ghToken(ask) {
   let t = "";
@@ -3241,13 +3240,26 @@ function ghHeaders() {
   return h;
 }
 function imgPath(name, suf) { return "img/" + encodeURIComponent(name.normalize("NFC") + suf + ".jpg"); }
-async function loadImgList(force) {
-  if (castImgFiles && !force) return castImgFiles;
-  const res = await fetch(`https://api.github.com/repos/${IMG_REPO}/contents/img?ref=main&_t=${Date.now()}`, { headers: ghHeaders(), cache: "no-store" });
-  if (!res.ok) throw new Error("画像一覧の取得に失敗（" + res.status + "）");
-  const map = {};
-  for (const f of await res.json()) map[f.name.normalize("NFC")] = { sha: f.sha, url: f.download_url + "?v=" + f.sha };
-  return castImgFiles = map;
+// 画像があるかは受付サイトの画像を直接読み込んで確かめる（GitHub API はトークンなしだと1時間60回で止まるため、
+// API は保存・削除のときだけトークン付きで使う）
+const IMG_SITE = "https://royallips.github.io/royal-reception/";
+const imgBust = Date.now();   // 開いた時点の最新を読む（サイトのキャッシュ対策）
+const imgLocal = {};          // 保存・削除した直後の状態。サイト反映まで1分ほどかかるので、その間はこちらを表示（null=削除済み）
+function imgKey(name, suf) { return name.normalize("NFC") + suf + ".jpg"; }
+function probeImg(url) { return new Promise(r => { const im = new Image(); im.onload = () => r(true); im.onerror = () => r(false); im.src = url; }); }
+async function imgState(name, suf) {
+  const k = imgKey(name, suf);
+  if (k in imgLocal) return imgLocal[k] ? { exists: true, src: imgLocal[k] } : { exists: false };
+  const u = IMG_SITE + imgPath(name, suf) + "?t=" + imgBust;
+  return (await probeImg(u)) ? { exists: true, src: u } : { exists: false };
+}
+// トークン付きで1ファイルだけ確認（無ければ null）
+async function ghFile(name, suf) {
+  const res = await fetch(`https://api.github.com/repos/${IMG_REPO}/contents/${imgPath(name, suf)}?ref=main&_t=${Date.now()}`, { headers: ghHeaders(), cache: "no-store" });
+  if (res.status === 404) return null;
+  if (res.status === 401) { try { localStorage.removeItem(GH_TOKEN_KEY); } catch (e) {} throw new Error("トークンが無効です。もう一度お試しください。"); }
+  if (!res.ok) throw new Error("GitHub の確認エラー（" + res.status + "）");
+  return await res.json();
 }
 async function renderCastImages() {
   const grid = $("castImgGrid"), inbGrid = $("castInbGrid");
@@ -3258,24 +3270,25 @@ async function renderCastImages() {
     return;
   }
   $("castImgHint").textContent = "";
-  const slotsHTML = (slots, files) => slots.map(([suf, label]) => {
-      const f = files && files[name.normalize("NFC") + suf + ".jpg"];
-      return `<div class="pimg"><div class="pimg-thumb ${f ? "has" : ""}" data-suf="${suf}">${f ? `<img src="${esc(f.url)}" alt="">` : "＋"}</div>
+  const slotsHTML = (slots, st) => slots.map(([suf, label]) => {
+      const f = st && st[suf] && st[suf].exists ? st[suf] : null;
+      return `<div class="pimg"><div class="pimg-thumb ${f ? "has" : ""}" data-suf="${suf}">${f ? `<img src="${esc(f.src)}" alt="">` : (st ? "＋" : "…")}</div>
         <div class="pimg-label">${label}</div>
         <button class="pimg-del" data-del="${suf}" style="visibility:${f ? "visible" : "hidden"}">削除</button></div>`;
   }).join("");
-  const draw = files => {
+  const draw = st => {
     if (castImgName !== name) return;
-    grid.innerHTML = slotsHTML(MAIN_SLOTS, files);
-    inbGrid.innerHTML = slotsHTML(INB_SLOTS, files);
+    grid.innerHTML = slotsHTML(MAIN_SLOTS, st);
+    inbGrid.innerHTML = slotsHTML(INB_SLOTS, st);
     // 既にインバウンド画像があるキャストは、チェックを入れた状態で開く
-    if (files && INB_SLOTS.some(([suf]) => files[name.normalize("NFC") + suf + ".jpg"]) && !$("castInbound").checked) {
+    if (st && INB_SLOTS.some(([suf]) => st[suf].exists) && !$("castInbound").checked) {
       $("castInbound").checked = true; refreshInbBox();
     }
   };
-  draw(castImgFiles);
-  try { draw(await loadImgList(true)); }
-  catch (e) { $("castImgHint").textContent = String(e.message || e); }
+  draw(null);
+  const st = {};
+  await Promise.all(IMG_SLOTS.map(async ([suf]) => { st[suf] = await imgState(name, suf); }));
+  draw(st);
 }
 // インバウンド対応にチェックしたときだけインバウンド画像の欄を出す（外しても画像は消さない）
 function refreshInbBox() { $("castInbBox").style.display = $("castInbound").checked ? "block" : "none"; }
@@ -3317,23 +3330,25 @@ function resizeToJpegBase64(file, maxSide, quality) {
   });
 }
 async function ghPutImage(name, suf, b64, message) {
-  const files = await loadImgList(true);
-  const cur = files[name.normalize("NFC") + suf + ".jpg"];
+  const cur = await ghFile(name, suf);
   const res = await fetch(`https://api.github.com/repos/${IMG_REPO}/contents/${imgPath(name, suf)}`, {
     method: "PUT", headers: { ...ghHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify({ message, content: b64, branch: "main", ...(cur ? { sha: cur.sha } : {}) })
   });
   if (res.status === 401 || res.status === 403) { try { localStorage.removeItem(GH_TOKEN_KEY); } catch (e) {} throw new Error("トークンが無効です。もう一度お試しください。"); }
   if (!res.ok) throw new Error("GitHub への保存エラー（" + res.status + "）");
+  imgLocal[imgKey(name, suf)] = "data:image/jpeg;base64," + b64;
 }
 async function ghDeleteImage(name, suf, message) {
-  const files = await loadImgList(true);
-  const cur = files[name.normalize("NFC") + suf + ".jpg"]; if (!cur) return;
-  const res = await fetch(`https://api.github.com/repos/${IMG_REPO}/contents/${imgPath(name, suf)}`, {
-    method: "DELETE", headers: { ...ghHeaders(), "Content-Type": "application/json" },
-    body: JSON.stringify({ message, sha: cur.sha, branch: "main" })
-  });
-  if (!res.ok) throw new Error("GitHub での削除エラー（" + res.status + "）");
+  const cur = await ghFile(name, suf);
+  if (cur) {
+    const res = await fetch(`https://api.github.com/repos/${IMG_REPO}/contents/${imgPath(name, suf)}`, {
+      method: "DELETE", headers: { ...ghHeaders(), "Content-Type": "application/json" },
+      body: JSON.stringify({ message, sha: cur.sha, branch: "main" })
+    });
+    if (!res.ok) throw new Error("GitHub での削除エラー（" + res.status + "）");
+  }
+  imgLocal[imgKey(name, suf)] = null;
 }
 async function deleteCastImage(suf) {
   const label = (IMG_SLOTS.find(x => x[0] === suf) || [])[1];
@@ -3344,21 +3359,19 @@ async function deleteCastImage(suf) {
 }
 // ===== トップ画像（img/top.jpg, top2.jpg, top3.jpg …）。受付画面は番号が途切れるまで順に表示する =====
 let topImgSlot = "";
-function topImgCount(files) { let n = 0; while (files[(n ? "top" + (n + 1) : "top") + ".jpg"]) n++; return n; }
 async function renderTopImages() {
-  const grid = $("topImgGrid"); if (!grid) return;
-  let files;
-  try { files = await loadImgList(true); }
-  catch (e) { $("topImgHint").textContent = String(e.message || e); return; }
   if (!$("topImgGrid")) return;
-  const n = topImgCount(files);
-  let html = "";
-  for (let i = 0; i < n; i++) {
-    const suf = i ? String(i + 1) : "", f = files["top" + suf + ".jpg"];
-    html += `<div class="pimg"><div class="pimg-thumb has" data-top="${suf}"><img src="${esc(f.url)}" alt=""></div>
-      <div class="pimg-label">${i + 1}枚目</div>
-      <button class="pimg-del" data-topdel="${suf}" style="visibility:${i === n - 1 && n > 1 ? "visible" : "hidden"}">削除</button></div>`;
+  const imgs = [];
+  for (let i = 0; i < 30; i++) {   // 番号が途切れるまで
+    const suf = i ? String(i + 1) : "", st = await imgState("top", suf);
+    if (!st.exists) break;
+    imgs.push({ suf, src: st.src });
   }
+  if (!$("topImgGrid")) return;
+  const n = imgs.length;
+  let html = imgs.map((f, i) => `<div class="pimg"><div class="pimg-thumb has" data-top="${f.suf}"><img src="${esc(f.src)}" alt=""></div>
+      <div class="pimg-label">${i + 1}枚目</div>
+      <button class="pimg-del" data-topdel="${f.suf}" style="visibility:${i === n - 1 && n > 1 ? "visible" : "hidden"}">削除</button></div>`).join("");
   html += `<div class="pimg"><div class="pimg-thumb" data-top="${n ? String(n + 1) : ""}">＋</div><div class="pimg-label">追加</div><button class="pimg-del" style="visibility:hidden">削除</button></div>`;
   $("topImgGrid").innerHTML = html;
 }
@@ -3391,19 +3404,18 @@ async function deleteTopImage(suf) {
 }
 // 名前を変えたら画像のファイル名も付け替える（新しい名前の画像が既にある枠はそのまま）
 async function renameCastImages(oldName, newName) {
-  let files;
-  try { files = await loadImgList(true); } catch (e) { return; }
-  const targets = IMG_SLOTS.map(([suf]) => suf).filter(suf => files[oldName.normalize("NFC") + suf + ".jpg"]);
+  const targets = [];
+  for (const [suf] of IMG_SLOTS) if ((await imgState(oldName, suf)).exists) targets.push(suf);
   if (!targets.length) return;
   if (!ghToken(true)) { alert("トークンがないため、画像のファイル名は変更されませんでした。"); return; }
   const skipped = [];
   for (const suf of targets) {
-    if (files[newName.normalize("NFC") + suf + ".jpg"]) { skipped.push(newName + suf); continue; }
     try {
-      const r = await fetch(`https://api.github.com/repos/${IMG_REPO}/contents/${imgPath(oldName, suf)}?ref=main`, { headers: ghHeaders(), cache: "no-store" });
-      const j = await r.json();
-      await ghPutImage(newName, suf, (j.content || "").replace(/\n/g, ""), `プロフィール画像の名前を変更: ${oldName}${suf} → ${newName}${suf}`);
-      await ghDeleteImage(oldName, suf, `プロフィール画像の名前を変更: ${oldName}${suf} → ${newName}${suf}`);
+      if (await ghFile(newName, suf)) { skipped.push(newName + suf); continue; }
+      const old = await ghFile(oldName, suf); if (!old) continue;
+      const msg = `プロフィール画像の名前を変更: ${oldName}${suf} → ${newName}${suf}`;
+      await ghPutImage(newName, suf, (old.content || "").replace(/\n/g, ""), msg);
+      await ghDeleteImage(oldName, suf, msg);
     } catch (e) { skipped.push(oldName + suf); }
   }
   if (skipped.length) alert("次の画像は名前を変更できませんでした：\n" + skipped.join("、"));
