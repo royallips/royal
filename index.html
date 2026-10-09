@@ -783,8 +783,15 @@
     </div>
     <div class="field" id="castSoukeiPlaceField" style="margin-top:8px;display:none"><label>送迎場所</label><input id="castSoukeiPlace" placeholder=""></div>
     <div style="margin-top:12px;font-size:12px;font-weight:700;color:var(--ink-soft)">プロフィール画像（受付画面に表示）</div>
-    <div class="hint" id="castImgHint" style="font-size:11px;margin-top:2px">タップで画像を選択・差し替え。A1・A2はインバウンド用です。</div>
+    <div class="hint" id="castImgHint" style="font-size:11px;margin-top:2px">タップで画像を選択・差し替え。</div>
     <div class="pimg-grid" id="castImgGrid"></div>
+    <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--ink-soft);margin-top:12px">
+      <input type="checkbox" id="castInbound" style="width:auto"> インバウンド対応</label>
+    <div id="castInbBox" style="display:none">
+      <div class="field" style="margin-top:6px"><label>インバウンド条件（受付画面に表示）</label><input id="castInbMemo" placeholder="例 韓国・台湾のみ" maxlength="40"></div>
+      <div style="margin-top:6px;font-size:12px;font-weight:700;color:var(--ink-soft)">インバウンド画像（受付画面のインバウンドに表示）</div>
+      <div class="pimg-grid" id="castInbGrid"></div>
+    </div>
     <input type="file" id="castImgFile" accept="image/*" style="display:none">
   </div>
   <div class="dlg-foot"><button class="btn danger" id="castDelete" style="display:none">削除</button><button class="btn" id="castSave" style="flex:1">保存</button></div>
@@ -1183,8 +1190,33 @@ async function cloudPull() {
         scrollPreserve(renderAll);
         cloudStatus("最新を反映 ✓", "#2d8a4a");
       }
+      maybeMigrateInbound();
     }
   } catch (e) { /* オフラインは無視 */ }
+}
+// インバウンド対応・条件は以前は受付画面（royal-reception の casts.json）で管理していた。
+// まだ一度も設定していない（inbound が未定義の）キャストだけ、受付画面の値を1回引き継ぐ。
+// クラウドの最新を取り込んだ直後に実行し、他端末の編集を古い値で上書きしないようにする。
+let inboundMigrateTried = false;
+async function maybeMigrateInbound() {
+  if (inboundMigrateTried) return;
+  if (!state.casts.some(c => c.inbound === undefined)) { inboundMigrateTried = true; return; }
+  inboundMigrateTried = true;
+  try {
+    const res = await fetch("https://royallips.github.io/royal-reception/casts.json?_t=" + Date.now(), { cache: "no-store" });
+    const rc = await res.json();
+    if (cloudBusy || cloudPushTimer) { inboundMigrateTried = false; return; }
+    const byName = new Map(rc.map(x => [String(x.name || "").normalize("NFC"), x]));
+    const now = Date.now();
+    for (const c of state.casts) {
+      if (c.inbound !== undefined) continue;
+      const r = byName.get(String(c.name || "").normalize("NFC"));
+      c.inbound = !!(r && r.inbound);
+      c.inbMemo = (r && r.inbound && r.inbMemo) || "";
+      c._updatedAt = now;
+    }
+    save();
+  } catch (e) { inboundMigrateTried = false; }
 }
 function applyCloudData(d) {
   if (!d || !d.casts) return;
@@ -3089,6 +3121,8 @@ function openCastDlg(cid) {
     $("castName").value = c.name; castGroup = c.group; castRank = c.rank || "";
     $("castBousui").checked = !!c.bousui;
     $("castMat").checked = !!c.mat;
+    $("castInbound").checked = !!c.inbound;
+    $("castInbMemo").value = c.inbMemo || "";
     $("castAutoOver").checked = !!c.autoOver;
     $("castSoukeiAri").checked = c.soukei === "ari";
     $("castSoukeiKakunin").checked = c.soukei === "kakunin";
@@ -3102,6 +3136,8 @@ function openCastDlg(cid) {
     $("castSoukeiPlace").value = "";
     $("castBousui").checked = false;
     $("castMat").checked = false;
+    $("castInbound").checked = false;
+    $("castInbMemo").value = "";
     $("castFuryo").checked = false;
     $("castDelete").style.display = "none";
   }
@@ -3144,15 +3180,17 @@ $("castSave").onclick = () => {
   const furyo = $("castFuryo").checked;
   const bousui = $("castBousui").checked;
   const mat = $("castMat").checked;
+  const inbound = $("castInbound").checked;
+  const inbMemo = inbound ? val("castInbMemo") : "";
   const soukei = $("castSoukeiAri").checked ? "ari" : ($("castSoukeiKakunin").checked ? "kakunin" : "");
   const soukeiPlace = soukei ? val("castSoukeiPlace") : "";
   const now = Date.now();
   if (editCastId) {
     const c = state.casts.find(x => x.id === editCastId);
     if (c && c.name !== n) renameCastImages(c.name, n);
-    if (c) { c.name = n; c.group = castGroup; c.autoOver = ao; c.soukei = soukei; c.soukeiPlace = soukeiPlace; c.furyo = furyo; c.bousui = bousui; c.mat = mat; c.rank = castRank; c._updatedAt = now; }
+    if (c) { c.name = n; c.group = castGroup; c.autoOver = ao; c.soukei = soukei; c.soukeiPlace = soukeiPlace; c.furyo = furyo; c.bousui = bousui; c.mat = mat; c.inbound = inbound; c.inbMemo = inbMemo; c.rank = castRank; c._updatedAt = now; }
   } else {
-    state.casts.push({ id: id(), name: n, group: castGroup, availDates: "", canAsk: "", canAsk2: "", autoOver: ao, soukei: soukei, soukeiPlace: soukeiPlace, furyo: furyo, bousui: bousui, mat: mat, rank: castRank, _updatedAt: now });
+    state.casts.push({ id: id(), name: n, group: castGroup, availDates: "", canAsk: "", canAsk2: "", autoOver: ao, soukei: soukei, soukeiPlace: soukeiPlace, furyo: furyo, bousui: bousui, mat: mat, inbound: inbound, inbMemo: inbMemo, rank: castRank, _updatedAt: now });
   }
   save(); dlgClose("castDlg"); renderAll();
 };
@@ -3167,7 +3205,9 @@ $("castName").addEventListener("keydown", e => { if (e.key === "Enter") e.preven
 /* ===== 12b. プロフィール画像（受付画面 royal-reception の img/源氏名*.jpg を直接読み書き） ===== */
 // 受付画面と同じ royallips.github.io なので、GitHub トークン（rr_gh_token）を共有する
 const IMG_REPO = "royallips/royal-reception";
-const IMG_SLOTS = [["", "メイン"], ["2", "2枚目"], ["3", "3枚目"], ["A1", "A1"], ["A2", "A2"]];
+const MAIN_SLOTS = [["", "メイン"], ["2", "2枚目"], ["3", "3枚目"]];
+const INB_SLOTS = [["A1", "A1"], ["A2", "A2"]];
+const IMG_SLOTS = [...MAIN_SLOTS, ...INB_SLOTS];
 const GH_TOKEN_KEY = "rr_gh_token";
 let castImgName = "";          // ダイアログを開いた時点の源氏名（画像のファイル名）
 let castImgFiles = null;       // img フォルダの一覧 {ファイル名: {sha, url}}
@@ -3196,27 +3236,37 @@ async function loadImgList(force) {
   return castImgFiles = map;
 }
 async function renderCastImages() {
-  const grid = $("castImgGrid");
+  const grid = $("castImgGrid"), inbGrid = $("castInbGrid");
   const name = castImgName;
+  refreshInbBox();
   if (!editCastId || !name) {
-    grid.innerHTML = ""; $("castImgHint").textContent = "画像は、キャストを保存したあと「キャスト編集」から追加できます。";
+    grid.innerHTML = inbGrid.innerHTML = ""; $("castImgHint").textContent = "画像は、キャストを保存したあと「キャスト編集」から追加できます。";
     return;
   }
-  $("castImgHint").textContent = "タップで画像を選択・差し替え。A1・A2はインバウンド用です。";
-  const draw = files => {
-    if (castImgName !== name) return;
-    grid.innerHTML = IMG_SLOTS.map(([suf, label]) => {
+  $("castImgHint").textContent = "タップで画像を選択・差し替え。";
+  const slotsHTML = (slots, files) => slots.map(([suf, label]) => {
       const f = files && files[name.normalize("NFC") + suf + ".jpg"];
       return `<div class="pimg"><div class="pimg-thumb ${f ? "has" : ""}" data-suf="${suf}">${f ? `<img src="${esc(f.url)}" alt="">` : "＋"}</div>
         <div class="pimg-label">${label}</div>
         <button class="pimg-del" data-del="${suf}" style="visibility:${f ? "visible" : "hidden"}">削除</button></div>`;
-    }).join("");
+  }).join("");
+  const draw = files => {
+    if (castImgName !== name) return;
+    grid.innerHTML = slotsHTML(MAIN_SLOTS, files);
+    inbGrid.innerHTML = slotsHTML(INB_SLOTS, files);
+    // 既にインバウンド画像があるキャストは、チェックを入れた状態で開く
+    if (files && INB_SLOTS.some(([suf]) => files[name.normalize("NFC") + suf + ".jpg"]) && !$("castInbound").checked) {
+      $("castInbound").checked = true; refreshInbBox();
+    }
   };
   draw(castImgFiles);
   try { draw(await loadImgList(true)); }
   catch (e) { $("castImgHint").textContent = String(e.message || e); }
 }
-$("castImgGrid").onclick = e => {
+// インバウンド対応にチェックしたときだけインバウンド画像の欄を出す（外しても画像は消さない）
+function refreshInbBox() { $("castInbBox").style.display = $("castInbound").checked ? "block" : "none"; }
+$("castInbound").onchange = refreshInbBox;
+$("castImgGrid").onclick = $("castInbGrid").onclick = e => {
   const th = e.target.closest(".pimg-thumb");
   if (th) { castImgSlot = th.dataset.suf; $("castImgFile").value = ""; $("castImgFile").click(); return; }
   const del = e.target.closest("[data-del]");
