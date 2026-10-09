@@ -2993,6 +2993,7 @@ $("askLabelX").onclick = () => dlgClose("askLabelDlg");
 $("askLabelInput").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); $("askLabelSave").click(); } });
 
 /* ===== 12. キャスト管理 ============================================ */
+let inbListOpen = false;   // インバウンド対応一覧（見出しクリックで開閉）
 function renderManage() {
   const inbCasts = state.casts.filter(c => c.inbound).sort((a, b) => a.name.localeCompare(b.name, "ja"));
   function chips(group) {
@@ -3019,8 +3020,9 @@ function renderManage() {
       <div style="margin-top:16px"><button class="btn" id="addCast2">＋ キャストを追加</button></div>
     </div>
     <div class="panel">
-      <div class="sec-title">インバウンド対応 <span style="font-size:12px;font-weight:600;color:var(--ink-soft)">${inbCasts.length}名</span></div>
-      ${inbCasts.length ? `<div class="inb-list">${inbCasts.map(c =>
+      <div class="sec-title" style="cursor:pointer;margin-bottom:${inbListOpen ? 10 : 4}px" onclick="inbListOpen=!inbListOpen;renderManage()">
+        <span style="font-size:11px;color:var(--ink-soft)">${inbListOpen ? "▼" : "▶"}</span>インバウンド対応 <span style="font-size:12px;font-weight:600;color:var(--ink-soft)">${inbCasts.length}名</span></div>
+      ${!inbListOpen ? "" : inbCasts.length ? `<div class="inb-list">${inbCasts.map(c =>
         `<div class="inb-row" onclick="openCastDlg('${c.id}')"><span class="inb-name">${esc(c.name)}</span><span class="inb-memo">${esc(c.inbMemo || "—")}</span></div>`).join("")}</div>`
         : '<span class="empty-msg">インバウンド対応のキャストはいません</span>'}
     </div>
