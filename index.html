@@ -790,8 +790,8 @@
     <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--ink-soft);margin-top:12px">
       <input type="checkbox" id="castInbound" style="width:auto"> インバウンド対応</label>
     <div id="castInbBox" style="display:none">
-      <div class="field" style="margin-top:6px"><label>インバウンド条件（受付画面に表示）</label><input id="castInbMemo" placeholder="例 韓国・台湾のみ" maxlength="40"></div>
-      <div style="margin-top:6px;font-size:12px;font-weight:700;color:var(--ink-soft)">インバウンド画像（受付画面のインバウンドに表示）</div>
+      <div class="field" style="margin-top:6px"><label>インバウンド条件</label><input id="castInbMemo" placeholder="例 韓国・台湾のみ" maxlength="40"></div>
+      <div style="margin-top:6px;font-size:12px;font-weight:700;color:var(--ink-soft)">インバウンド画像</div>
       <div class="pimg-grid" id="castInbGrid"></div>
     </div>
     <input type="file" id="castImgFile" accept="image/*" style="display:none">
@@ -3215,7 +3215,7 @@ $("castName").addEventListener("keydown", e => { if (e.key === "Enter") e.preven
 // 受付画面と同じ royallips.github.io なので、GitHub トークン（rr_gh_token）を共有する
 const IMG_REPO = "royallips/royal-reception";
 const MAIN_SLOTS = [["", "メイン"], ["2", "2枚目"], ["3", "3枚目"]];
-const INB_SLOTS = [["A1", "A1"], ["A2", "A2"]];
+const INB_SLOTS = [["A1", "メイン"], ["A2", "2枚目"]];
 const IMG_SLOTS = [...MAIN_SLOTS, ...INB_SLOTS];
 const GH_TOKEN_KEY = "rr_gh_token";
 let castImgName = "";          // ダイアログを開いた時点の源氏名（画像のファイル名）
