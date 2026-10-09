@@ -785,6 +785,8 @@
     </div>
     <div class="field" id="castSoukeiPlaceField" style="margin-top:8px;display:none"><label>送迎場所</label><input id="castSoukeiPlace" placeholder=""></div>
     <div style="margin-top:12px;font-size:12px;font-weight:700;color:var(--ink-soft)">パネル画像</div>
+    <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--ink-soft);margin-top:4px">
+      <input type="checkbox" id="castHidePanel" style="width:auto"> 非表示</label>
     <div class="hint" id="castImgHint" style="font-size:11px;margin-top:2px"></div>
     <div class="pimg-grid" id="castImgGrid"></div>
     <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--ink-soft);margin-top:12px">
@@ -3132,6 +3134,7 @@ function openCastDlg(cid) {
     $("castMat").checked = !!c.mat;
     $("castInbound").checked = !!c.inbound;
     $("castInbMemo").value = c.inbMemo || "";
+    $("castHidePanel").checked = !!c.hidePanel;
     $("castAutoOver").checked = !!c.autoOver;
     $("castSoukeiAri").checked = c.soukei === "ari";
     $("castSoukeiKakunin").checked = c.soukei === "kakunin";
@@ -3147,6 +3150,7 @@ function openCastDlg(cid) {
     $("castMat").checked = false;
     $("castInbound").checked = false;
     $("castInbMemo").value = "";
+    $("castHidePanel").checked = false;
     $("castFuryo").checked = false;
     $("castDelete").style.display = "none";
   }
@@ -3191,15 +3195,16 @@ $("castSave").onclick = () => {
   const mat = $("castMat").checked;
   const inbound = $("castInbound").checked;
   const inbMemo = inbound ? val("castInbMemo") : "";
+  const hidePanel = $("castHidePanel").checked;   // 受付画面のパネルに表示しない
   const soukei = $("castSoukeiAri").checked ? "ari" : ($("castSoukeiKakunin").checked ? "kakunin" : "");
   const soukeiPlace = soukei ? val("castSoukeiPlace") : "";
   const now = Date.now();
   if (editCastId) {
     const c = state.casts.find(x => x.id === editCastId);
     if (c && c.name !== n) renameCastImages(c.name, n);
-    if (c) { c.name = n; c.group = castGroup; c.autoOver = ao; c.soukei = soukei; c.soukeiPlace = soukeiPlace; c.furyo = furyo; c.bousui = bousui; c.mat = mat; c.inbound = inbound; c.inbMemo = inbMemo; c.rank = castRank; c._updatedAt = now; }
+    if (c) { c.name = n; c.group = castGroup; c.autoOver = ao; c.soukei = soukei; c.soukeiPlace = soukeiPlace; c.furyo = furyo; c.bousui = bousui; c.mat = mat; c.inbound = inbound; c.inbMemo = inbMemo; c.hidePanel = hidePanel; c.rank = castRank; c._updatedAt = now; }
   } else {
-    state.casts.push({ id: id(), name: n, group: castGroup, availDates: "", canAsk: "", canAsk2: "", autoOver: ao, soukei: soukei, soukeiPlace: soukeiPlace, furyo: furyo, bousui: bousui, mat: mat, inbound: inbound, inbMemo: inbMemo, rank: castRank, _updatedAt: now });
+    state.casts.push({ id: id(), name: n, group: castGroup, availDates: "", canAsk: "", canAsk2: "", autoOver: ao, soukei: soukei, soukeiPlace: soukeiPlace, furyo: furyo, bousui: bousui, mat: mat, inbound: inbound, inbMemo: inbMemo, hidePanel: hidePanel, rank: castRank, _updatedAt: now });
   }
   save(); dlgClose("castDlg"); renderAll();
 };
