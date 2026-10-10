@@ -25,9 +25,9 @@ function doPost(e) {
       return json_({ ok: true, files });
     }
 
-    // 1ファイルの操作は img/*.jpg だけに限る
+    // 1ファイルの操作は img/*.jpg と img/top.json（トップ画像の表示設定）だけに限る
     const path = String(req.path || '');
-    if (!/^img\/[^\/]+\.jpg$/.test(path)) return json_({ ok: false, error: 'path' });
+    if (!/^img\/([^\/]+\.jpg|top\.json)$/.test(path)) return json_({ ok: false, error: 'path' });
     const url = api_(path);
     const current = () => {
       const r = UrlFetchApp.fetch(url + '?ref=main', { headers, muteHttpExceptions: true });
