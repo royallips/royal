@@ -3261,9 +3261,24 @@ const imgBust = Date.now();   // 開いた時点の最新を読む（サイト�
 const imgLocal = {};          // 保存・削除した直後の状態。サイト反映まで1分ほどかかるので、その間はこちらを表示（null=削除済み）
 function imgKey(name, suf) { return name.normalize("NFC") + suf + ".jpg"; }
 function probeImg(url) { return new Promise(r => { const im = new Image(); im.onload = () => r(true); im.onerror = () => r(false); im.src = url; }); }
+// トークンがある端末は GitHub の一覧（トークン付き・1時間5000回まで）で正確に確認する。
+// 受付サイトへの反映は1〜2分遅れるので、サイトだけで数えると直前に上げた画像を「ない」と判断して上書きしてしまう
+let ghList = null;   // ファイル名 → 表示用URL（null=一覧なし。受付サイトで確認する）
+async function refreshGhList() {
+  ghList = null;
+  if (!ghToken(false)) return;
+  try {
+    const res = await fetch(`https://api.github.com/repos/${IMG_REPO}/contents/img?ref=main&_t=${Date.now()}`, { headers: ghHeaders(), cache: "no-store" });
+    if (!res.ok) return;
+    const map = {};
+    for (const f of await res.json()) map[f.name.normalize("NFC")] = f.download_url + "?v=" + f.sha;
+    ghList = map;
+  } catch (e) {}
+}
 async function imgState(name, suf) {
   const k = imgKey(name, suf);
   if (k in imgLocal) return imgLocal[k] ? { exists: true, src: imgLocal[k] } : { exists: false };
+  if (ghList) return ghList[k] ? { exists: true, src: ghList[k] } : { exists: false };
   const u = IMG_SITE + imgPath(name, suf) + "?t=" + imgBust;
   return (await probeImg(u)) ? { exists: true, src: u } : { exists: false };
 }
@@ -3300,6 +3315,7 @@ async function renderCastImages() {
     }
   };
   draw(null);
+  await refreshGhList();
   const st = {};
   await Promise.all(IMG_SLOTS.map(async ([suf]) => { st[suf] = await imgState(name, suf); }));
   draw(st);
@@ -3375,6 +3391,7 @@ async function deleteCastImage(suf) {
 let topImgSlot = "";
 async function renderTopImages() {
   if (!$("topImgGrid")) return;
+  await refreshGhList();
   const imgs = [];
   for (let i = 0; i < 30; i++) {   // 番号が途切れるまで
     const suf = i ? String(i + 1) : "", st = await imgState("top", suf);
@@ -3385,7 +3402,7 @@ async function renderTopImages() {
   const n = imgs.length;
   let html = imgs.map((f, i) => `<div class="pimg"><div class="pimg-thumb has" data-top="${f.suf}"><img src="${esc(f.src)}" alt=""></div>
       <div class="pimg-label">${i + 1}枚目</div>
-      <button class="pimg-del" data-topdel="${f.suf}" style="visibility:${i === n - 1 && n > 1 ? "visible" : "hidden"}">削除</button></div>`).join("");
+      <button class="pimg-del" data-topdel="${f.suf}">削除</button></div>`).join("");
   html += `<div class="pimg"><div class="pimg-thumb" data-top="${n ? String(n + 1) : ""}">＋</div><div class="pimg-label">追加</div><button class="pimg-del" style="visibility:hidden">削除</button></div>`;
   $("topImgGrid").innerHTML = html;
 }
@@ -3409,12 +3426,26 @@ document.addEventListener("change", async e => {
     if (th) th.classList.remove("busy");
   }
 });
-// 番号が途切れると以降が表示されなくなるので、削除できるのは最後の1枚だけ（1枚目は差し替えのみ）
+// 受付画面は番号が途切れるとそれ以降を表示しないので、途中の画像を消したら後ろの画像を1つずつ前に詰める
+const topSuf = n => n === 1 ? "" : String(n);
 async function deleteTopImage(suf) {
-  if (!confirm("このトップ画像を削除しますか？")) return;
+  const k = suf === "" ? 1 : Number(suf);
+  if (!confirm(`トップ画像の${k}枚目を削除しますか？` )) return;
   if (!ghToken(true)) return;
-  try { await ghDeleteImage("top", suf, "トップ画像を削除: top" + suf); await renderTopImages(); }
-  catch (e) { alert("トップ画像の削除に失敗しました。\n" + (e.message || e)); }
+  const grid = $("topImgGrid"); if (grid) grid.style.opacity = ".5";
+  try {
+    await refreshGhList();
+    let n = 0;
+    while (n < 30 && (await imgState("top", topSuf(n + 1))).exists) n++;
+    for (let i = k; i < n; i++) {
+      const next = await ghFile("top", topSuf(i + 1));
+      if (!next) break;
+      await ghPutImage("top", topSuf(i), (next.content || "").replace(/\n/g, ""), `トップ画像を削除（${k}枚目）：${i + 1}枚目を${i}枚目へ`);
+    }
+    await ghDeleteImage("top", topSuf(n), `トップ画像を削除（${k}枚目）`);
+    await renderTopImages();
+  } catch (e) { alert("トップ画像の削除に失敗しました。\n" + (e.message || e)); }
+  if (grid) grid.style.opacity = "";
 }
 // 名前を変えたら画像のファイル名も付け替える（新しい名前の画像が既にある枠はそのまま）
 async function renameCastImages(oldName, newName) {
