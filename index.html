@@ -218,6 +218,7 @@
   .cell .note{display:block;font-size:9px;color:#b3679a;font-weight:700;margin-top:1px;white-space:nowrap;line-height:1.05;overflow:hidden}
   .cell .xmark{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;pointer-events:none}
   .cell .xmark.red{color:#e8253c;font-size:26px;text-shadow:0 0 1px #e8253c}
+  .cell .xmark.blackx{color:#222;font-size:26px;text-shadow:0 0 1px #222}
   .cell .xmark.black{display:block;font-size:0;width:40%;height:2px;background:#222;border-radius:1px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}
   .cell .omark{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;pointer-events:none;color:var(--over)}
   .cell.sel-cell{outline:2.5px solid var(--pink);outline-offset:-2px;background:#ffe8f3 !important}
@@ -709,7 +710,7 @@
   <div class="dlg-head"><span id="dlgTitle"></span><span class="x" id="dlgX">×</span></div>
   <div class="dlg-body">
     <div class="status-grid" id="statusGridInput">
-      <button data-s="work">利用</button><button data-s="furikae">振替</button><button data-s="mitei"><span style="font-weight:900;margin-right:3px">△</span>未定</button><button data-s="absent">当日欠勤</button><button data-s="off"><span style="display:inline-block;width:18px;height:2px;background:currentColor;border-radius:1px;vertical-align:middle;margin-right:3px"></span>休み</button>
+      <button data-s="work">利用</button><button data-s="furikae">振替</button><button data-s="mitei"><span style="font-weight:900;margin-right:3px">△</span>未定</button><button data-s="absent"><span style="font-weight:900;margin-right:3px;color:var(--over)">✕</span>当欠(ペナあり)</button><button data-s="absentNoPenalty"><span style="font-weight:900;margin-right:3px">✕</span>当欠(ペナなし)</button><button data-s="off"><span style="display:inline-block;width:18px;height:2px;background:currentColor;border-radius:1px;vertical-align:middle;margin-right:3px"></span>休み</button>
     </div>
     <div class="marker-section">
       <div class="status-grid marker-grid" id="statusGridMarker">
@@ -1828,7 +1829,7 @@ function renderRooms() {
   const eventTag = dayEvent ? `<span class="rt-event">${esc(dayEvent)}</span>` : "";
 
   // この日の当欠一覧（当欠があった場合のみ表示）
-  const absentList = state.casts.filter(c => { const r = rec(c.id, roomDay); return r && r.status === "absent"; });
+  const absentList = state.casts.filter(c => { const r = rec(c.id, roomDay); return r && (r.status === "absent" || r.status === "absentNoPenalty"); });
   const absentHtml = absentList.length
     ? `<div class="absent-zone"><div class="az-title">本日の当欠（${absentList.length}名）</div>` +
       absentList.map(c => { const t = fmtTime(rec(c.id, roomDay)); return `<span class="absent-item">${c.name}${t ? `<small>${t}</small>` : ""}</span>`; }).join("") + `</div>`
@@ -2614,6 +2615,8 @@ function cellInner(rc) {
       return { inner: `<span class="timeunder">${fmtTime(rc)}</span>${note}`, cls: "st-tenpaku" };
     case "absent":
       return { inner: `<span class="timeunder">${fmtTime(rc)}</span><span class="xmark red">✕</span>${note}`, cls: stayCls };
+    case "absentNoPenalty":
+      return { inner: `<span class="timeunder">${fmtTime(rc)}</span><span class="xmark blackx">✕</span>${note}`, cls: stayCls };
     case "off":
       return { inner: (rc.start ? `<span class="timeunder">${fmtTime(rc)}</span>` : "") + `<span class="xmark black"></span>`, cls: stayCls };
     default:
@@ -2780,7 +2783,8 @@ function renderCalendar() {
         <span><i class="dot" style="background:#fff;border-color:var(--pink)"></i>利用(時間)</span>
         <span><i class="dot" style="background:#fff3e0;border-color:#f0c14b"></i>中抜け</span>
         <span style="color:var(--over);font-weight:700">○=振替</span>
-        <span style="font-weight:700;color:var(--over)">✕(赤)=当欠</span>
+        <span style="font-weight:700;color:var(--over)">✕(赤)=当欠(ペナあり)</span>
+        <span style="font-weight:700;color:#222">✕(黒)=当欠(ペナなし)</span>
         <span style="font-weight:700;color:#222">ー=休み</span>
         <span style="font-weight:700;color:#222">△=未定</span><span><i class="dot st-seiri"></i>生理</span>
         <span><i class="dot st-shukuhaku"></i>宿泊</span><span><i class="dot st-yotei"></i>予定</span><span><i class="dot st-tenpaku"></i>店泊</span>
@@ -2842,7 +2846,7 @@ function computeCastMonthStats(cid, y, m) {
     if (r.status === "work") { if (!r.dummy) use++; }
     else if (r.status === "shukuhaku" || r.status === "tenpaku") { if (r.start) use++; }
     else if (r.status === "furikae") { use++; furikae++; }
-    else if (r.status === "absent") absent++;
+    else if (r.status === "absent" || r.status === "absentNoPenalty") absent++;
     const sp = span(r);
     if (sp) totalHours += (sp[1] - sp[0]);
     if (r && isUse(r.status) && r.start2) {
@@ -3809,9 +3813,9 @@ function openDlg(cid, day, blank = false) {
 function refreshPick() {
   document.querySelectorAll("#statusGridInput button").forEach(b => b.classList.toggle("sel", b.dataset.s === pickStatus));
   document.querySelectorAll("#statusGridMarker button").forEach(b => b.classList.toggle("marker-sel", b.dataset.m === pickOverlay));
-  const showTime = pickStatus === "work" || pickStatus === "furikae" || pickStatus === "absent" || pickStatus === "off"; // "none" は時間入力なし
+  const showTime = pickStatus === "work" || pickStatus === "furikae" || pickStatus === "absent" || pickStatus === "absentNoPenalty" || pickStatus === "off"; // "none" は時間入力なし
   $("timeFields").style.display = showTime ? "block" : "none";
-  $("absentNote").style.display = (pickStatus === "absent" || pickStatus === "off") ? "block" : "none";
+  $("absentNote").style.display = (pickStatus === "absent" || pickStatus === "absentNoPenalty" || pickStatus === "off") ? "block" : "none";
   const nk = $("nakanukeRow"); if (nk) nk.style.display = (pickStatus === "work") ? "block" : "none";
   const nf = $("nakanukeFields"), chk = $("nakanukeChk");
   if (nf && chk) nf.style.display = (pickStatus === "work" && chk.checked) ? "flex" : "none";
@@ -3958,9 +3962,9 @@ $("dlgSave").onclick = () => {
       if (!_hasPinTs) delete state.assign[dkey(day)][cid]; // 手動配置なし→自動配置へ戻す
       // 手動配置あり（_hasPinTs=true）→位置を維持
     }
-  } else if (pickStatus === "absent") {
+  } else if (pickStatus === "absent" || pickStatus === "absentNoPenalty") {
     if (s && !e) e = "L";
-    setRec(k, { status: "absent", start: s, end: e, note });
+    setRec(k, { status: pickStatus, start: s, end: e, note });
     if (state.assign[dkey(day)]) delete state.assign[dkey(day)][cid];
   } else if (pickStatus === "off") {
     // 非破壊：既存データ（利用時間・マーカー等）を保持し status だけ上書き
