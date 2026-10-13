@@ -2409,7 +2409,7 @@ function renderRoomsList() {
         else if (!isFree && spanStart !== null) {
           if (h - spanStart >= 2) {
             const lp = (spanStart - OPEN) / HOURS * 100, wp = (h - spanStart) / HOURS * 100;
-            ov += `<div style="position:absolute;left:${lp}%;width:${wp}%;top:0;bottom:0;background:rgba(224,70,60,0.55);pointer-events:none;z-index:0"></div>`;
+            ov += `<div style="position:absolute;left:${lp}%;width:${wp}%;top:0;bottom:0;background:rgba(224,70,60,0.85);pointer-events:none;z-index:0"></div>`;
           }
           spanStart = null;
         }
