@@ -2453,9 +2453,9 @@ function renderRoomsList() {
 
       const allBorrow = arr.length && arr.every(x => x.borrow);
       const rno = allBorrow ? "借" : (++ovNo);
-      roomRows += `<div class="lf-row over"><div class="lf-rno" style="background:var(--over-bg);color:var(--over)">${rno}</div><div class="lf-track" data-ri="OVER" data-day="${d}" data-overrow="${overRowIdx}">${bars}</div></div>`;
+      roomRows += `<div class="lf-row over"><div class="lf-rno" style="background:var(--over);color:#fff">${rno}</div><div class="lf-track" data-ri="OVER" data-day="${d}" data-overrow="${overRowIdx}">${bars}</div></div>`;
     });
-    roomRows += `<div class="lf-row over"><div class="lf-rno" style="background:var(--over-bg);color:var(--over)">${ovNo === 0 ? '溢' : ''}</div><div class="lf-track" data-ri="OVER" data-day="${d}" data-overrow="${(overRooms || []).length}"></div></div>`;
+    roomRows += `<div class="lf-row over"><div class="lf-rno" style="background:var(--over);color:#fff">${ovNo === 0 ? '溢' : ''}</div><div class="lf-track" data-ri="OVER" data-day="${d}" data-overrow="${(overRooms || []).length}"></div></div>`;
 
     const wd = new Date(y, m, d).getDay(), wkcls = wd === 0 ? "sun" : wd === 6 ? "sat" : "";
     const isToday = d === todayD;
