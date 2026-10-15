@@ -369,7 +369,9 @@
   #topImgGrid.editing .pimg-thumb.has{touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
   #topImgGrid .pimg.dragging,#castImgGrid .pimg.dragging{opacity:.85;z-index:5;position:relative;pointer-events:none}
   #topImgGrid .pimg.drop-target .pimg-thumb,#castImgGrid .pimg.drop-target .pimg-thumb{outline:3px solid var(--pink);outline-offset:1px}
-  #castImgGrid.editing .pimg-thumb{touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
+  #castInbGrid .pimg.dragging{opacity:.85;z-index:5;position:relative;pointer-events:none}
+  #castInbGrid .pimg.drop-target .pimg-thumb{outline:3px solid var(--pink);outline-offset:1px}
+  #castInbGrid.editing .pimg-thumb,#castImgGrid.editing .pimg-thumb{touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
   .pimg-thumb.off::before{content:"非表示";position:absolute;z-index:1;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,.6);color:#fff;font-size:10px;font-weight:800;padding:2px 6px;border-radius:6px;white-space:nowrap}
   .pimg-btns{display:flex;gap:8px;align-items:center}
   .pimg-vis{font-size:10px;font-weight:700;border:1px solid var(--line);background:#fff;color:var(--ink-soft);border-radius:6px;padding:1px 6px;cursor:pointer}
@@ -813,6 +815,7 @@
     <div id="castInbBox" style="display:none">
       <div class="field" style="margin-top:6px"><label>インバウンド条件</label><input id="castInbMemo" placeholder="例 韓国・台湾のみ" maxlength="40"></div>
       <div style="margin-top:6px;font-size:12px;font-weight:700;color:var(--ink-soft)">インバウンド画像</div>
+      <div id="castInbBar" style="display:flex;gap:8px;align-items:center;margin:2px 0 6px"></div>
       <div class="pimg-grid" id="castInbGrid"></div>
     </div>
     <input type="file" id="castImgFile" accept="image/*" style="display:none">
@@ -3324,14 +3327,17 @@ async function renderCastImages() {
         <div class="pimg-label">${label}</div>
         <button class="pimg-del" data-del="${suf}" style="visibility:${f ? "visible" : "hidden"}">削除</button></div>`;
   }).join("");
-  castOrder = null; $("castImgBar").innerHTML = ""; grid.classList.remove("editing");
+  castOrder = null; $("castImgBar").innerHTML = $("castInbBar").innerHTML = "";
+  grid.classList.remove("editing"); inbGrid.classList.remove("editing");
   const draw = st => {
     if (castImgName !== name || castOrder) return;
     grid.innerHTML = slotsHTML(MAIN_SLOTS, st);
-    const cnt = st ? MAIN_SLOTS.filter(([suf]) => st[suf].exists).length : 0;
-    $("castImgBar").innerHTML = cnt ? `<button class="btn ghost" id="castOrderStart" style="padding:5px 12px;font-size:12px">並びを変更</button>` : "";
-    if (cnt) $("castOrderStart").onclick = startCastOrder;
     inbGrid.innerHTML = slotsHTML(INB_SLOTS, st);
+    // 画像がある欄には「並びを変更」
+    for (const g of Object.values(CAST_ORDER_GROUPS)) {
+      const has = st && g.slots.some(([suf]) => st[suf].exists);
+      $(g.bar).innerHTML = has ? `<button class="btn ghost" data-order-start="${g.key}" style="padding:5px 12px;font-size:12px">並びを変更</button>` : "";
+    }
     // 既にインバウンド画像があるキャストは、チェックを入れた状態で開く
     if (st && INB_SLOTS.some(([suf]) => st[suf].exists) && !$("castInbound").checked) {
       $("castInbound").checked = true; refreshInbBox();
@@ -3343,30 +3349,42 @@ async function renderCastImages() {
   await Promise.all(IMG_SLOTS.map(async ([suf]) => { st[suf] = await imgState(name, suf); }));
   draw(st);
 }
-// ===== パネル画像（メイン・2枚目・3枚目）の並べ替え：「並びを変更」→ ドラッグ（枠どうしを入れ替え）→「保存」 =====
-let castOrder = null;   // { name, base: 開始時の各枠の画像SHA, order: 各枠に入れる元の枠番号, srcs }
+// ===== パネル画像（メイン・2枚目・3枚目）とインバウンド画像（メイン・2枚目）の並べ替え：
+//       「並びを変更」→ ドラッグ（枠どうしを入れ替え）→「保存」 =====
+const CAST_ORDER_GROUPS = {
+  main: { key: "main", slots: MAIN_SLOTS, grid: "castImgGrid", bar: "castImgBar", title: "パネル画像" },
+  inb:  { key: "inb",  slots: INB_SLOTS,  grid: "castInbGrid", bar: "castInbBar", title: "インバウンド画像" },
+};
+let castOrder = null;   // { g: 欄, name, base: 開始時の各枠の画像SHA, order: 各枠に入れる元の枠番号, srcs }
 let castOrderBusy = false;
 const castFile = (name, suf) => name.normalize("NFC") + suf + ".jpg";
-async function startCastOrder() {
-  if (castOrderBusy || !ghToken(true)) return;
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-order-start]");
+  if (b) startCastOrder(CAST_ORDER_GROUPS[b.dataset.orderStart]);
+});
+async function startCastOrder(g) {
+  if (castOrder || castOrderBusy || !ghToken(true)) return;
   castOrderBusy = true;
   try {
     const name = castImgName, snap = await readImgFiles();
-    const base = MAIN_SLOTS.map(([suf]) => snap.byName[castFile(name, suf)] || null);
-    castOrder = { name, base, order: [0, 1, 2], srcs: base.map((sha, i) => sha ? rawImgUrl(snap.head, castFile(name, MAIN_SLOTS[i][0])) : null) };
+    const base = g.slots.map(([suf]) => snap.byName[castFile(name, suf)] || null);
+    castOrder = { g, name, base, order: g.slots.map((_, i) => i), srcs: base.map((sha, i) => sha ? rawImgUrl(snap.head, castFile(name, g.slots[i][0])) : null) };
+    // もう一方の欄の「並びを変更」は隠す（同時に2つは並べ替えない）
+    for (const o of Object.values(CAST_ORDER_GROUPS)) if (o !== g) $(o.bar).innerHTML = "";
     drawCastOrder();
   } catch (e) { alert("画像の読み込みに失敗しました。\n" + (e.message || e)); }
   finally { castOrderBusy = false; }
 }
 function drawCastOrder() {
-  const grid = $("castImgGrid"); if (!castOrder) return;
+  if (!castOrder) return;
+  const { g } = castOrder, grid = $(g.grid);
   grid.classList.add("editing");
   grid.innerHTML = castOrder.order.map((k, i) => {
     const src = castOrder.srcs[k];
     return `<div class="pimg" data-slotpos="${i}"><div class="pimg-thumb ${src ? "has" : ""}">${src ? `<img src="${esc(src)}" alt="" draggable="false">` : "空き"}</div>
-      <div class="pimg-label">${MAIN_SLOTS[i][1]}${src && k !== i ? `（元${MAIN_SLOTS[k][1]}）` : ""}</div></div>`;
+      <div class="pimg-label">${g.slots[i][1]}${src && k !== i ? `（元${g.slots[k][1]}）` : ""}</div></div>`;
   }).join("");
-  $("castImgBar").innerHTML = `<span style="font-size:11px;font-weight:700;color:var(--pink)">ドラッグで入れ替えて「保存」</span>
+  $(g.bar).innerHTML = `<span style="font-size:11px;font-weight:700;color:var(--pink)">ドラッグで入れ替えて「保存」</span>
     <button class="btn" id="castOrderSave" style="padding:5px 12px;font-size:12px">保存</button>
     <button class="btn ghost" id="castOrderCancel" style="padding:5px 12px;font-size:12px">キャンセル</button>`;
   $("castOrderSave").onclick = saveCastOrder;
@@ -3374,28 +3392,29 @@ function drawCastOrder() {
 }
 async function saveCastOrder() {
   if (!castOrder || castOrderBusy) return;
-  const { name, base, order } = castOrder;
+  const { g, name, base, order } = castOrder;
   if (order.every((k, i) => k === i)) { castOrder = null; renderCastImages(); return; }
-  if (!base[order[0]]) { alert("メインの枠が空になります。メインに画像を入れてから保存してください。"); return; }
-  castOrderBusy = true; $("castImgGrid").style.opacity = ".5";
+  if (!base[order[0]]) { alert(`${g.title}のメインの枠が空になります。メインに画像を入れてから保存してください。`); return; }
+  castOrderBusy = true; $(g.grid).style.opacity = ".5";
   try {
     const head = await commitImgFiles(snap => {
-      const cur = MAIN_SLOTS.map(([suf]) => snap.byName[castFile(name, suf)] || null);
+      const cur = g.slots.map(([suf]) => snap.byName[castFile(name, suf)] || null);
       if (cur.join() !== base.join()) throw new Error("並べ替えの間に画像が変更されました。もう一度「並びを変更」からやり直してください。");
-      return MAIN_SLOTS.map(([suf], i) => ({ file: castFile(name, suf), sha: base[order[i]] }));
-    }, `パネル画像の並べ替え: ${name}`);
+      return g.slots.map(([suf], i) => ({ file: castFile(name, suf), sha: base[order[i]] }));
+    }, `${g.title}の並べ替え: ${name}`);
     // 受付サイトへの反映待ちの間も新しい並びで表示する
-    MAIN_SLOTS.forEach(([suf], i) => { imgLocal[imgKey(name, suf)] = base[order[i]] ? rawImgUrl(head, castFile(name, suf)) : null; });
+    g.slots.forEach(([suf], i) => { imgLocal[imgKey(name, suf)] = base[order[i]] ? rawImgUrl(head, castFile(name, suf)) : null; });
     castOrder = null;
     await renderCastImages();
   } catch (e) { alert("並べ替えの保存に失敗しました。\n" + (e.message || e)); }
-  finally { castOrderBusy = false; $("castImgGrid").style.opacity = ""; }
+  finally { castOrderBusy = false; $(g.grid).style.opacity = ""; }
 }
-// ドラッグ（並べ替え中だけ）。離した先の枠と入れ替える
+// ドラッグ（並べ替え中の欄だけ）。離した先の枠と入れ替える
 let castDrag = null, castDragJust = false;
 document.addEventListener("pointerdown", e => {
-  const item = e.target.closest("#castImgGrid.editing .pimg[data-slotpos]");
-  if (!item || !castOrder || castOrderBusy || !e.target.closest(".pimg-thumb.has")) return;
+  if (!castOrder || castOrderBusy) return;
+  const item = e.target.closest(`#${castOrder.g.grid}.editing .pimg[data-slotpos]`);
+  if (!item || !e.target.closest(".pimg-thumb.has")) return;
   castDrag = { item, from: Number(item.dataset.slotpos), x: e.clientX, y: e.clientY, id: e.pointerId, started: false, target: null };
 });
 document.addEventListener("pointermove", e => {
@@ -3405,8 +3424,8 @@ document.addEventListener("pointermove", e => {
   e.preventDefault();
   castDrag.item.style.transform = `translate(${dx}px,${dy}px)`;
   const over = document.elementFromPoint(e.clientX, e.clientY);
-  const t = over && over.closest("#castImgGrid .pimg[data-slotpos]");
-  document.querySelectorAll("#castImgGrid .drop-target").forEach(x => x.classList.remove("drop-target"));
+  const t = over && castOrder && over.closest(`#${castOrder.g.grid} .pimg[data-slotpos]`);
+  document.querySelectorAll(".drop-target").forEach(x => x.classList.remove("drop-target"));
   castDrag.target = t && t !== castDrag.item ? Number(t.dataset.slotpos) : null;
   if (castDrag.target !== null) t.classList.add("drop-target");
 }, { passive: false });
@@ -3414,7 +3433,7 @@ const endCastDrag = e => {
   if (!castDrag || (e && e.pointerId !== castDrag.id)) return;
   const d = castDrag; castDrag = null;
   d.item.classList.remove("dragging"); d.item.style.transform = "";
-  document.querySelectorAll("#castImgGrid .drop-target").forEach(x => x.classList.remove("drop-target"));
+  document.querySelectorAll(".drop-target").forEach(x => x.classList.remove("drop-target"));
   if (!d.started) return;
   castDragJust = true; setTimeout(() => { castDragJust = false; }, 300);
   if (e.type === "pointerup" && d.target !== null && d.target !== d.from && castOrder) {
