@@ -2700,7 +2700,7 @@ function calTable(group) {
     let r = `<td class='name-col' onclick="openStat('${c.id}')">${gmark}${c.name}${!hasWork ? '<span class="mitei-badge">未定</span>' : ''}</td>`;
     let dayOpts = `<option value="">−</option>`;
     const _avail = getCalAvail(c.id);
-    for (let dd = 1; dd <= dim; dd++) dayOpts += `<option value="${dd}" ${String(_avail) === String(dd) ? "selected" : ""}>${dd}日</option>`;
+    for (let dd = 1; dd <= 31; dd++) dayOpts += `<option value="${dd}" ${String(_avail) === String(dd) ? "selected" : ""}>${dd}日</option>`;   // 月の日数に関係なく毎月31日まで
     r += `<td class='avail-col'><select class="availin" onchange="setAvail('${c.id}',this.value)" onclick="event.stopPropagation()">${dayOpts}</select></td>`;
     r += `<td class='canask-col'><span class="askbtn" onclick="cycleAsk('${c.id}',1)">${askMark(getCalAsk(c.id, 1))}</span></td>`;
     r += `<td class='canask-col'><span class="askbtn" onclick="cycleAsk('${c.id}',2)">${askMark(getCalAsk(c.id, 2))}</span></td>`;
