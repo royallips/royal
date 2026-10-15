@@ -367,8 +367,9 @@
   .pimg-del{font-size:10px;border:none;background:none;color:#c0392b;padding:0;cursor:pointer;min-height:14px}
   .pimg-thumb.off img{opacity:.3}
   #topImgGrid.editing .pimg-thumb.has{touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
-  #topImgGrid .pimg.dragging{opacity:.85;z-index:5;position:relative;pointer-events:none}
-  #topImgGrid .pimg.drop-target .pimg-thumb{outline:3px solid var(--pink);outline-offset:1px}
+  #topImgGrid .pimg.dragging,#castImgGrid .pimg.dragging{opacity:.85;z-index:5;position:relative;pointer-events:none}
+  #topImgGrid .pimg.drop-target .pimg-thumb,#castImgGrid .pimg.drop-target .pimg-thumb{outline:3px solid var(--pink);outline-offset:1px}
+  #castImgGrid.editing .pimg-thumb{touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
   .pimg-thumb.off::before{content:"非表示";position:absolute;z-index:1;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,.6);color:#fff;font-size:10px;font-weight:800;padding:2px 6px;border-radius:6px;white-space:nowrap}
   .pimg-btns{display:flex;gap:8px;align-items:center}
   .pimg-vis{font-size:10px;font-weight:700;border:1px solid var(--line);background:#fff;color:var(--ink-soft);border-radius:6px;padding:1px 6px;cursor:pointer}
@@ -805,6 +806,7 @@
     <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--ink-soft);margin-top:4px">
       <input type="checkbox" id="castHidePanel" style="width:auto"> 非表示</label>
     <div class="hint" id="castImgHint" style="font-size:11px;margin-top:2px"></div>
+    <div id="castImgBar" style="display:flex;gap:8px;align-items:center;margin:2px 0 6px"></div>
     <div class="pimg-grid" id="castImgGrid"></div>
     <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--ink-soft);margin-top:12px">
       <input type="checkbox" id="castInbound" style="width:auto"> インバウンド対応</label>
@@ -3322,9 +3324,13 @@ async function renderCastImages() {
         <div class="pimg-label">${label}</div>
         <button class="pimg-del" data-del="${suf}" style="visibility:${f ? "visible" : "hidden"}">削除</button></div>`;
   }).join("");
+  castOrder = null; $("castImgBar").innerHTML = ""; grid.classList.remove("editing");
   const draw = st => {
-    if (castImgName !== name) return;
+    if (castImgName !== name || castOrder) return;
     grid.innerHTML = slotsHTML(MAIN_SLOTS, st);
+    const cnt = st ? MAIN_SLOTS.filter(([suf]) => st[suf].exists).length : 0;
+    $("castImgBar").innerHTML = cnt ? `<button class="btn ghost" id="castOrderStart" style="padding:5px 12px;font-size:12px">並びを変更</button>` : "";
+    if (cnt) $("castOrderStart").onclick = startCastOrder;
     inbGrid.innerHTML = slotsHTML(INB_SLOTS, st);
     // 既にインバウンド画像があるキャストは、チェックを入れた状態で開く
     if (st && INB_SLOTS.some(([suf]) => st[suf].exists) && !$("castInbound").checked) {
@@ -3337,10 +3343,92 @@ async function renderCastImages() {
   await Promise.all(IMG_SLOTS.map(async ([suf]) => { st[suf] = await imgState(name, suf); }));
   draw(st);
 }
+// ===== パネル画像（メイン・2枚目・3枚目）の並べ替え：「並びを変更」→ ドラッグ（枠どうしを入れ替え）→「保存」 =====
+let castOrder = null;   // { name, base: 開始時の各枠の画像SHA, order: 各枠に入れる元の枠番号, srcs }
+let castOrderBusy = false;
+const castFile = (name, suf) => name.normalize("NFC") + suf + ".jpg";
+async function startCastOrder() {
+  if (castOrderBusy || !ghToken(true)) return;
+  castOrderBusy = true;
+  try {
+    const name = castImgName, snap = await readImgFiles();
+    const base = MAIN_SLOTS.map(([suf]) => snap.byName[castFile(name, suf)] || null);
+    castOrder = { name, base, order: [0, 1, 2], srcs: base.map((sha, i) => sha ? rawImgUrl(snap.head, castFile(name, MAIN_SLOTS[i][0])) : null) };
+    drawCastOrder();
+  } catch (e) { alert("画像の読み込みに失敗しました。\n" + (e.message || e)); }
+  finally { castOrderBusy = false; }
+}
+function drawCastOrder() {
+  const grid = $("castImgGrid"); if (!castOrder) return;
+  grid.classList.add("editing");
+  grid.innerHTML = castOrder.order.map((k, i) => {
+    const src = castOrder.srcs[k];
+    return `<div class="pimg" data-slotpos="${i}"><div class="pimg-thumb ${src ? "has" : ""}">${src ? `<img src="${esc(src)}" alt="" draggable="false">` : "空き"}</div>
+      <div class="pimg-label">${MAIN_SLOTS[i][1]}${src && k !== i ? `（元${MAIN_SLOTS[k][1]}）` : ""}</div></div>`;
+  }).join("");
+  $("castImgBar").innerHTML = `<span style="font-size:11px;font-weight:700;color:var(--pink)">ドラッグで入れ替えて「保存」</span>
+    <button class="btn" id="castOrderSave" style="padding:5px 12px;font-size:12px">保存</button>
+    <button class="btn ghost" id="castOrderCancel" style="padding:5px 12px;font-size:12px">キャンセル</button>`;
+  $("castOrderSave").onclick = saveCastOrder;
+  $("castOrderCancel").onclick = () => { castOrder = null; renderCastImages(); };
+}
+async function saveCastOrder() {
+  if (!castOrder || castOrderBusy) return;
+  const { name, base, order } = castOrder;
+  if (order.every((k, i) => k === i)) { castOrder = null; renderCastImages(); return; }
+  if (!base[order[0]]) { alert("メインの枠が空になります。メインに画像を入れてから保存してください。"); return; }
+  castOrderBusy = true; $("castImgGrid").style.opacity = ".5";
+  try {
+    const head = await commitImgFiles(snap => {
+      const cur = MAIN_SLOTS.map(([suf]) => snap.byName[castFile(name, suf)] || null);
+      if (cur.join() !== base.join()) throw new Error("並べ替えの間に画像が変更されました。もう一度「並びを変更」からやり直してください。");
+      return MAIN_SLOTS.map(([suf], i) => ({ file: castFile(name, suf), sha: base[order[i]] }));
+    }, `パネル画像の並べ替え: ${name}`);
+    // 受付サイトへの反映待ちの間も新しい並びで表示する
+    MAIN_SLOTS.forEach(([suf], i) => { imgLocal[imgKey(name, suf)] = base[order[i]] ? rawImgUrl(head, castFile(name, suf)) : null; });
+    castOrder = null;
+    await renderCastImages();
+  } catch (e) { alert("並べ替えの保存に失敗しました。\n" + (e.message || e)); }
+  finally { castOrderBusy = false; $("castImgGrid").style.opacity = ""; }
+}
+// ドラッグ（並べ替え中だけ）。離した先の枠と入れ替える
+let castDrag = null, castDragJust = false;
+document.addEventListener("pointerdown", e => {
+  const item = e.target.closest("#castImgGrid.editing .pimg[data-slotpos]");
+  if (!item || !castOrder || castOrderBusy || !e.target.closest(".pimg-thumb.has")) return;
+  castDrag = { item, from: Number(item.dataset.slotpos), x: e.clientX, y: e.clientY, id: e.pointerId, started: false, target: null };
+});
+document.addEventListener("pointermove", e => {
+  if (!castDrag || e.pointerId !== castDrag.id) return;
+  const dx = e.clientX - castDrag.x, dy = e.clientY - castDrag.y;
+  if (!castDrag.started) { if (Math.hypot(dx, dy) < 8) return; castDrag.started = true; castDrag.item.classList.add("dragging"); }
+  e.preventDefault();
+  castDrag.item.style.transform = `translate(${dx}px,${dy}px)`;
+  const over = document.elementFromPoint(e.clientX, e.clientY);
+  const t = over && over.closest("#castImgGrid .pimg[data-slotpos]");
+  document.querySelectorAll("#castImgGrid .drop-target").forEach(x => x.classList.remove("drop-target"));
+  castDrag.target = t && t !== castDrag.item ? Number(t.dataset.slotpos) : null;
+  if (castDrag.target !== null) t.classList.add("drop-target");
+}, { passive: false });
+const endCastDrag = e => {
+  if (!castDrag || (e && e.pointerId !== castDrag.id)) return;
+  const d = castDrag; castDrag = null;
+  d.item.classList.remove("dragging"); d.item.style.transform = "";
+  document.querySelectorAll("#castImgGrid .drop-target").forEach(x => x.classList.remove("drop-target"));
+  if (!d.started) return;
+  castDragJust = true; setTimeout(() => { castDragJust = false; }, 300);
+  if (e.type === "pointerup" && d.target !== null && d.target !== d.from && castOrder) {
+    const o = castOrder.order; [o[d.from], o[d.target]] = [o[d.target], o[d.from]];
+    drawCastOrder();
+  }
+};
+document.addEventListener("pointerup", endCastDrag);
+document.addEventListener("pointercancel", endCastDrag);
 // インバウンド対応にチェックしたときだけインバウンド画像の欄を出す（外しても画像は消さない）
 function refreshInbBox() { $("castInbBox").style.display = $("castInbound").checked ? "block" : "none"; }
 $("castInbound").onchange = refreshInbBox;
 $("castImgGrid").onclick = $("castInbGrid").onclick = e => {
+  if (castOrder || castDragJust) return;   // 並べ替え中・ドラッグ直後は差し替えを開かない
   const th = e.target.closest(".pimg-thumb");
   if (th) { castImgSlot = th.dataset.suf; $("castImgFile").value = ""; $("castImgFile").click(); return; }
   const del = e.target.closest("[data-del]");
@@ -3427,21 +3515,40 @@ async function ghJson(path, opt = {}) {
   if (!res.ok) { const err = new Error("GitHub エラー（" + res.status + "）"); err.status = res.status; throw err; }
   return res.json();
 }
-// 今のトップ画像（main の最新コミット時点でそろった状態）
-async function readTopSnapshot() {
+// img フォルダの最新状態（main の最新コミット時点でそろったもの）。byName: ファイル名 → 画像のSHA
+async function readImgFiles() {
   const ref = await ghJson("/git/ref/heads/main?_t=" + Date.now());
   const commit = await ghJson("/git/commits/" + ref.object.sha);
   const root = await ghJson("/git/trees/" + commit.tree.sha);
   const imgTree = root.tree.find(t => t.path === "img" && t.type === "tree");
   const files = imgTree ? (await ghJson("/git/trees/" + imgTree.sha)).tree : [];
-  const byName = Object.fromEntries(files.map(f => [f.path.normalize("NFC"), f.sha]));
+  return { head: ref.object.sha, tree: commit.tree.sha, byName: Object.fromEntries(files.map(f => [f.path.normalize("NFC"), f.sha])) };
+}
+// build(今の状態) → [{ file, sha }]（sha=null は削除）を1回のコミットで保存。重なったら読み直してやり直す。新しいコミットのSHAを返す
+async function commitImgFiles(build, message) {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const snap = await readImgFiles();
+    const entries = build(snap).filter(c => (snap.byName[c.file] || null) !== c.sha)
+      .map(c => ({ path: "img/" + c.file, mode: "100644", type: "blob", sha: c.sha }));
+    if (!entries.length) return snap.head;
+    const tree = await ghJson("/git/trees", { method: "POST", body: JSON.stringify({ base_tree: snap.tree, tree: entries }) });
+    const commit = await ghJson("/git/commits", { method: "POST", body: JSON.stringify({ message, tree: tree.sha, parents: [snap.head] }) });
+    try { await ghJson("/git/refs/heads/main", { method: "PATCH", body: JSON.stringify({ sha: commit.sha, force: false }) }); return commit.sha; }
+    catch (e) { if (e.status !== 422) throw e; }
+  }
+  throw new Error("ほかの保存と重なったため保存できませんでした。もう一度お試しください。");
+}
+const rawImgUrl = (commitSha, file) => `https://raw.githubusercontent.com/${IMG_REPO}/${commitSha}/img/${encodeURIComponent(file)}`;
+// 今のトップ画像
+async function readTopSnapshot() {
+  const { head, tree, byName } = await readImgFiles();
   const blobs = [];
   for (let n = 1; n <= 30 && byName[topFile(n)]; n++) blobs.push(byName[topFile(n)]);
   let hidden = [];
   if (byName["top.json"]) {
     try { const b = await ghJson("/git/blobs/" + byName["top.json"]); hidden = JSON.parse(decodeURIComponent(escape(atob(b.content.replace(/\n/g, ""))))).hidden || []; } catch (e) {}
   }
-  return { head: ref.object.sha, tree: commit.tree.sha, blobs, hidden: hidden.filter(x => x >= 1 && x <= blobs.length) };
+  return { head, tree, blobs, hidden: hidden.filter(x => x >= 1 && x <= blobs.length) };
 }
 // mutate(今の状態) → { blobs, hidden } を1回のコミットで保存。ほかの保存と重なったら読み直してやり直す
 async function commitTop(mutate, message) {
