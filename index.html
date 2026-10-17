@@ -1001,6 +1001,7 @@ let calSelMode = false, calSelCells = new Set(), calSelApply = false, calSelViaB
 let calDragSel = false, calDragMoved = false, calDragAnchor = null;
 let pickOverlay = null;
 let roomsListScrollTarget = null;            // リスピラ一覧で次回スクロールする対象日（チップからのジャンプ用）
+let roomsListYm = null;                      // リスピラ一覧を最後に描いた月（月が変わったら1日から表示する）
 
 /* ===== 2. 永続化と正規化 ============================================ */
 // 読み込んだデータに後付けフィールドを補完して欠損を防ぐ
@@ -2492,7 +2493,9 @@ function renderRoomsList() {
   if (needSave) save();
 
   const prevScroller = $("view-roomslist").querySelector(".lf-scroll");
-  const savedScrollLeft = prevScroller ? prevScroller.scrollLeft : -1;
+  const monthChanged = roomsListYm !== null && roomsListYm !== ym(cur);
+  const savedScrollLeft = prevScroller && !monthChanged ? prevScroller.scrollLeft : -1;
+  roomsListYm = ym(cur);
 
   $("view-roomslist").innerHTML =
     `<div class="panel">
@@ -2508,6 +2511,8 @@ function renderRoomsList() {
         card.classList.add("flash");
         setTimeout(() => card.classList.remove("flash"), 1200);
       }
+    } else if (monthChanged) {
+      scroller.scrollLeft = 0;   // 月を切り替えたら1日から
     } else if (savedScrollLeft > 0) {
       scroller.scrollLeft = savedScrollLeft;
     } else if (todayD > 0) {
