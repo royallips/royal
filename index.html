@@ -2511,8 +2511,12 @@ function renderRoomsList() {
         card.classList.add("flash");
         setTimeout(() => card.classList.remove("flash"), 1200);
       }
+    } else if (monthChanged && todayD > 0) {
+      // 当月に切り替えたら今日から
+      const card = $("view-roomslist").querySelector(`.lf-day[data-day="${todayD}"]`);
+      scroller.scrollLeft = card ? Math.max(0, card.offsetLeft - 12) : 0;
     } else if (monthChanged) {
-      scroller.scrollLeft = 0;   // 月を切り替えたら1日から
+      scroller.scrollLeft = 0;   // 当月以外に切り替えたら1日から
     } else if (savedScrollLeft > 0) {
       scroller.scrollLeft = savedScrollLeft;
     } else if (todayD > 0) {
