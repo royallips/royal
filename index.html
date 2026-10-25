@@ -615,6 +615,18 @@
     .cards{grid-template-columns:1fr 1fr}
     .status-grid{grid-template-columns:1fr 1fr}
   }
+  /* 画面の高さが低い端末（横向きタブレット等）：通常のシート表示は固定高さをやめ、
+     全部屋を縦スクロールで見られるようにする（スクショモードは1画面のまま） */
+  @media (max-height: 860px){
+    body:not(.ssmode) .sheet-view{height:auto;overflow:visible}
+    body:not(.ssmode) .sheet-cols{overflow:visible}
+    body:not(.ssmode) .sheet-col{overflow:visible}
+    body:not(.ssmode) .sheet-table{height:auto}
+    body:not(.ssmode) .sheet-table tbody{height:auto}
+    body:not(.ssmode) .sheet-table tbody tr{height:auto}
+    body:not(.ssmode) .sh-names{position:static}
+    body:not(.ssmode) .sh-inner{position:static;inset:auto;min-height:30px}
+  }
   @media print {
     @page { size: B5 landscape; margin: 8mm 6mm; }
     /* B5横: 257×182mm → 余白4mm×6mm → 使用可能 249×174mm */
