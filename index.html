@@ -617,7 +617,7 @@
   }
   /* 画面の高さが低い端末（横向きタブレット等）：通常のシート表示は固定高さをやめ、
      全部屋を縦スクロールで見られるようにする（スクショモードは1画面のまま） */
-  @media (max-height: 860px){
+  @media screen and (max-height: 860px){
     body:not(.ssmode) .sheet-view{height:auto;overflow:visible}
     body:not(.ssmode) .sheet-cols{overflow:visible}
     body:not(.ssmode) .sheet-col{overflow:visible}
