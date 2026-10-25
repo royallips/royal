@@ -585,8 +585,15 @@
     .room-move-list button{padding:9px 12px;font-size:13px}
     /* 凡例は小さめに折り返し */
     .legend{gap:8px;font-size:10px}
-    /* シートビュー：スマホ幅に合わせる */
-    .sheet-view{height:calc(100vh - 120px)}
+    /* シートビュー：スマホは高さ固定にせず、全部屋を縦スクロールで見られるようにする */
+    .sheet-view{height:auto;overflow:visible}
+    .sheet-cols{overflow:visible}
+    .sheet-col{overflow:visible}
+    .sheet-table{height:auto}
+    .sheet-table tbody{height:auto}
+    .sheet-table tbody tr{height:auto}
+    .sh-names{position:static}
+    .sh-inner{position:static;inset:auto;min-height:32px}
     /* 溢れ・掛け持ちが人数が多いと右にはみ出るのを防ぎ、折り返して全部見えるようにする */
     .sheet-top-row{gap:4px}
     .sheet-kake-row{width:100%;gap:4px}
@@ -594,7 +601,7 @@
     .sh-kake-zone.over{font-size:13px}
     .sh-kake-zone.soukei{width:100%}
     .sh-rno{font-size:11px;width:20px;min-width:20px}
-    .sh-inner{padding:0 2px;gap:2px;font-size:14px}
+    .sh-inner{padding:2px;gap:2px;font-size:14px}
     .sh-name small{font-size:.8em}
     /* 部屋割りサイドバーはスマホでは縦積みに戻す */
     .rooms-layout{flex-direction:column}
