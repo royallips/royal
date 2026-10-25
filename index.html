@@ -642,7 +642,7 @@
     .sheet-header { display: flex !important; justify-content: flex-start; gap: 4pt; flex-shrink: 0; margin-bottom: 0; }
     .sheet-date { font-size: 12pt; font-weight: 900; white-space: nowrap; }
     .sheet-kake-row { display: flex !important; gap: 3pt; flex-wrap: wrap; align-items: center; flex: 1; margin: 0; }
-    .sh-kake-zone { display: inline-flex !important; font-size: 12pt; padding: 2pt 6pt; border-radius: 3pt; }
+    .sh-kake-zone { display: inline-flex !important; font-size: 10pt; padding: 1pt 5pt; border-radius: 3pt; }
     .sh-kake-zone.over { font-size: 12pt; }
     .sh-kake-zone.over .sh-kake-label { font-size: 10pt; }
     .sh-kake-zone.over .sh-kake-item { font-size: 12pt; }
@@ -650,7 +650,7 @@
     .sh-kake-zone.soukei .sh-kake-label { font-size: 7pt; }
     .sh-kake-zone.soukei .sh-kake-item { font-size: 8pt; }
     .sh-kake-label { font-size: 10pt; }
-    .sh-kake-item { font-size: 12pt; padding: 0 5pt; }
+    .sh-kake-item { font-size: 10pt; padding: 0 4pt; }
     .sheet-soukei-row { flex-shrink: 0; margin-top: 1.5mm; }
     /* シート本体: 行高さを固定mmで指定し、モバイル印刷でも1ページに収まるようにする */
     .sheet-view { padding: 0; display: flex; flex-direction: column; height: auto; overflow: visible; width: 100%; box-sizing: border-box; }
@@ -661,14 +661,14 @@
     .sheet-col.yoru .sheet-col-head { background: #e0eaff !important; color: #1a3a80; border: 1pt solid #7090d0; }
     .sheet-table { width: 100%; height: auto; border-collapse: collapse; table-layout: fixed; }
     .sheet-table tbody { height: auto; }
-    .sheet-table tbody tr { height: 9mm; overflow: hidden; }
+    .sheet-table tbody tr { height: 7.6mm; overflow: hidden; }
     .sh-rno { font-size: 11pt; font-weight: 900; text-align: center; padding: 0; border: 1pt solid #bbb; width: 18pt; color: #c03060; vertical-align: middle; white-space: nowrap; overflow: hidden; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .sh-names { padding: 0; border: 1pt solid #bbb; border-left: none; vertical-align: middle; overflow: hidden; max-height: 9mm; }
+    .sh-names { padding: 0; border: 1pt solid #bbb; border-left: none; vertical-align: middle; overflow: hidden; max-height: 7.6mm; position: relative; }
     .sh-inner { display: flex; align-items: center; gap: 2pt; padding: 0; height: 100%; }
     .sh-side-l { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-align: left; }
     .sh-side-r { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-align: right; }
     .sh-side-r-only { margin-left: auto; flex: 1; text-align: right; }
-    .sh-name { font-size: 20pt; font-weight: 900; display: inline; white-space: nowrap; color: #000; line-height: 1; }
+    .sh-name { font-size: 16pt; font-weight: 900; display: inline; white-space: nowrap; color: #000; line-height: 1; }
     .sh-vip { font-size: 6pt; font-weight: 900; color: #8a6a00; background: #fbf1d2 !important; border: 0.5pt solid #f5c800; border-radius: 2pt; padding: 0 2pt; margin-left: 0; vertical-align: middle; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .sh-bousui { font-size: 6pt; font-weight: 900; color: #1565c0; background: #e3f2fd !important; border: 0.5pt solid #90caf9; border-radius: 2pt; padding: 0 2pt; margin-left: 0; vertical-align: middle; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .sh-badge-stack { display: inline-flex; flex-direction: column; gap: 0.3pt; vertical-align: middle; margin-left: 1pt; }
