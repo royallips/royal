@@ -4311,11 +4311,15 @@ function fitSheetNames() {
 }
 function enterSSMode() {
   document.body.classList.add("ssmode");
+  const dm = $("dayMemo");
+  if (dm) { dm.style.height = "auto"; dm.style.height = dm.scrollHeight + "px"; }
   window.scrollTo(0, 0);
   setTimeout(() => window.print(), 100);
 }
 function exitSSMode() {
   document.body.classList.remove("ssmode");
+  const dm = $("dayMemo");
+  if (dm) dm.style.height = "";
 }
 function safeRender(fn, name) {
   try { fn(); } catch(e) { console.error("[render error] " + name + ":", e); }
