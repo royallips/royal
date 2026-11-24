@@ -299,7 +299,7 @@
   .rt-bar.bar-compact .dummy-bar{display:none}
   .doji-bar{display:inline-block;background:#dff3e4;color:#1b7a3a;font-weight:800;border-radius:4px;padding:0 3px;margin-left:3px;font-size:9px}
   .rt-bar.has-doji.bar-compact::after{content:"同時受";position:absolute;top:0;right:0;background:#dff3e4;color:#1b7a3a;font-weight:900;font-size:7px;line-height:1.3;padding:0 2px;border-radius:0 5px 0 4px;z-index:3;pointer-events:none}
-  .lf-doji-tag{position:absolute;top:1px;z-index:60;transform:translateX(-100%);background:#dff3e4;color:#1b7a3a;font-weight:900;font-size:12px;line-height:1.3;padding:0 4px;border-radius:0 4px 0 4px;pointer-events:none}
+  .lf-bar.has-doji::after{content:"同";position:absolute;top:0;right:0;background:#dff3e4;color:#1b7a3a;font-weight:900;font-size:12px;line-height:1.3;padding:0 4px;border-radius:0 4px 0 4px;z-index:3;pointer-events:none}
   .rt-bar.bar-compact .doji-bar{display:none}
   .rt-bar.clash{box-shadow:0 1px 3px rgba(0,0,0,.15), inset 0 0 0 1.5px rgba(224,70,60,.9)}
   .rt-bar .rt-nklabel{position:relative;z-index:2;font-size:.7em;font-weight:700;opacity:.8;padding:0 2px;white-space:nowrap}
@@ -1470,11 +1470,6 @@ function sortedCasts(group) {
 function barLeft(sp) { return (sp[0] - OPEN) / HOURS * 100; }
 function barWidth(sp) { return (sp[1] - sp[0]) / HOURS * 100; }
 // 同じ部屋で時間が被る相手との重複帯（赤ハッチ）のHTML
-// 同時受けの「同」は、時間が被って後ろのバーに隠れないよう、バーとは別にトラック最前面へ出す
-function lfDojiTag(w) {
-  if (!(w.r && w.r.doji)) return "";
-  return `<span class="lf-doji-tag" style="left:${barLeft(w.sp) + barWidth(w.sp)}%">同</span>`;
-}
 function clashOverlayHtml(w, arr) {
   if (!w.clash) return "";
   let ov = "";
@@ -2468,7 +2463,7 @@ function renderRoomsList() {
           return `<div class="lf-bar newcomer${rankCls}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name ? w.name+' ' : ''}入店予定 ${fmtSp(w.sp)}"><span class="lf-barlabel">${w.name ? w.name+' ' : ''}入店予定<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
         if (w.borrow)
           return `<div class="lf-bar bw${rankCls} store-${w.store||''}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name} ${fmtSp(w.sp)}（掛け持ち）"><span class="lf-barlabel${nameCls}">${w.name}<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
-        return `<div class="lf-bar ${k % 2 ? 'b2' : 'b1'}${rankCls}${w.r && w.r.hideNet ? ' has-hidenet' : ''}${w.r && w.r.doji ? ' has-doji' : ''} ${w.clash ? 'clash' : ''}" draggable="true" data-cid="${w.cid}"${w.seg2 ? ' data-nk2="1"' : ''} style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name} ${fmtSp(w.sp)}${w.r && w.r.hideNet ? ' 非掲載' : ''}${w.r && w.r.doji ? ' 同時受' : ''}${w.seg2 ? '（中抜け後半）' : ''}">${ov}<span class="lf-barlabel${nameCls}">${w.name}<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>` + lfDojiTag(w);
+        return `<div class="lf-bar ${k % 2 ? 'b2' : 'b1'}${rankCls}${w.r && w.r.hideNet ? ' has-hidenet' : ''}${w.r && w.r.doji ? ' has-doji' : ''} ${w.clash ? 'clash' : ''}" draggable="true" data-cid="${w.cid}"${w.seg2 ? ' data-nk2="1"' : ''} style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name} ${fmtSp(w.sp)}${w.r && w.r.hideNet ? ' 非掲載' : ''}${w.r && w.r.doji ? ' 同時受' : ''}${w.seg2 ? '（中抜け後半）' : ''}">${ov}<span class="lf-barlabel${nameCls}">${w.name}<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
       }).join("");
     }
     let roomRows = "";
@@ -2489,7 +2484,7 @@ function renderRoomsList() {
           return `<div class="lf-bar newcomer${rankCls}${clashCls}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name ? w.name+' ' : ''}入店予定 ${fmtSp(w.sp)}">${ov}<span class="lf-barlabel">${w.name ? w.name+' ' : ''}入店予定<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
         if (w.borrow)
           return `<div class="lf-bar bw${rankCls} store-${w.store||''}${clashCls}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name} ${fmtSp(w.sp)}（掛け持ち）">${ov}<span class="lf-barlabel${nameCls}">${w.name}<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
-        return `<div class="lf-bar ov${rankCls}${clashCls}${w.r && w.r.hideNet ? ' has-hidenet' : ''}${w.r && w.r.doji ? ' has-doji' : ''}${w.r && w.r.dummy ? ' has-dummy' : ''}" draggable="true" data-cid="${w.cid}"${w.seg2 ? ' data-nk2="1"' : ''} style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name} ${fmtSp(w.sp)}${w.seg2 ? '（中抜け後半）' : ''}${w.r && w.r.hideNet ? ' 非掲載' : ''}${w.r && w.r.doji ? ' 同時受' : ''}${w.r && w.r.dummy ? ' ダミー' : ''}">${ov}<span class="lf-barlabel${nameCls}">${w.name}<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>` + lfDojiTag(w);
+        return `<div class="lf-bar ov${rankCls}${clashCls}${w.r && w.r.hideNet ? ' has-hidenet' : ''}${w.r && w.r.doji ? ' has-doji' : ''}${w.r && w.r.dummy ? ' has-dummy' : ''}" draggable="true" data-cid="${w.cid}"${w.seg2 ? ' data-nk2="1"' : ''} style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name} ${fmtSp(w.sp)}${w.seg2 ? '（中抜け後半）' : ''}${w.r && w.r.hideNet ? ' 非掲載' : ''}${w.r && w.r.doji ? ' 同時受' : ''}${w.r && w.r.dummy ? ' ダミー' : ''}">${ov}<span class="lf-barlabel${nameCls}">${w.name}<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
       }).join("");
 
       const allBorrow = arr.length && arr.every(x => x.borrow);
