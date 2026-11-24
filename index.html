@@ -3619,14 +3619,14 @@ async function commitTop(mutate, message) {
   throw new Error("ほかの保存と重なったため保存できませんでした。もう一度お試しください。");
 }
 // 保存系の操作を1つずつ実行する
-async function topOp(fn, failMsg) {
+async function topOp(fn, failMsg, noDim) {
   if (topBusy) return;
   if (!ghToken(true)) return;
   topBusy = true;
-  const grid = $("topImgGrid"); if (grid) grid.style.opacity = ".5";
+  const grid = $("topImgGrid"); if (grid) { if (noDim) grid.style.pointerEvents = "none"; else grid.style.opacity = ".5"; }
   try { await fn(); await renderTopImages(); }
-  catch (e) { alert(failMsg + "\n" + (e.message || e)); }
-  finally { topBusy = false; const g = $("topImgGrid"); if (g) g.style.opacity = ""; }
+  catch (e) { alert(failMsg + "\n" + (e.message || e)); try { await renderTopImages(); } catch (e2) {} }
+  finally { topBusy = false; const g = $("topImgGrid"); if (g) { g.style.opacity = ""; g.style.pointerEvents = ""; } }
 }
 function toggleTopVisible(n) {
   return topOp(() => commitTop(s => ({ blobs: s.blobs, hidden: s.hidden.includes(n) ? s.hidden.filter(x => x !== n) : [...s.hidden, n] }),
@@ -3666,8 +3666,11 @@ async function saveTopEdit() {
 function deleteTopImage(suf) {
   const k = suf === "" ? 1 : Number(suf);
   if (topBusy || !confirm(`トップ画像の${k}枚目を削除しますか？`)) return;
+  // 保存を待つ間も消した画像が暗く残らないよう、先に画面から取り除く（失敗時は topOp が元の状態を読み直す）
+  topShown = { ...topShown, imgs: topShown.imgs.filter((_, i) => i !== k - 1).map((f, i) => ({ ...f, suf: topSuf(i + 1) })), hidden: topShown.hidden.filter(x => x !== k).map(x => x > k ? x - 1 : x) };
+  drawTopGrid();
   return topOp(() => commitTop(s => ({ blobs: s.blobs.filter((_, i) => i !== k - 1), hidden: s.hidden.filter(x => x !== k).map(x => x > k ? x - 1 : x) }),
-    `トップ画像を削除（${k}枚目）`), "トップ画像の削除に失敗しました。");
+    `トップ画像を削除（${k}枚目）`), "トップ画像の削除に失敗しました。", true);
 }
 async function renderTopImages() {
   if (!$("topImgGrid")) return;
