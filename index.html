@@ -211,6 +211,7 @@
   .st-mitei{background:var(--mitei)!important;color:var(--ink-soft)}
   .cell .timeunder{font-size:11.5px;display:block;line-height:1.1;letter-spacing:-.5px}
   .cell .hidenet{font-size:8px;font-weight:800;color:#c0392b;background:#ffe3e0;border-radius:4px;padding:0 2px;display:inline-block;margin-top:1px}
+  .cell .doji{font-size:8px;font-weight:800;color:#1565c0;background:#dcecff;border-radius:4px;padding:0 2px;display:inline-block;margin-top:1px}
   .cell .dummy{font-size:8px;font-weight:800;color:#6b3fb0;background:#e9e0fa;border-radius:4px;padding:0 2px;display:inline-block;margin-top:1px}
   .cell.nakanuke{background:#fff}
   .cell.nakanuke .timeunder{font-size:9px;line-height:1.2;font-weight:800;text-align:center}
@@ -296,6 +297,10 @@
   .rt-bar.has-dummy.bar-compact::after{content:"ダミー";position:absolute;top:0;right:0;background:#e9e0fa;color:#6b3fb0;font-weight:900;font-size:7px;line-height:1.3;padding:0 2px;border-radius:0 5px 0 4px;z-index:3;pointer-events:none}
   .lf-bar.has-dummy::after{content:"ダミー";position:absolute;top:0;right:0;background:#e9e0fa;color:#6b3fb0;font-weight:900;font-size:10px;line-height:1.3;padding:0 4px;border-radius:0 4px 0 4px;z-index:3;pointer-events:none}
   .rt-bar.bar-compact .dummy-bar{display:none}
+  .doji-bar{display:inline-block;background:#dcecff;color:#1565c0;font-weight:800;border-radius:4px;padding:0 3px;margin-left:3px;font-size:9px}
+  .rt-bar.has-doji.bar-compact::after{content:"同時受";position:absolute;top:0;right:0;background:#dcecff;color:#1565c0;font-weight:900;font-size:7px;line-height:1.3;padding:0 2px;border-radius:0 5px 0 4px;z-index:3;pointer-events:none}
+  .lf-bar.has-doji::after{content:"同";position:absolute;top:0;right:0;background:#dcecff;color:#1565c0;font-weight:900;font-size:12px;line-height:1.3;padding:0 4px;border-radius:0 4px 0 4px;z-index:3;pointer-events:none}
+  .rt-bar.bar-compact .doji-bar{display:none}
   .rt-bar.clash{box-shadow:0 1px 3px rgba(0,0,0,.15), inset 0 0 0 1.5px rgba(224,70,60,.9)}
   .rt-bar .rt-nklabel{position:relative;z-index:2;font-size:.7em;font-weight:700;opacity:.8;padding:0 2px;white-space:nowrap}
   .rt-bar .rt-barlabel{position:relative;z-index:2;overflow:hidden;text-overflow:ellipsis;max-width:100%}
@@ -788,6 +793,8 @@
           <input type="checkbox" id="hideNetChk" style="width:auto"> ネット非掲載</label>
         <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--ink-soft);margin:2px 0 8px">
           <input type="checkbox" id="dummyChk" style="width:auto"> ダミー</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--ink-soft);margin:2px 0 8px">
+          <input type="checkbox" id="dojiChk" style="width:auto"> 同時受け</label>
       </div>
       <div class="hint"></div>
     </div>
@@ -1744,7 +1751,7 @@ function buildRoomsSheet(memo) {
   }
   const lendZone = shZone("他店部屋", shLends.map(l => `${l.store} ${tL(l.start)}-${tL(l.end)}`), "lend");
   const borrowZone = shZone("掛け持ちor入店", shBorrows.map(l => l.newcomer ? `${l.name ? l.name+' ' : ''}入店予定 ${tL(l.start)}-${tL(l.end)}` : `${l.store}${l.name ? " "+l.name : ""} ${tL(l.start)}-${tL(l.end)}`), "borrow");
-  const overZone = shZone("溢れ", shOverWorkers.map(w => `${w.name}${w.r && w.r.hideNet ? '<span class="hidenet-bar">非掲載</span>' : ''}${w.r && w.r.dummy ? '<span class="dummy-bar">ダミー</span>' : ''} ${fmtSp(w.sp)}`), "over");
+  const overZone = shZone("溢れ", shOverWorkers.map(w => `${w.name}${w.r && w.r.hideNet ? '<span class="hidenet-bar">非掲載</span>' : ''}${w.r && w.r.doji ? '<span class="doji-bar">同時受</span>' : ''}${w.r && w.r.dummy ? '<span class="dummy-bar">ダミー</span>' : ''} ${fmtSp(w.sp)}`), "over");
   // 送迎
   const stMap = (state.soukeiStatus && state.soukeiStatus[dk]) || {};
   const soukeiCasts = state.casts.filter(c => {
@@ -1802,7 +1809,7 @@ function renderRooms() {
   function barsHtml(arr) {
     return arr.map((w, k) => {
       const left = barLeft(w.sp), width = barWidth(w.sp), ov = clashOverlayHtml(w, arr);
-      const tip = `${w.name} ${fmtSp(w.sp)}${w.r && w.r.hideNet ? ' 非掲載' : ''}`;
+      const tip = `${w.name} ${fmtSp(w.sp)}${w.r && w.r.hideNet ? ' 非掲載' : ''}${w.r && w.r.doji ? ' 同時受' : ''}`;
       const cobj = state.casts.find(x => x.id === w.cid);
       const rankCls = cobj && cobj.rank === "premier" ? " rank-premier" : cobj && cobj.rank === "vip" ? " rank-vip" : "";
       const nameCls = cobj && (cobj.furyo || cobj.autoOver) ? " furyo-name" : "";
@@ -1810,7 +1817,7 @@ function renderRooms() {
         return `<div class="rt-bar newcomer${rankCls} ${w.clash ? 'clash' : ''} ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${left}%;width:${width}%" title="${w.name ? w.name+' ' : ''}入店予定 ${fmtSp(w.sp)}" onclick="openMove('${w.cid}',event)">${ov}<span class="rt-barlabel">${w.name ? w.name+' ' : ''}入店予定</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
       if (w.borrow)
         return `<div class="rt-bar bw${rankCls} store-${w.store||''} ${w.clash ? 'clash' : ''} ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${left}%;width:${width}%" title="${w.name} ${fmtSp(w.sp)}（掛け持ち）" onclick="openMove('${w.cid}',event)">${ov}<span class="rt-barlabel${nameCls}">${w.name}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
-      return `<div class="rt-bar ${k % 2 ? 'b2' : 'b1'}${rankCls}${w.r && w.r.hideNet ? ' has-hidenet' : ''} ${w.clash ? 'clash' : ''} ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}"${w.seg2 ? ' data-nk2="1"' : ''} style="left:${left}%;width:${width}%" title="${tip}" onclick="openMove('${w.cid}',event${w.seg2 ? ',true' : ''})">${ov}<span class="rt-barlabel${nameCls}">${w.name}${w.r && w.r.hideNet ? '<span class="hidenet-bar">非掲載</span>' : ''}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
+      return `<div class="rt-bar ${k % 2 ? 'b2' : 'b1'}${rankCls}${w.r && w.r.hideNet ? ' has-hidenet' : ''}${w.r && w.r.doji ? ' has-doji' : ''} ${w.clash ? 'clash' : ''} ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}"${w.seg2 ? ' data-nk2="1"' : ''} style="left:${left}%;width:${width}%" title="${tip}" onclick="openMove('${w.cid}',event${w.seg2 ? ',true' : ''})">${ov}<span class="rt-barlabel${nameCls}">${w.name}${w.r && w.r.hideNet ? '<span class="hidenet-bar">非掲載</span>' : ''}${w.r && w.r.doji ? '<span class="doji-bar">同時受</span>' : ''}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
     }).join("");
   }
 
@@ -1832,7 +1839,7 @@ function renderRooms() {
         return `<div class="rt-bar newcomer${rankCls} ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name ? w.name+' ' : ''}入店予定 ${fmtSp(w.sp)}" onclick="openMove('${w.cid}',event)"><span class="rt-barlabel">${w.name ? w.name+' ' : ''}入店予定</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
       if (w.borrow)
         return `<div class="rt-bar bw${rankCls} store-${w.store||''} ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name} ${fmtSp(w.sp)}（掛け持ち）" onclick="openMove('${w.cid}',event)"><span class="rt-barlabel${nameCls}">${w.name}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
-      return `<div class="rt-bar ov${rankCls}${w.r && w.r.hideNet ? ' has-hidenet' : ''}${w.r && w.r.dummy ? ' has-dummy' : ''} ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}"${w.seg2 ? ' data-nk2="1"' : ''} style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name} ${fmtSp(w.sp)}${w.r && w.r.hideNet ? ' 非掲載' : ''}${w.r && w.r.dummy ? ' ダミー' : ''}" onclick="openMove('${w.cid}',event${w.seg2 ? ',true' : ''})">${w.seg2 ? '<span class="rt-nklabel">後半</span>' : ''}<span class="rt-barlabel${nameCls}">${w.name}${w.r && w.r.hideNet ? '<span class="hidenet-bar">非掲載</span>' : ''}${w.r && w.r.dummy ? '<span class="dummy-bar">ダミー</span>' : ''}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
+      return `<div class="rt-bar ov${rankCls}${w.r && w.r.hideNet ? ' has-hidenet' : ''}${w.r && w.r.doji ? ' has-doji' : ''}${w.r && w.r.dummy ? ' has-dummy' : ''} ${selBar === w.cid ? 'sel' : ''}" draggable="true" data-cid="${w.cid}"${w.seg2 ? ' data-nk2="1"' : ''} style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%" title="${w.name} ${fmtSp(w.sp)}${w.r && w.r.hideNet ? ' 非掲載' : ''}${w.r && w.r.doji ? ' 同時受' : ''}${w.r && w.r.dummy ? ' ダミー' : ''}" onclick="openMove('${w.cid}',event${w.seg2 ? ',true' : ''})">${w.seg2 ? '<span class="rt-nklabel">後半</span>' : ''}<span class="rt-barlabel${nameCls}">${w.name}${w.r && w.r.hideNet ? '<span class="hidenet-bar">非掲載</span>' : ''}${w.r && w.r.doji ? '<span class="doji-bar">同時受</span>' : ''}${w.r && w.r.dummy ? '<span class="dummy-bar">ダミー</span>' : ''}</span><span class="rt-bartime">${fmtSp(w.sp)}</span></div>`;
     }).join("");
     const hasCast = arr.some(w => !w.borrow);
     const allBorrow = arr.length && arr.every(w => w.borrow);
@@ -2452,7 +2459,7 @@ function renderRoomsList() {
           return `<div class="lf-bar newcomer${rankCls}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name ? w.name+' ' : ''}入店予定 ${fmtSp(w.sp)}"><span class="lf-barlabel">${w.name ? w.name+' ' : ''}入店予定<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
         if (w.borrow)
           return `<div class="lf-bar bw${rankCls} store-${w.store||''}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name} ${fmtSp(w.sp)}（掛け持ち）"><span class="lf-barlabel${nameCls}">${w.name}<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
-        return `<div class="lf-bar ${k % 2 ? 'b2' : 'b1'}${rankCls}${w.r && w.r.hideNet ? ' has-hidenet' : ''} ${w.clash ? 'clash' : ''}" draggable="true" data-cid="${w.cid}"${w.seg2 ? ' data-nk2="1"' : ''} style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name} ${fmtSp(w.sp)}${w.r && w.r.hideNet ? ' 非掲載' : ''}${w.seg2 ? '（中抜け後半）' : ''}">${ov}<span class="lf-barlabel${nameCls}">${w.name}<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
+        return `<div class="lf-bar ${k % 2 ? 'b2' : 'b1'}${rankCls}${w.r && w.r.hideNet ? ' has-hidenet' : ''}${w.r && w.r.doji ? ' has-doji' : ''} ${w.clash ? 'clash' : ''}" draggable="true" data-cid="${w.cid}"${w.seg2 ? ' data-nk2="1"' : ''} style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name} ${fmtSp(w.sp)}${w.r && w.r.hideNet ? ' 非掲載' : ''}${w.r && w.r.doji ? ' 同時受' : ''}${w.seg2 ? '（中抜け後半）' : ''}">${ov}<span class="lf-barlabel${nameCls}">${w.name}<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
       }).join("");
     }
     let roomRows = "";
@@ -2473,7 +2480,7 @@ function renderRoomsList() {
           return `<div class="lf-bar newcomer${rankCls}${clashCls}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name ? w.name+' ' : ''}入店予定 ${fmtSp(w.sp)}">${ov}<span class="lf-barlabel">${w.name ? w.name+' ' : ''}入店予定<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
         if (w.borrow)
           return `<div class="lf-bar bw${rankCls} store-${w.store||''}${clashCls}" draggable="true" data-cid="${w.cid}" style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name} ${fmtSp(w.sp)}（掛け持ち）">${ov}<span class="lf-barlabel${nameCls}">${w.name}<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
-        return `<div class="lf-bar ov${rankCls}${clashCls}${w.r && w.r.hideNet ? ' has-hidenet' : ''}${w.r && w.r.dummy ? ' has-dummy' : ''}" draggable="true" data-cid="${w.cid}"${w.seg2 ? ' data-nk2="1"' : ''} style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name} ${fmtSp(w.sp)}${w.seg2 ? '（中抜け後半）' : ''}${w.r && w.r.hideNet ? ' 非掲載' : ''}${w.r && w.r.dummy ? ' ダミー' : ''}">${ov}<span class="lf-barlabel${nameCls}">${w.name}<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
+        return `<div class="lf-bar ov${rankCls}${clashCls}${w.r && w.r.hideNet ? ' has-hidenet' : ''}${w.r && w.r.doji ? ' has-doji' : ''}${w.r && w.r.dummy ? ' has-dummy' : ''}" draggable="true" data-cid="${w.cid}"${w.seg2 ? ' data-nk2="1"' : ''} style="left:${barLeft(w.sp)}%;width:${barWidth(w.sp)}%;z-index:${k + 1}" title="${w.name} ${fmtSp(w.sp)}${w.seg2 ? '（中抜け後半）' : ''}${w.r && w.r.hideNet ? ' 非掲載' : ''}${w.r && w.r.doji ? ' 同時受' : ''}${w.r && w.r.dummy ? ' ダミー' : ''}">${ov}<span class="lf-barlabel${nameCls}">${w.name}<span class="lf-endtime">${lfTime(w.sp)}</span></span></div>`;
       }).join("");
 
       const allBorrow = arr.length && arr.every(x => x.borrow);
@@ -2636,8 +2643,8 @@ function cellInner(rc) {
   if (!rc.status) return { inner: note, cls: stayCls }; // ステータス未選択＝マーカーのみ、または備考のみ
   switch (rc.status) {
     case "work":
-      if (rc.start2) return { inner: `<span class="timeunder">${fmtTime(rc)}<span class="nk-label">中抜け</span>${rc.start2}-${rc.end2 || 'L'}${rc.hideNet ? '<br><span class="hidenet">非掲載</span>' : ''}${rc.dummy ? '<br><span class="dummy">ダミー</span>' : ''}</span>${note}`, cls: "nakanuke" + (stayCls ? " " + stayCls : "") };
-      return { inner: `<span class="timeunder">${fmtTime(rc)}${rc.hideNet ? '<br><span class="hidenet">非掲載</span>' : ''}${rc.dummy ? '<br><span class="dummy">ダミー</span>' : ''}</span>${note}`, cls: stayCls };
+      if (rc.start2) return { inner: `<span class="timeunder">${fmtTime(rc)}<span class="nk-label">中抜け</span>${rc.start2}-${rc.end2 || 'L'}${rc.hideNet ? '<br><span class="hidenet">非掲載</span>' : ''}${rc.doji ? '<br><span class="doji">同時受け</span>' : ''}${rc.dummy ? '<br><span class="dummy">ダミー</span>' : ''}</span>${note}`, cls: "nakanuke" + (stayCls ? " " + stayCls : "") };
+      return { inner: `<span class="timeunder">${fmtTime(rc)}${rc.hideNet ? '<br><span class="hidenet">非掲載</span>' : ''}${rc.doji ? '<br><span class="doji">同時受け</span>' : ''}${rc.dummy ? '<br><span class="dummy">ダミー</span>' : ''}</span>${note}`, cls: stayCls };
     case "furikae":
       return { inner: `<span class="timeunder">${fmtTime(rc)}</span><span class="omark">○</span>${note}`, cls: stayCls };
     case "mitei":
@@ -3965,6 +3972,7 @@ function openDlg(cid, day, blank = false) {
   $("nakanukeChk").checked = !!(r && r.start2);
   $("hideNetChk").checked = !!(r && r.hideNet);
   $("dummyChk").checked = !!(r && r.dummy);
+  $("dojiChk").checked = !!(r && r.doji);
   $("noteText").value = r && r.note ? r.note : "";
   dlgInitial = { status: pickStatus, start: val("startTime"), end: val("endTime"), start2: val("startTime2"), end2: val("endTime2") };
   refreshPick();
@@ -4014,13 +4022,14 @@ $("statusGridMarker").onclick = e => {
 // 中抜け利用・ネット非掲載・ダミーは同時に選べないようにする（どれか1つを選ぶと他は自動解除）
 function exclusiveChkChanged(idd) {
   if ($(idd).checked) {
-    ["nakanukeChk", "hideNetChk", "dummyChk"].forEach(other => { if (other !== idd) $(other).checked = false; });
+    ["nakanukeChk", "hideNetChk", "dummyChk", "dojiChk"].forEach(other => { if (other !== idd) $(other).checked = false; });
   }
   $("nakanukeFields").style.display = $("nakanukeChk").checked ? "flex" : "none";
 }
 $("nakanukeChk").onchange = () => exclusiveChkChanged("nakanukeChk");
 $("hideNetChk").onchange = () => exclusiveChkChanged("hideNetChk");
 $("dummyChk").onchange = () => exclusiveChkChanged("dummyChk");
+$("dojiChk").onchange = () => exclusiveChkChanged("dojiChk");
 $("dlgSave").onclick = () => {
   pushCalUndo();
   const { cid, day } = editing, k = recKey(cid, day);
@@ -4105,6 +4114,7 @@ $("dlgSave").onclick = () => {
     }
     if (pickStatus === "work" && $("hideNetChk").checked) rec0.hideNet = true;
     if (pickStatus === "work" && $("dummyChk").checked) rec0.dummy = true;
+    if (pickStatus === "work" && $("dojiChk").checked) rec0.doji = true;
     // 時間欄を触っていない（マーカー等の追加だけ）場合は、プルダウンの丸め等で意図せず変わらないよう元の値をそのまま使う
     if (primaryTimeUnchanged && editingOriginalRec && (editingOriginalRec.status === "work" || editingOriginalRec.status === "furikae")) {
       rec0.start = editingOriginalRec.start;
